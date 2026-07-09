@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+// GET - Fetch all quote requests
+export async function GET(req: NextRequest) {
+  try {
+    const { data, error } = await supabase
+      .from('quote_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    console.error('Quote fetch error:', err);
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+  }
+}
+
+// POST - Create new quote request
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

@@ -57,7 +57,7 @@ export default function Navbar() {
 
         <div className="hidden md:block">
           <Button asChild>
-            <Link href="/contact">Request a quote</Link>
+            <Link href="/request-quote">Request a quote</Link>
           </Button>
         </div>
 
@@ -91,7 +91,7 @@ export default function Navbar() {
             ))}
             <div className="pt-2">
               <Button asChild className="w-full">
-                <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/request-quote" onClick={() => setMobileMenuOpen(false)}>
                   Request a quote
                 </Link>
               </Button>

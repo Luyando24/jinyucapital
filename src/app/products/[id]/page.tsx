@@ -145,7 +145,7 @@ export default function ProductDetailPage() {
               size="lg" 
               className="w-full h-14 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]" 
             >
-              <Link href={`/contact?product=${encodeURIComponent(product.name)}&quantity=${quantity}`}>
+              <Link href={`/request-quote?product=${encodeURIComponent(product.name)}&quantity=${quantity}`}>
                 <Mail className="mr-3 h-5 w-5" /> Request a Quote
               </Link>
             </Button>

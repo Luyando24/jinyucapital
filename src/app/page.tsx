@@ -86,7 +86,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="text-base bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 px-8 h-12">
-                <Link href="/contact">Request a quote</Link>
+                <Link href="/request-quote">Request a quote</Link>
               </Button>
             </div>
 
@@ -203,7 +203,7 @@ export default function Home() {
               Whether you need OEM services or bulk orders of our standard product lines, our team is ready to support your business.
             </p>
             <Button asChild size="lg" className="px-8 h-12 text-base">
-              <Link href="/contact">Contact our sales team</Link>
+              <Link href="/request-quote">Contact our sales team</Link>
             </Button>
           </motion.div>
         </div>

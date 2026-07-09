@@ -85,6 +85,10 @@ export default function AdminDashboardPage() {
   const [newSubscriberEmail, setNewSubscriberEmail] = useState("");
   const [addingSubscriber, setAddingSubscriber] = useState(false);
 
+  // Quote edit state
+  const [editingQuote, setEditingQuote] = useState<string | null>(null);
+  const [quoteEditData, setQuoteEditData] = useState<any>(null);
+
   // Fetch Dataset
   const loadAdminDataset = async () => {
     try {
@@ -413,6 +417,40 @@ export default function AdminDashboardPage() {
     const { error } = await supabase.from("contact_messages").delete().eq("id", id);
     if (error) { alert("Failed to delete."); return; }
     setContactMessages(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Quote edit handlers
+  const handleStartEditQuote = (quote: any) => {
+    setEditingQuote(quote.id);
+    setQuoteEditData({ ...quote });
+  };
+
+  const handleCancelEditQuote = () => {
+    setEditingQuote(null);
+    setQuoteEditData(null);
+  };
+
+  const handleSaveQuoteEdit = async () => {
+    if (!editingQuote || !quoteEditData) return;
+    try {
+      const { error } = await supabase
+        .from("quote_requests")
+        .update({
+          status: quoteEditData.status,
+          message: quoteEditData.message,
+          quantity: quoteEditData.quantity,
+          product_interest: quoteEditData.product_interest,
+        })
+        .eq("id", editingQuote);
+
+      if (error) throw error;
+
+      setQuoteRequests(prev => prev.map(q => q.id === editingQuote ? { ...q, ...quoteEditData } : q));
+      setEditingQuote(null);
+      setQuoteEditData(null);
+    } catch (err: any) {
+      alert("Failed to update quote: " + err.message);
+    }
   };
 
   // Auth restriction gate
@@ -800,42 +838,126 @@ export default function AdminDashboardPage() {
 
               {/* Quotes Tab */}
               {activeTab === "quotes" && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {quoteRequests.map(q => (
-                    <div key={q.id} className="bg-card border rounded-2xl p-6 shadow-sm space-y-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <p className="font-bold">{q.first_name} {q.last_name} · <span className="text-muted-foreground font-normal">{q.company_name}</span></p>
-                          <p className="text-xs text-muted-foreground mt-1">{q.email} · {q.phone}</p>
+                    <div key={q.id} className="bg-card border rounded-2xl shadow-sm overflow-hidden">
+                      <div className="p-6 space-y-4">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <p className="font-bold">{q.first_name} {q.last_name}</p>
+                              <span className="text-muted-foreground">·</span>
+                              <p className="text-muted-foreground">{q.company_name}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{q.email} · {q.phone || 'No phone'}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            {editingQuote === q.id ? (
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={handleCancelEditQuote}>Cancel</Button>
+                                <Button size="sm" onClick={handleSaveQuoteEdit}>Save</Button>
+                              </div>
+                            ) : (
+                              <>
+                                <Button variant="ghost" size="icon" onClick={() => handleStartEditQuote(q)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteQuote(q.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <select
-                            value={q.status}
-                            onChange={e => handleUpdateQuoteStatus(q.id, e.target.value)}
-                            className="bg-background border rounded px-2 py-1 text-xs font-bold"
-                          >
-                            <option value="new">New</option>
-                            <option value="quoted">Quoted</option>
-                            <option value="closed">Closed</option>
-                          </select>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteQuote(q.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+
+                        {editingQuote === q.id ? (
+                          <div className="space-y-4 p-4 bg-muted/30 rounded-xl">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Status</label>
+                                <select
+                                  value={quoteEditData.status}
+                                  onChange={e => setQuoteEditData({ ...quoteEditData, status: e.target.value })}
+                                  className="w-full bg-background border rounded px-3 py-2 text-xs font-bold"
+                                >
+                                  <option value="new">New</option>
+                                  <option value="quoted">Quoted</option>
+                                  <option value="closed">Closed</option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Quantity</label>
+                                <input
+                                  type="number"
+                                  value={quoteEditData.quantity}
+                                  onChange={e => setQuoteEditData({ ...quoteEditData, quantity: parseInt(e.target.value) })}
+                                  className="w-full bg-background border rounded px-3 py-2 text-xs font-bold"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Product Interest</label>
+                              <input
+                                type="text"
+                                value={quoteEditData.product_interest}
+                                onChange={e => setQuoteEditData({ ...quoteEditData, product_interest: e.target.value })}
+                                className="w-full bg-background border rounded px-3 py-2 text-xs font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold uppercase text-muted-foreground mb-1 block">Message</label>
+                              <textarea
+                                rows={3}
+                                value={quoteEditData.message}
+                                onChange={e => setQuoteEditData({ ...quoteEditData, message: e.target.value })}
+                                className="w-full bg-background border rounded px-3 py-2 text-xs resize-none"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                              <div className="bg-muted/50 p-3 rounded-xl">
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Product</p>
+                                <p className="font-medium">{q.product_interest || 'N/A'}</p>
+                              </div>
+                              <div className="bg-muted/50 p-3 rounded-xl">
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Quantity</p>
+                                <p className="font-medium">{q.quantity || 'N/A'}</p>
+                              </div>
+                              <div className="bg-muted/50 p-3 rounded-xl">
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Project Type</p>
+                                <p className="font-medium">{q.project_type || 'N/A'}</p>
+                              </div>
+                              <div className="bg-muted/50 p-3 rounded-xl">
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Status</p>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase border ${
+                                  q.status === 'new' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  q.status === 'quoted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  'bg-gray-50 text-gray-700 border-gray-200'
+                                }`}>
+                                  {q.status}
+                                </span>
+                              </div>
+                            </div>
+                            {q.message && (
+                              <div className="p-4 bg-primary/5 border-l-4 border-primary text-sm rounded-r-xl">
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Message</p>
+                                <p>{q.message}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-                        <div className="bg-muted/50 p-3 rounded-xl">
-                          <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Product</p>
-                          <p className="font-medium">{q.product_interest}</p>
-                        </div>
-                        <div className="bg-muted/50 p-3 rounded-xl">
-                          <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Quantity</p>
-                          <p className="font-medium">{q.quantity}</p>
-                        </div>
-                      </div>
-                      {q.message && <div className="p-4 bg-primary/5 border-l-4 border-primary text-sm rounded-r-xl">{q.message}</div>}
                     </div>
                   ))}
+                  {quoteRequests.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                      <p className="text-sm font-medium">No quote requests yet</p>
+                    </div>
+                  )}
                 </div>
               )}
 
