@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabase';
 // PUT - Update quote request
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
     const { status, message, quantity, product_interest } = body;
 
@@ -18,7 +19,7 @@ export async function PUT(
         quantity: quantity ? parseInt(quantity, 10) : undefined,
         product_interest,
       })
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) throw error;
 
@@ -32,13 +33,14 @@ export async function PUT(
 // DELETE - Delete quote request
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { error } = await supabase
       .from('quote_requests')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) throw error;
 
