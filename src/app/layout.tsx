@@ -2,14 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ChatWidget from "@/components/ChatWidget";
-import { CartProvider } from "@/components/CartContext";
-import CartDrawer from "@/components/CartDrawer";
-import { AuthProvider } from "@/components/AuthContext";
-import { CurrencyProvider } from "@/components/CurrencyContext";
-import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
-import NewsletterPopup from "@/components/NewsletterPopup";
-import BottomNav from "@/components/BottomNav";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
@@ -22,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -35,23 +29,19 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`antialiased font-sans min-h-screen flex flex-col bg-white text-black`}
       >
-        <StoreSettingsProvider>
-          <AuthProvider>
-            <CurrencyProvider>
-              <CartProvider>
-                <Navbar />
-                <main className="flex-grow pb-16 md:pb-0">
-                  {children}
-                </main>
-                <Footer />
-                <BottomNav />
-                <ChatWidget />
-                <CartDrawer />
-                <NewsletterPopup />
-              </CartProvider>
-            </CurrencyProvider>
-          </AuthProvider>
-        </StoreSettingsProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Navbar />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <Footer />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

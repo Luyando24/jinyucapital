@@ -1,98 +1,82 @@
 -- ============================================================
--- Jinyu Capital – Supabase Database Migration
+-- Jinyu Capital – Optimized Supabase Database Schema
+-- Matches the modern frontend design and structure
 -- Run this in Supabase Dashboard > SQL Editor
 -- ============================================================
 
--- ── 1. Products ──────────────────────────────────────────────
+-- ── 1. Products Table ───────────────────────────────────────
+-- Stores our catalog of industrial and landscape lighting
 CREATE TABLE IF NOT EXISTS products (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name             TEXT NOT NULL,
   category         TEXT NOT NULL DEFAULT 'Street Lamps',
   price            NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
   stock_quantity   INTEGER NOT NULL DEFAULT 0,
-  image            TEXT,
-  images           TEXT[] DEFAULT '{}',
+  image            TEXT,                -- Primary product image
+  images           TEXT[] DEFAULT '{}', -- Gallery images
   description      TEXT,
-  rating           NUMERIC(3, 1) DEFAULT 5.0,
-  reviews_count    INTEGER DEFAULT 0,
   is_wholesale     BOOLEAN DEFAULT FALSE,
-  moq_price        NUMERIC(12, 2),
-  moq_quantity     INTEGER DEFAULT 10,
-  created_at       TIMESTAMPTZ DEFAULT NOW()
+  moq_price        NUMERIC(12, 2),      -- Minimum order quantity price
+  moq_quantity     INTEGER DEFAULT 10,   -- Minimum order quantity
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 2. Orders ────────────────────────────────────────────────
+-- ── 2. Orders Table ──────────────────────────────────────────
+-- Stores customer orders for storefront products
 CREATE TABLE IF NOT EXISTS orders (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  status           TEXT NOT NULL DEFAULT 'pending',
-  total            NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+  status           TEXT NOT NULL DEFAULT 'Pending', -- Pending, Processing, Shipped, Cancelled
+  total_amount     NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
   currency         TEXT DEFAULT 'USD',
-  customer_email   TEXT,
-  customer_name    TEXT,
-  shipping_address JSONB,
-  created_at       TIMESTAMPTZ DEFAULT NOW()
+  email            TEXT NOT NULL,
+  first_name       TEXT NOT NULL,
+  last_name        TEXT NOT NULL,
+  phone            TEXT,
+  address          TEXT NOT NULL,
+  city             TEXT NOT NULL,
+  postal_code      TEXT NOT NULL,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 3. Order Items ───────────────────────────────────────────
+-- ── 3. Order Items Table ─────────────────────────────────────
+-- Line items for each order
 CREATE TABLE IF NOT EXISTS order_items (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id    UUID REFERENCES orders(id) ON DELETE CASCADE,
   product_id  UUID REFERENCES products(id) ON DELETE SET NULL,
   quantity    INTEGER NOT NULL DEFAULT 1,
-  unit_price  NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+  price       NUMERIC(12, 2) NOT NULL DEFAULT 0.00, -- Price at time of purchase
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 4. Product Reviews ───────────────────────────────────────
-CREATE TABLE IF NOT EXISTS product_reviews (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_id  UUID REFERENCES products(id) ON DELETE CASCADE,
-  name        TEXT NOT NULL,
-  rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  comment     TEXT,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ── 5. Store Settings (singleton row, id=1) ──────────────────
+-- ── 4. Store Settings Table ──────────────────────────────────
+-- Singleton table for administrative site settings
 CREATE TABLE IF NOT EXISTS store_settings (
   id           INTEGER PRIMARY KEY DEFAULT 1,
   store_name   TEXT DEFAULT 'Jinyu Capital',
   logo_url     TEXT,
-  currency     TEXT DEFAULT 'USD',
-  tagline      TEXT,
+  email        TEXT DEFAULT 'sales@jinyucapital.com',
+  phone        TEXT DEFAULT '+86-139-2243-0321',
+  address      TEXT DEFAULT 'Unit 119, Building 19, Changfeng International, No. 96 Lixin 12th Road, Xintang Town, Zengcheng District, Guangzhou City',
   updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert default settings row (only once)
-INSERT INTO store_settings (id, store_name, currency, tagline)
-VALUES (1, 'Jinyu Capital', 'USD', 'Precision Lighting for a Brighter World')
-ON CONFLICT (id) DO NOTHING;
+-- Ensure default settings exist
+INSERT INTO store_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
--- ── 6. Newsletter Subscribers ────────────────────────────────
+-- ── 5. Newsletter Subscribers ────────────────────────────────
+-- Stores emails for marketing outreach
 CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email         TEXT UNIQUE NOT NULL,
+  is_active     BOOLEAN DEFAULT TRUE,
   subscribed_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 7. Marquee Items (scrolling banner text) ─────────────────
-CREATE TABLE IF NOT EXISTS marquee_items (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  text       TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Seed default marquee items
-INSERT INTO marquee_items (text) VALUES
-  ('✦ ISO 9001 CERTIFIED MANUFACTURER'),
-  ('✦ ATEX / EX EXPLOSION-PROOF LIGHTING'),
-  ('✦ 80+ DESIGN PATENTS'),
-  ('✦ 30+ COUNTRIES SERVED'),
-  ('✦ CUSTOM OEM / ODM AVAILABLE'),
-  ('✦ 5-YEAR COMMERCIAL WARRANTY')
-ON CONFLICT DO NOTHING;
-
--- ── 8. Quote Requests ────────────────────────────────────────
+-- ── 6. Quote Requests Table ──────────────────────────────────
+-- Lead generation for high-volume or custom project quotes
 CREATE TABLE IF NOT EXISTS quote_requests (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   first_name       TEXT NOT NULL,
@@ -100,96 +84,83 @@ CREATE TABLE IF NOT EXISTS quote_requests (
   company_name     TEXT NOT NULL,
   email            TEXT NOT NULL,
   phone            TEXT,
-  project_type     TEXT,
-  product_interest TEXT,
-  quantity         INTEGER,
+  product_interest TEXT, -- Reference to product name
+  quantity         INTEGER DEFAULT 1,
   message          TEXT,
-  status           TEXT DEFAULT 'new',
+  status           TEXT DEFAULT 'new', -- new, quoted, closed
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 9. Distributor Applications ─────────────────────────────
+-- ── 7. Distributor Applications Table ────────────────────────
+-- Applications for global partnership program
 CREATE TABLE IF NOT EXISTS distributor_applications (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_name  TEXT NOT NULL,
-  country       TEXT,
-  business_type TEXT,
+  country       TEXT NOT NULL,
+  business_type TEXT NOT NULL,
   contact_name  TEXT NOT NULL,
   email         TEXT NOT NULL,
-  phone         TEXT,
+  phone         TEXT NOT NULL,
   experience    TEXT,
-  products      TEXT,
+  products      TEXT, -- Categories of interest
   message       TEXT,
-  status        TEXT DEFAULT 'new',
+  status        TEXT DEFAULT 'new', -- new, approved, rejected
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── 10. Contact Messages ─────────────────────────────────────
+-- ── 8. Contact Messages Table ────────────────────────────────
+-- General inquiries from the contact page
 CREATE TABLE IF NOT EXISTS contact_messages (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name       TEXT NOT NULL,
   email      TEXT NOT NULL,
-  subject    TEXT,
   message    TEXT NOT NULL,
-  status     TEXT DEFAULT 'unread',
+  status     TEXT DEFAULT 'unread', -- unread, read
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================================
--- Storage: product-images bucket (run in Supabase Dashboard)
--- ============================================================
--- 1. Go to Storage > New bucket > name: product-images > Public: ON
--- OR use this if using supabase CLI:
--- supabase storage create product-images --public
-
--- ============================================================
--- Row Level Security (RLS) – public read, admin write
+-- Row Level Security (RLS) Configuration
 -- ============================================================
 
--- Products: anyone can read; only authenticated users can write
+-- 1. Enable RLS on all tables
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read products" ON products FOR SELECT USING (true);
-CREATE POLICY "Auth write products"  ON products FOR ALL USING (auth.role() = 'authenticated');
-
--- Orders: only authenticated users
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth access orders" ON orders FOR ALL USING (auth.role() = 'authenticated');
-
--- Order Items: only authenticated users
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Auth access order_items" ON order_items FOR ALL USING (auth.role() = 'authenticated');
-
--- Reviews: public read, authenticated write
-ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read reviews" ON product_reviews FOR SELECT USING (true);
-CREATE POLICY "Auth write reviews"  ON product_reviews FOR ALL USING (auth.role() = 'authenticated');
-
--- Store Settings: public read, authenticated write
 ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read settings" ON store_settings FOR SELECT USING (true);
-CREATE POLICY "Auth write settings"  ON store_settings FOR ALL USING (auth.role() = 'authenticated');
-
--- Newsletter: insert from anyone, read/delete authenticated
 ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public subscribe" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
-CREATE POLICY "Auth manage subscribers" ON newsletter_subscribers FOR ALL USING (auth.role() = 'authenticated');
-
--- Marquee: public read, authenticated write
-ALTER TABLE marquee_items ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public read marquee" ON marquee_items FOR SELECT USING (true);
-CREATE POLICY "Auth write marquee"  ON marquee_items FOR ALL USING (auth.role() = 'authenticated');
-
--- Quote Requests: anyone can insert, authenticated can read
 ALTER TABLE quote_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public submit quote" ON quote_requests FOR INSERT WITH CHECK (true);
-CREATE POLICY "Auth read quotes"    ON quote_requests FOR ALL USING (auth.role() = 'authenticated');
-
--- Distributor Applications: anyone can insert, authenticated can read
 ALTER TABLE distributor_applications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public submit distributor" ON distributor_applications FOR INSERT WITH CHECK (true);
-CREATE POLICY "Auth read distributors"    ON distributor_applications FOR ALL USING (auth.role() = 'authenticated');
-
--- Contact Messages: anyone can insert, authenticated can read
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+
+-- 2. Public Read Policies (Public access for storefront)
+CREATE POLICY "Public read products" ON products FOR SELECT USING (true);
+CREATE POLICY "Public read settings" ON store_settings FOR SELECT USING (true);
+
+-- 3. Public Insert Policies (Lead generation & checkout)
+CREATE POLICY "Public submit orders" ON orders FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public submit order_items" ON order_items FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public subscribe newsletter" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public submit quote" ON quote_requests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public submit distributor" ON distributor_applications FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public submit contact" ON contact_messages FOR INSERT WITH CHECK (true);
-CREATE POLICY "Auth read contacts"    ON contact_messages FOR ALL USING (auth.role() = 'authenticated');
+
+-- 4. Admin Full Access Policies (Authenticated users only)
+CREATE POLICY "Admin manage products" ON products FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage orders" ON orders FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage order_items" ON order_items FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage settings" ON store_settings FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage subscribers" ON newsletter_subscribers FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage quotes" ON quote_requests FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage distributors" ON distributor_applications FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage contacts" ON contact_messages FOR ALL USING (auth.role() = 'authenticated');
+
+-- ============================================================
+-- Indexes for Performance
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_orders_email ON orders(email);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_quote_requests_status ON quote_requests(status);
+CREATE INDEX IF NOT EXISTS idx_distributor_applications_status ON distributor_applications(status);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status);

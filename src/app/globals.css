@@ -1,115 +1,161 @@
 @import "tailwindcss";
 
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #FFFFFF;
-  --foreground: #000000;
+  --background: 0 0% 100%;
+  --foreground: 220 13% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 13% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 13% 13%;
+  --muted: 220 13% 96%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 220 90% 56%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 220 90% 56%;
+  --radius: 0.75rem;
+  --primary: 220 90% 56%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 13% 13%;
+  --secondary-foreground: 0 0% 100%;
 
-  /* Brand Colors (Minimalist Black & White) */
-  --color-black: #000000;
-  --color-white: #FFFFFF;
-  --color-gray-dark: #121212;
-  --color-gray-medium: #707070;
-  --color-gray-light: #F5F5F7;
-  --color-border: #E5E5E7;
-}
+  /* Signature specific tokens */
+  --sig-bg: 0 0% 100%;
+  --sig-text: 220 13% 13%;
+  --sig-primary: 220 90% 56%;
+  --sig-secondary: 220 9% 46%;
+  --sig-accent: 220 90% 50%;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-primary: #2a6df4;
-  --color-secondary: var(--color-white);
-  --color-dark: var(--color-gray-dark);
-  --color-muted: var(--color-gray-medium);
-  --color-light: var(--color-gray-light);
-
-  --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  /* Font settings */
+  --font-sans: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: "Outfit", sans-serif;
 }
 
-html {
-  color-scheme: light;
+.dark {
+  --background: 220 13% 13%;
+  --foreground: 0 0% 100%;
+  --card: 220 13% 16%;
+  --card-foreground: 0 0% 100%;
+  --popover: 220 13% 16%;
+  --popover-foreground: 0 0% 100%;
+  --muted: 220 13% 20%;
+  --muted-foreground: 220 9% 70%;
+  --accent: 220 90% 56%;
+  --accent-foreground: 220 13% 13%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 220 13% 13%;
+  --border: 220 13% 24%;
+  --input: 220 13% 24%;
+  --ring: 220 90% 56%;
+  --primary: 220 90% 56%;
+  --primary-foreground: 220 13% 13%;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 220 13% 13%;
+
+  /* Signature specific tokens */
+  --sig-bg: 220 13% 13%;
+  --sig-text: 0 0% 100%;
+  --sig-primary: 220 90% 65%;
+  --sig-secondary: 220 9% 70%;
+  --sig-accent: 220 90% 60%;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: "Outfit", sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--color-gray-light);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-black);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-dark);
-}
-
-/* Focus visible */
-*:focus-visible {
-  outline: 2px solid var(--color-black);
-  outline-offset: 2px;
-}
-
-/* Selection */
-::selection {
-  background-color: var(--color-black);
-  color: var(--color-white);
-}
-
-/* Marquee animation */
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 25s linear infinite;
-}
-
-/* Fade-in up animation */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
   }
 }
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
+    font-family: var(--font-sans);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-/* Override tailwind dark mode classes to support black & white light-first mode */
-.dark\:bg-zinc-900 { background-color: #FFFFFF !important; }
-.dark\:bg-zinc-950 { background-color: var(--color-gray-light) !important; }
-.dark\:bg-zinc-800 { background-color: #FAFAFA !important; }
-.dark\:text-white { color: #000000 !important; }
-.dark\:text-gray-100 { color: #111111 !important; }
-.dark\:text-gray-200 { color: #222222 !important; }
-.dark\:text-gray-300 { color: #444444 !important; }
-.dark\:text-gray-400 { color: #666666 !important; }
-.dark\:border-zinc-800 { border-color: var(--color-border) !important; }
-.dark\:border-zinc-700 { border-color: #E5E5E7 !important; }
-.dark\:text-primary { color: var(--color-black) !important; }
+.section-container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .section-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-container {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+@layer components {
+  .sidebar-link {
+    @apply flex items-center justify-between w-full text-left px-3 py-2 text-sm transition-colors rounded-lg hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  
+  .sidebar-link-active {
+    @apply bg-primary/10 text-primary font-medium;
+  }
+
+  .signature-container {
+    font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

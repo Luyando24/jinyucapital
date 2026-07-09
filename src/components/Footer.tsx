@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function Footer() {
   const pathname = usePathname();
@@ -13,121 +14,91 @@ export default function Footer() {
   }
 
   return (
-    <footer style={{ backgroundColor: "#1c1e21", color: "#FFFFFF" }} className="border-t border-neutral-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          
-          {/* Brand */}
-          <div className="space-y-5 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <img
-                src="/logo.jpeg"
-                alt="Jinyu Logo"
-                className="h-7 w-auto object-contain rounded-md"
-                onError={(e) => {
-                  // Fallback if image doesn't exist
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-              <span className="font-sans text-lg font-bold tracking-widest text-white">
+    <footer className="bg-background text-foreground border-t">
+      <div className="section-container py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+          {/* Company Info */}
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2.5">
+              <Logo className="w-8 h-8" />
+              <span className="font-bold text-xl tracking-tight">
                 JINYU
               </span>
-            </Link>
-            <p className="text-sm leading-relaxed text-neutral-400 font-light pr-4">
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
               Your trusted manufacturer of premium lighting equipment and appliances, delivering engineering excellence and quality since 2018.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider mb-6 text-white" style={{ fontFamily: "var(--font-display)" }}>
-              Quick links
-            </h4>
-            <ul className="space-y-3">
-              {[
-                { href: "/about", label: "About us" },
-                { href: "/products", label: "Products" },
-                { href: "/distributor", label: "Become a Distributor" },
-                { href: "https://jinyucapital.com/blog", label: "Blog" },
-                { href: "/contact", label: "Contact" },
-              ].map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-neutral-400 hover:text-white transition-colors duration-200"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Quick links</h3>
+            <ul className="space-y-4">
+              <li>
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                  About us
+                </Link>
+              </li>
+              <li>
+                <Link href="/products" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                  Products
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider mb-6 text-white" style={{ fontFamily: "var(--font-display)" }}>
-              Contact
-            </h4>
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Contact</h3>
             <ul className="space-y-4">
-              <li className="flex items-center space-x-3 text-neutral-400">
-                <Mail className="h-4.5 w-4.5 flex-shrink-0" />
-                <a href="mailto:sales@jinyucapital.com" className="text-sm hover:text-white transition-colors">
-                  sales@jinyucapital.com
-                </a>
+              <li className="flex items-start space-x-3 text-sm text-muted-foreground">
+                <Mail size={18} className="mt-0.5 flex-shrink-0 text-foreground" />
+                <span>sales@jinyucapital.com</span>
               </li>
-              <li className="flex items-center space-x-3 text-neutral-400">
-                <Phone className="h-4.5 w-4.5 flex-shrink-0" />
-                <span className="text-sm">
-                  +86-139-2243-0321
-                </span>
+              <li className="flex items-start space-x-3 text-sm text-muted-foreground">
+                <Phone size={18} className="mt-0.5 flex-shrink-0 text-foreground" />
+                <span>+86-139-2243-0321</span>
               </li>
-              <li className="flex items-start space-x-3 text-neutral-400">
-                <MapPin className="h-4.5 w-4.5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm leading-relaxed">
-                  Unit 119, Building 19, Changfeng International, No. 96 Lixin 12th Road, Xintang Town, Zengcheng District, Guangzhou City
-                </span>
+              <li className="flex items-start space-x-3 text-sm text-muted-foreground">
+                <MapPin size={18} className="mt-0.5 flex-shrink-0 text-foreground" />
+                <span className="leading-relaxed">Unit 119, Building 19, Changfeng International, No. 96 Lixin 12th Road, Xintang Town, Zengcheng District, Guangzhou City</span>
               </li>
             </ul>
           </div>
 
-          {/* Follow Us */}
+          {/* Social Media */}
           <div>
-            <h4 className="text-sm font-bold uppercase tracking-wider mb-6 text-white" style={{ fontFamily: "var(--font-display)" }}>
-              Follow us
-            </h4>
-            <div className="flex space-x-3">
-              <a
-                href="#"
-                className="flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-800 text-neutral-400 transition-all duration-200 hover:bg-neutral-700 hover:text-white"
-              >
-                <Linkedin className="h-4 w-4" />
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Follow us</h3>
+            <div className="flex space-x-5">
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors duration-200" aria-label="LinkedIn">
+                <Linkedin size={22} />
               </a>
-              <a
-                href="#"
-                className="flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-800 text-neutral-400 transition-all duration-200 hover:bg-neutral-700 hover:text-white"
-              >
-                <Twitter className="h-4 w-4" />
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors duration-200" aria-label="Twitter">
+                <Twitter size={22} />
               </a>
-              <a
-                href="#"
-                className="flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-800 text-neutral-400 transition-all duration-200 hover:bg-neutral-700 hover:text-white"
-              >
-                <Facebook className="h-4 w-4" />
+              <a href="https://www.facebook.com/profile.php?id=61590193816131" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors duration-200" aria-label="Facebook">
+                <Facebook size={22} />
               </a>
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div
-          className="mt-16 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-neutral-800"
-        >
-          <p className="text-sm text-neutral-500 font-light">
+        <div className="mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+          <p className="text-sm text-muted-foreground">
             © 2026 Jinyu. All rights reserved.
           </p>
-          <div className="flex items-center gap-6 text-sm text-neutral-500 font-light">
-            <Link href="/contact" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Terms of Service</Link>
+          <div className="flex space-x-8">
+            <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+              Privacy Policy
+            </Link>
+            <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>
