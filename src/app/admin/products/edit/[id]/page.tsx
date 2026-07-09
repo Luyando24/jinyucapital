@@ -26,7 +26,7 @@ export default function AdminEditProductPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
 
   // Load States
   const [fetching, setFetching] = useState(true);
@@ -54,6 +54,12 @@ export default function AdminEditProductPage() {
   // Fetch product on mount
   useEffect(() => {
     if (!id) return;
+
+    // Check admin role
+    if (user && !isAdmin) {
+      router.push("/");
+      return;
+    }
 
     const loadProductData = async () => {
       try {

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -15,6 +16,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Check if user has admin usertype
+  const isAdmin = user?.user_metadata?.usertype === 'admin';
 
   useEffect(() => {
     // Retrieve active session user
@@ -55,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, signOut }}>
       {children}
     </AuthContext.Provider>
   );

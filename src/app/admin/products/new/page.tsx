@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminNewProductPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
 
   // Form Input States
   const [name, setName] = useState("");
@@ -43,6 +43,13 @@ export default function AdminNewProductPage() {
   const [mainImagePreview, setMainImagePreview] = useState<string>("");
   const [secondaryFiles, setSecondaryFiles] = useState<File[]>([]);
   const [secondaryPreviews, setSecondaryPreviews] = useState<string[]>([]);
+
+  // Check admin role
+  useEffect(() => {
+    if (user && !isAdmin) {
+      router.push("/");
+    }
+  }, [user, isAdmin]);
 
   // Main Image Change
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

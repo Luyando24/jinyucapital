@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut, loading: authLoading, isAdmin } = useAuth();
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<"overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "settings" | "newsletter">("overview");
@@ -82,6 +82,8 @@ export default function AdminDashboardPage() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [newSubscriberEmail, setNewSubscriberEmail] = useState("");
+  const [addingSubscriber, setAddingSubscriber] = useState(false);
 
   // Fetch Dataset
   const loadAdminDataset = async () => {
@@ -166,9 +168,13 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (user) {
+      if (!isAdmin) {
+        router.push("/");
+        return;
+      }
       loadAdminDataset();
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   // Restock trigger
   const handleSaveStock = async (productId: string) => {
@@ -230,6 +236,24 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Delete Order
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return;
+
+    try {
+      const { error: delError } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+
+      if (delError) throw delError;
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+    } catch (err: any) {
+      console.error("Order deletion failed:", err);
+      alert("Failed to delete order: " + err.message);
+    }
+  };
+
   // Delete subscriber
   const handleDeleteSubscriber = async (subscriberId: string) => {
     if (!confirm("Remove this subscriber?")) return;
@@ -267,6 +291,33 @@ export default function AdminDashboardPage() {
     const subject = encodeURIComponent(emailSubject);
     const body = encodeURIComponent(emailBody);
     window.open(`mailto:?bcc=${bcc}&subject=${subject}&body=${body}`, "_blank");
+  };
+
+  // Add subscriber manually
+  const handleAddSubscriber = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubscriberEmail || !newSubscriberEmail.includes('@')) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      setAddingSubscriber(true);
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .insert({ email: newSubscriberEmail, is_active: true });
+
+      if (error) throw error;
+
+      setNewSubscriberEmail("");
+      alert("Subscriber added successfully!");
+      loadAdminDataset();
+    } catch (err: any) {
+      console.error("Failed to add subscriber:", err);
+      alert("Failed to add subscriber: " + err.message);
+    } finally {
+      setAddingSubscriber(false);
+    }
   };
 
   // Logo File Change
@@ -678,6 +729,7 @@ export default function AdminDashboardPage() {
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Customer</th>
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Amount</th>
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Status</th>
+                          <th className="px-6 py-4 text-center font-medium text-muted-foreground">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -704,10 +756,15 @@ export default function AdminDashboardPage() {
                                   <option value="Cancelled">Cancelled</option>
                                 </select>
                               </td>
+                              <td className="px-6 py-4 text-center">
+                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteOrder(o.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
                             </tr>
                             {expandedOrderId === o.id && (
                               <tr className="bg-muted/20">
-                                <td colSpan={5} className="p-6">
+                                <td colSpan={6} className="p-6">
                                   <div className="grid md:grid-cols-2 gap-8">
                                     <div className="space-y-4">
                                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
@@ -851,6 +908,17 @@ export default function AdminDashboardPage() {
                       <h3 className="font-bold">Subscribers</h3>
                       <Button variant="outline" size="sm" onClick={handleExportCSV}>Export CSV</Button>
                     </div>
+                    <form onSubmit={handleAddSubscriber} className="flex gap-2">
+                      <Input
+                        placeholder="Add subscriber email..."
+                        value={newSubscriberEmail}
+                        onChange={e => setNewSubscriberEmail(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button type="submit" disabled={addingSubscriber}>
+                        {addingSubscriber ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      </Button>
+                    </form>
                     <div className="bg-card border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
