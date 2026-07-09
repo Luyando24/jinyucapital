@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await supabase
       .from('contact_messages')
-      .insert({ name, email, subject: subject || null, message });
+      .insert({ name, email, message });
 
     if (error) throw error;
 
