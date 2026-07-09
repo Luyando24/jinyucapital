@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Large media files – serve via CDN or Supabase Storage
+*.mp4
+*.mov
+*.avi
+*.webm
+public/products/
+product images/
