@@ -4,6 +4,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/components/AuthContext";
+import { CartProvider } from "@/components/CartContext";
+import { CurrencyProvider } from "@/components/CurrencyContext";
+import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
 
 export const metadata: Metadata = {
   title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
@@ -35,12 +39,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
