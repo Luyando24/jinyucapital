@@ -40,12 +40,18 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Navbar />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-            <Toaster />
+            <CartProvider>
+              <CurrencyProvider>
+                <StoreSettingsProvider>
+                  <Navbar />
+                  <main className="flex-grow">
+                    {children}
+                  </main>
+                  <Footer />
+                  <Toaster />
+                </StoreSettingsProvider>
+              </CurrencyProvider>
+            </CartProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
