@@ -13,15 +13,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
-  global: {
-    fetch: (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        // Ensure credentials and headers are always passed correctly
-        credentials: 'same-origin',
-      });
-    },
-  },
   realtime: {
     // Disable automatic realtime connection on startup to prevent
     // WebSocket interference with auth fetch requests in dev mode

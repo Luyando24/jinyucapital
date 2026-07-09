@@ -8,6 +8,7 @@ import { AuthProvider } from "@/components/AuthContext";
 import { CartProvider } from "@/components/CartContext";
 import { CurrencyProvider } from "@/components/CurrencyContext";
 import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
+import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
 
 export const metadata: Metadata = {
   title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
@@ -33,6 +34,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`antialiased font-sans min-h-screen flex flex-col bg-white text-black`}
       >
+        <ServiceWorkerCleanup />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

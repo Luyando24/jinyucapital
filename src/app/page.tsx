@@ -6,34 +6,19 @@ import { motion } from 'framer-motion';
 import { Factory, ShieldCheck, Lightbulb, ArrowRight, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStoreSettings } from '@/components/StoreSettingsContext';
+import {
+  DEFAULT_HERO_IMAGE,
+  DEFAULT_MANUFACTURING_IMAGE,
+  DEFAULT_SHOWCASE,
+  resolveImageUrl,
+} from '@/lib/default-images';
 
 // Static fallback content
-const DEFAULT_HERO_IMAGE = 'https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/88fc8296ed52347192f2faf67093b795.png';
-const DEFAULT_MANUFACTURING_IMAGE = 'https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/3ec89bf6e24c3c85836ead9b9a89aa7e.png';
-
 const DEFAULT_STATS = [
   { value: '150+', label: 'Product lines' },
   { value: '10k', label: 'Sq.m facility' },
   { value: '50+', label: 'Countries exported' },
   { value: 'ISO', label: '9001 Certified' },
-];
-
-const DEFAULT_SHOWCASE = [
-  {
-    title: 'Skyline Boulevard Series',
-    description: 'Designed for modern cities, business districts, residential communities, and municipal infrastructure projects, the Skyline Boulevard Series combines contemporary aesthetics with exceptional lighting performance. Its durable construction, energy-efficient LED technology, and weather-resistant design ensure reliable illumination while enhancing the appearance of any roadway.',
-    image: 'https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/2d2f38454b0a51de12a8d25ef8865e29.png',
-  },
-  {
-    title: 'Urban Road Lighting Series',
-    description: 'Reliable LED street lighting for urban roads, parks, estates, and commercial projects. Designed for strong illumination, energy efficiency, and long service life.',
-    image: 'https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/202c6c4ad9decc793555fc90c89a010b.png',
-  },
-  {
-    title: 'Metro Avenue Series',
-    description: 'Modern LED street lighting for highways, city roads, business parks, and residential developments. Built for efficient illumination, durability, and long-lasting outdoor performance.',
-    image: 'https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/37662bcfd9d866fc2b36dd3037f09255.png',
-  },
 ];
 
 const DEFAULT_FEATURES = [
@@ -58,14 +43,25 @@ export default function Home() {
   const { settings } = useStoreSettings();
   const content = settings?.homepage_content;
 
-  const heroImage = settings?.hero_image_url || DEFAULT_HERO_IMAGE;
-  const manufacturingImage = settings?.manufacturing_image_url || DEFAULT_MANUFACTURING_IMAGE;
+  const heroImage = resolveImageUrl(settings?.hero_image_url, DEFAULT_HERO_IMAGE);
+  const manufacturingImage = resolveImageUrl(
+    settings?.manufacturing_image_url,
+    DEFAULT_MANUFACTURING_IMAGE,
+  );
   const heroHeadline = content?.hero_headline || 'Manufacturing Excellence From China To The World';
   const heroSubheadline = content?.hero_subheadline || 'Jinyu combines manufacturing, OEM production, product development, and global supply chain solutions for distributors, wholesalers, contractors, and brands worldwide.';
   const stats = content?.stats?.length ? content.stats : DEFAULT_STATS;
   const manufacturingHeadline = content?.manufacturing_headline || 'Manufacturing excellence';
   const manufacturingBody = content?.manufacturing_body || 'Built on a foundation of engineering expertise, we deliver reliable products that meet the demands of global markets. Our Guangzhou facility represents the pinnacle of modern production capabilities.';
-  const showcaseProducts = content?.showcase_products?.length ? content.showcase_products : DEFAULT_SHOWCASE;
+  const showcaseProducts = content?.showcase_products?.length
+    ? content.showcase_products.map((product, index) => ({
+        ...product,
+        image: resolveImageUrl(
+          product.image,
+          DEFAULT_SHOWCASE[index]?.image ?? DEFAULT_SHOWCASE[0].image,
+        ),
+      }))
+    : DEFAULT_SHOWCASE;
 
   return (
     <div className="min-h-screen flex flex-col">

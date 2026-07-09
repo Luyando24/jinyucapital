@@ -1,15 +1,44 @@
+"use client";
+
 import React from 'react';
+import { useStoreSettings } from '@/components/StoreSettingsContext';
+import { resolveImageUrl } from '@/lib/default-images';
 
 interface LogoProps {
   className?: string;
 }
 
-const Logo: React.FC<LogoProps> = ({ className = "w-8 h-8" }) => {
+function LogoFallback({ className }: { className: string }) {
   return (
-    <img 
-      src="https://horizons-cdn.hostinger.com/b89183a0-b6a3-4e5f-9421-7ba71104641c/ce34fecd-5183-4876-867b-9d7bc1f29fe7-3MTTp.png" 
-      alt="Jinyu Logo" 
-      className={className} 
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect width="36" height="36" rx="8" className="fill-primary" />
+      <path
+        d="M10 24V12h3.2l3.4 7.2L20 12h3.2v12h-2.6v-7.4l-3.2 6.6h-1.8l-3.2-6.6V24H10z"
+        className="fill-primary-foreground"
+      />
+    </svg>
+  );
+}
+
+const Logo: React.FC<LogoProps> = ({ className = "w-8 h-8" }) => {
+  const { settings } = useStoreSettings();
+  const logoUrl = resolveImageUrl(settings?.logo_url, '');
+
+  if (!logoUrl) {
+    return <LogoFallback className={className} />;
+  }
+
+  return (
+    <img
+      src={logoUrl}
+      alt="Jinyu Logo"
+      className={className}
     />
   );
 };
