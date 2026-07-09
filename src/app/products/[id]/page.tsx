@@ -20,23 +20,13 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     const found = allProducts.find(p => p.id === id);
-    if (found) {
-      setProduct(found);
-      if (found.is_wholesale && found.moq_quantity) {
-        setQuantity(found.moq_quantity);
-      }
-    }
+    if (found) setProduct(found);
     setLoading(false);
   }, [id]);
 
   const handleQuantityChange = useCallback((amount: number) => {
-    setQuantity(prevQuantity => {
-        const min = product?.is_wholesale ? (product.moq_quantity || 1) : 1;
-        const newQuantity = prevQuantity + amount;
-        if (newQuantity < min) return min;
-        return newQuantity;
-    });
-  }, [product]);
+    setQuantity(prev => Math.max(1, prev + amount));
+  }, []);
 
   if (loading) {
     return (
@@ -70,7 +60,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = [product.image]; // In a real app, this would be product.images
+  const images = [product.image];
   const currentImage = images[currentImageIndex];
   const hasMultipleImages = images.length > 1;
 
@@ -80,7 +70,7 @@ export default function ProductDetailPage() {
         <ArrowLeft size={16} />
         Back to Products
       </Link>
-      
+
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative">
           <div className="relative overflow-hidden rounded-2xl bg-muted h-[400px] md:h-[500px] flex items-center justify-center p-8">
@@ -89,7 +79,6 @@ export default function ProductDetailPage() {
               alt={product.name}
               className="max-w-full max-h-full object-contain"
             />
-
             {hasMultipleImages && (
               <>
                 <button
@@ -106,12 +95,6 @@ export default function ProductDetailPage() {
                 </button>
               </>
             )}
-
-            {product.is_wholesale && (
-              <div className="absolute top-4 left-4 bg-primary text-primary-foreground text-sm font-bold px-4 py-2 rounded-full shadow-lg">
-                Wholesale Available
-              </div>
-            )}
           </div>
         </motion.div>
 
@@ -121,9 +104,6 @@ export default function ProductDetailPage() {
 
           <div className="flex items-baseline gap-4 mb-8 pb-8 border-b">
             <span className="text-4xl font-bold">${product.price}</span>
-            {product.is_wholesale && product.moq_price && (
-              <span className="text-lg text-muted-foreground">Bulk: ${product.moq_price}</span>
-            )}
           </div>
 
           <div className="prose prose-sm md:prose-base dark:prose-invert text-muted-foreground mb-8">
@@ -140,10 +120,10 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="mt-auto pt-6 space-y-4">
-            <Button 
+            <Button
               asChild
-              size="lg" 
-              className="w-full h-14 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]" 
+              size="lg"
+              className="w-full h-14 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
             >
               <Link href={`/request-quote?product=${encodeURIComponent(product.name)}&quantity=${quantity}`}>
                 <Mail className="mr-3 h-5 w-5" /> Request a Quote
@@ -153,12 +133,6 @@ export default function ProductDetailPage() {
             <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 font-medium">
               <CheckCircle size={16} /> In stock and ready to ship worldwide
             </div>
-
-            {product.is_wholesale && (
-              <p className="text-xs text-center text-muted-foreground">
-                Minimum Order Quantity: {product.moq_quantity} units
-              </p>
-            )}
           </div>
         </motion.div>
       </div>

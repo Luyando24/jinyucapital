@@ -7,9 +7,6 @@ export interface Product {
   category: string;
   rating: number;
   reviews: number;
-  is_wholesale?: boolean;
-  moq_price?: number;
-  moq_quantity?: number;
 }
 
 export const products: Product[] = [
@@ -22,9 +19,6 @@ export const products: Product[] = [
     category: 'Street Lamps',
     rating: 4.9,
     reviews: 142,
-    is_wholesale: true,
-    moq_price: 119.99,
-    moq_quantity: 10,
   },
   {
     id: '2',
@@ -55,13 +49,10 @@ export const products: Product[] = [
     category: 'Landscape Lamps',
     rating: 4.7,
     reviews: 189,
-    is_wholesale: true,
-    moq_price: 899.99,
-    moq_quantity: 3,
   },
   {
     id: '5',
-    name: 'Jinyu Angel\'s Wings Landscape Light',
+    name: "Jinyu Angel's Wings Landscape Light",
     price: 749.99,
     image: '/products/O1CN01hwVOPJ1YvvXdgVilS_!!2213303343122-0-cib.jpg',
     description: '4.5m tall modern landscape sculpture made of premium grade 304 stainless steel. Features a swept-back illuminated form silhouette providing ambient night glow.',
@@ -98,9 +89,6 @@ export const products: Product[] = [
     category: 'Wall Sconces',
     rating: 4.9,
     reviews: 82,
-    is_wholesale: true,
-    moq_price: 44.99,
-    moq_quantity: 12,
   },
   {
     id: '9',
@@ -111,9 +99,6 @@ export const products: Product[] = [
     category: 'Pendant Lamps',
     rating: 5.0,
     reviews: 41,
-    is_wholesale: true,
-    moq_price: 99.99,
-    moq_quantity: 5,
   },
   {
     id: '10',
