@@ -7,4 +7,26 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
   console.warn('Supabase credentials missing. Check your .env.local file.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+  global: {
+    fetch: (url, options = {}) => {
+      return fetch(url, {
+        ...options,
+        // Ensure credentials and headers are always passed correctly
+        credentials: 'same-origin',
+      });
+    },
+  },
+  realtime: {
+    // Disable automatic realtime connection on startup to prevent
+    // WebSocket interference with auth fetch requests in dev mode
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+});

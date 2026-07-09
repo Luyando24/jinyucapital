@@ -68,12 +68,19 @@ function LoginForm() {
       }
     } catch (err: any) {
       console.error("Auth action failed:", err);
-      setMessage(err.message || "An authentication error occurred. Please try again.");
+      // Distinguish network errors from auth credential errors
+      const isNetworkError = err.message === "Failed to fetch" || err.message?.includes("NetworkError") || err.message?.includes("network");
+      setMessage(
+        isNetworkError
+          ? "Network error — could not reach the authentication server. Please check your internet connection and try again."
+          : err.message || "An authentication error occurred. Please try again."
+      );
       setIsSuccess(false);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div style={{ backgroundColor: "#F9F9F9", minHeight: "100vh" }} className="py-24 flex items-center justify-center px-4 sm:px-6 lg:px-8">

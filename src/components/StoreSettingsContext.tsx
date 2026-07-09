@@ -3,8 +3,29 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
+export interface ShowcaseProduct {
+  title: string;
+  description: string;
+  image: string;
+}
+
+export interface HomepageStat {
+  value: string;
+  label: string;
+}
+
+export interface HomepageContent {
+  hero_headline?: string;
+  hero_subheadline?: string;
+  stats?: HomepageStat[];
+  manufacturing_headline?: string;
+  manufacturing_body?: string;
+  showcase_products?: ShowcaseProduct[];
+}
+
 export interface StoreSettings {
   id: number;
+  store_name?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -15,6 +36,9 @@ export interface StoreSettings {
   aud_rate?: number;
   ngn_rate?: number;
   global_wholesale_moq?: number;
+  hero_image_url?: string;
+  manufacturing_image_url?: string;
+  homepage_content?: HomepageContent;
 }
 
 interface StoreSettingsContextType {
