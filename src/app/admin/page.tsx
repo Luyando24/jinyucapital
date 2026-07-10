@@ -766,7 +766,7 @@ export default function AdminDashboardPage() {
     { id: "newsletter", label: "Newsletter", icon: Mail },
     { id: "website", label: "Website Content", icon: Monitor },
     { id: "settings", label: "Settings", icon: Settings },
-    { id: "docs", label: "Documentation", icon: BookOpen },
+    { id: "docs", label: "Documentation", icon: BookOpen, href: "/admin/documentation" },
   ];
 
   // ── Status badge helper ──────────────────────────────────────────────────
@@ -812,7 +812,11 @@ export default function AdminDashboardPage() {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => { setActiveTab(item.id as AdminTab); setIsMobileMenuOpen(false); }}
+                onClick={() => {
+                  if ("href" in item) window.open(item.href, "_blank", "noopener,noreferrer");
+                  else setActiveTab(item.id as AdminTab);
+                  setIsMobileMenuOpen(false);
+                }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   activeTab === item.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
