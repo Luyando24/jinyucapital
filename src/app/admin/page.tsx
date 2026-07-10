@@ -487,7 +487,7 @@ export default function AdminDashboardPage() {
         if (settingsData.homepage_content && Object.keys(settingsData.homepage_content).length > 0) {
           setHomepageContent({ ...DEFAULT_HOMEPAGE_CONTENT, ...settingsData.homepage_content });
           if (settingsData.homepage_content.showcase_products) {
-            setShowcasePreviews(settingsData.homepage_content.showcase_products.map(p => p.image));
+        setShowcasePreviews(settingsData.homepage_content.showcase_products.map((p: ShowcaseProduct) => p.image));
           }
         }
       }
