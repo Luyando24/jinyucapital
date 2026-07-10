@@ -40,17 +40,25 @@ import {
   BarChart3,
   Link as LinkIcon,
   RefreshCcw,
-  Check
+  Check,
+  BookOpen,
+  ChevronRight,
+  Info,
+  Lightbulb,
+  ShieldCheck,
+  Zap,
+  HelpCircle,
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { type HomepageContent, type HomepageStat, type ShowcaseProduct } from "@/components/StoreSettingsContext";
+import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStoreSettings } from "@/components/StoreSettingsContext";
 import { DEFAULT_SHOWCASE } from "@/lib/default-images";
 
-type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings";
+type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "docs";
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
@@ -96,11 +104,285 @@ function SaveBanner({ saving, saved }: { saving: boolean; saved: boolean }) {
   );
 }
 
+// ── Documentation Tab ─────────────────────────────────────────────────────────
+
+function DocsTab() {
+  const docs = [
+    {
+      category: "Getting Started",
+      items: [
+        {
+          title: "Dashboard Overview",
+          description: "Understanding your admin dashboard",
+          steps: [
+            "The Overview tab shows your store's key metrics at a glance: total revenue, number of orders, product count, and low stock alerts",
+            "Recent orders are displayed in a table showing customer name, email, date, amount, and status",
+            "Quick stats show pending quotes, new distributor applications, unread messages, and active subscribers",
+            "Click the refresh button (top right) to update all data with the latest information"
+          ]
+        },
+        {
+          title: "Navigation Guide",
+          description: "How to navigate the admin panel",
+          steps: [
+            "Use the left sidebar to switch between different sections: Overview, Products, Orders, Quotes, Distributors, Contacts, Newsletter, Website Content, Settings, and Documentation",
+            "On mobile devices, tap the menu icon to open the navigation sidebar",
+            "Each section has its own tools and management features specific to that area",
+            "Click your profile name in the top right to sign out of the admin panel"
+          ]
+        }
+      ]
+    },
+    {
+      category: "Product Management",
+      items: [
+        {
+          title: "How to Add a New Product",
+          description: "Step-by-step guide to creating products",
+          steps: [
+            "Go to the Products tab and click 'Add Product' button",
+            "Fill in the product name, description, and category",
+            "Set the price in your default currency",
+            "Enter the stock quantity available",
+            "Upload product images by clicking the upload area and selecting image files from your computer",
+            "Click 'Save Product' to add the product to your catalog"
+          ]
+        },
+        {
+          title: "How to Update Product Stock",
+          description: "Managing inventory levels",
+          steps: [
+            "Navigate to the Products tab",
+            "Find the product you want to update in the list",
+            "Click the edit (pencil) icon next to the stock quantity",
+            "Enter the new stock quantity",
+            "Click the checkmark to save the changes",
+            "The stock level will update immediately and low stock alerts will adjust accordingly"
+          ]
+        },
+        {
+          title: "How to Upload Product Images",
+          description: "Adding images to your products",
+          steps: [
+            "When adding or editing a product, locate the image upload section",
+            "Click 'Choose File' or the upload area",
+            "Select one or more image files from your computer (JPG, PNG, WebP formats supported)",
+            "Images will be automatically uploaded to Supabase storage",
+            "The first image will be set as the main product image",
+            "Additional images will appear in the product gallery"
+          ]
+        }
+      ]
+    },
+    {
+      category: "Order Management",
+      items: [
+        {
+          title: "How to View Order Details",
+          description: "Accessing complete order information",
+          steps: [
+            "Go to the Orders tab to see all customer orders",
+            "Orders are listed with customer name, date, amount, and current status",
+            "Click on any order row to expand and view full details",
+            "Expanded view shows customer contact information, shipping address, and all items in the order",
+            "Use the search bar to find specific orders by customer name or email"
+          ]
+        },
+        {
+          title: "How to Update Order Status",
+          description: "Managing order fulfillment",
+          steps: [
+            "Open the Orders tab and find the order you want to update",
+            "Click on the order to expand it and see the status dropdown",
+            "Select the new status from the dropdown menu: Pending, Processing, Shipped, Delivered, or Cancelled",
+            "The status change is saved automatically",
+            "Customers can be notified of status updates through your configured notification system"
+          ]
+        }
+      ]
+    },
+    {
+      category: "Website Content",
+      items: [
+        {
+          title: "How to Customize the Homepage",
+          description: "Editing homepage content and images",
+          steps: [
+            "Navigate to the Website Content tab in the admin panel",
+            "Edit the Hero Headline and Sub-headline text fields to change the main homepage text",
+            "Update statistics values and labels in the Stats section",
+            "Modify the Manufacturing section headline and body text",
+            "Edit featured product information in the Showcase Products section",
+            "Click 'Save All Changes' to apply your updates to the live website"
+          ]
+        },
+        {
+          title: "How to Upload Homepage Images",
+          description: "Changing hero and manufacturing images",
+          steps: [
+            "Go to the Website Content tab",
+            "In the Hero Section, click 'Click to upload image…' to select a new hero image from your computer",
+            "In the Manufacturing Section, click 'Click to upload image…' to select a new manufacturing image",
+            "Alternatively, paste a direct image URL in the URL input fields",
+            "Preview your images before saving",
+            "Click 'Save All Changes' to upload and apply the new images",
+            "The homepage will automatically refresh with the new images"
+          ]
+        },
+        {
+          title: "How to Configure Store Settings",
+          description: "Managing store-wide configuration",
+          steps: [
+            "Go to the Settings tab",
+            "Update your store name, email, phone number, and physical address",
+            "Add social media links for Facebook, Instagram, and TikTok",
+            "Set currency conversion rates (AUD and NGN)",
+            "Configure the global wholesale minimum order quantity",
+            "Upload your company logo by clicking the logo upload area",
+            "Click 'Save Settings' to apply all changes"
+          ]
+        }
+      ]
+    },
+    {
+      category: "Customer Engagement",
+      items: [
+        {
+          title: "How to Manage Quote Requests",
+          description: "Handling bulk order inquiries",
+          steps: [
+            "Go to the Quotes tab to see all quote requests",
+            "Each request shows customer details, requested products, and status (new, contacted, won, lost)",
+            "Click on a quote to view full details and customer message",
+            "Update the quote status as you progress through the sales process",
+            "Use the contact information provided to reach out to customers"
+          ]
+        },
+        {
+          title: "How to Review Distributor Applications",
+          description: "Processing partnership requests",
+          steps: [
+            "Navigate to the Distributors tab",
+            "View applications showing company name, contact person, and application status",
+            "Click on an application to see the full business details and application message",
+            "Update the status to 'approved', 'rejected', or 'under review' based on your assessment",
+            "Contact applicants directly using the provided information"
+          ]
+        },
+        {
+          title: "How to Handle Contact Messages",
+          description: "Managing customer inquiries",
+          steps: [
+            "Go to the Contacts tab to view all messages from the contact form",
+            "Messages show sender name, email, subject, and read status",
+            "Click on a message to read the full content",
+            "Mark messages as 'read' after reviewing them",
+            "Respond to customers using the email address provided"
+          ]
+        },
+        {
+          title: "How to Manage Newsletter Subscribers",
+          description: "Building and maintaining email lists",
+          steps: [
+            "Navigate to the Newsletter tab",
+            "View all subscribers with their email addresses and subscription status",
+            "Add new subscribers manually by entering their email address and clicking 'Add Subscriber'",
+            "Deactivate subscribers by clicking the deactivate button next to their email",
+            "Use the compose section to draft and send newsletter emails to active subscribers"
+          ]
+        }
+      ]
+    },
+    {
+      category: "Account Management",
+      items: [
+        {
+          title: "How to Sign In",
+          description: "Accessing the admin panel",
+          steps: [
+            "Navigate to /login on your website",
+            "Enter your admin email address and password",
+            "Click 'Sign In' to authenticate",
+            "If credentials are correct and you have admin privileges, you'll be redirected to the dashboard",
+            "If you forgot your password, use the 'Forgot Password' link to reset it"
+          ]
+        },
+        {
+          title: "How to Sign Out",
+          description: "Securely ending your session",
+          steps: [
+            "Click on your profile name or email in the top right corner of the admin panel",
+            "Select 'Sign Out' from the dropdown menu",
+            "You will be redirected to the login page",
+            "Your session is now ended and you'll need to sign in again to access the admin panel"
+          ]
+        }
+      ]
+    }
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-primary/10 to-primary/5 border rounded-2xl p-8">
+        <h2 className="text-2xl font-bold mb-3">Admin User Guide</h2>
+        <p className="text-muted-foreground max-w-2xl">
+          Step-by-step instructions for managing your Jinyu Capital website through the admin panel.
+        </p>
+      </div>
+
+      {docs.map((section, sectionIndex) => (
+        <div key={sectionIndex} className="space-y-6">
+          <h3 className="text-xl font-bold border-b pb-3">{section.category}</h3>
+          <div className="grid gap-6">
+            {section.items.map((item, itemIndex) => (
+              <div key={itemIndex} className="bg-card border rounded-xl p-6 shadow-sm">
+                <h4 className="font-bold text-lg mb-2 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  {item.title}
+                </h4>
+                <p className="text-muted-foreground mb-4">{item.description}</p>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <p className="text-sm font-medium mb-3 text-foreground">Steps:</p>
+                  <ol className="space-y-2">
+                    {item.steps.map((step, stepIndex) => (
+                      <li key={stepIndex} className="text-sm text-muted-foreground flex items-start gap-3">
+                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
+                          {stepIndex + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+          <HelpCircle className="h-5 w-5" />
+          Need Additional Help?
+        </h4>
+        <p className="text-blue-800 text-sm mb-3">
+          If you encounter issues not covered in this guide or need technical assistance, please contact support.
+        </p>
+        <Button variant="outline" size="sm" className="border-blue-300 text-blue-900 hover:bg-blue-100">
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Contact Support
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, signOut, loading: authLoading, isAdmin } = useAuth();
+  const { refreshSettings } = useStoreSettings();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -131,6 +413,10 @@ export default function AdminDashboardPage() {
   const [heroPreview, setHeroPreview] = useState<string>("");
   const [mfgFile, setMfgFile] = useState<File | null>(null);
   const [mfgPreview, setMfgPreview] = useState<string>("");
+
+  // Showcase product image uploads
+  const [showcaseFiles, setShowcaseFiles] = useState<(File | null)[]>([null, null, null]);
+  const [showcasePreviews, setShowcasePreviews] = useState<string[]>(["", "", ""]);
 
   // Homepage content local state
   const [homepageContent, setHomepageContent] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
@@ -200,6 +486,9 @@ export default function AdminDashboardPage() {
         if (settingsData.manufacturing_image_url) { setMfgImageUrl(settingsData.manufacturing_image_url); setMfgPreview(settingsData.manufacturing_image_url); }
         if (settingsData.homepage_content && Object.keys(settingsData.homepage_content).length > 0) {
           setHomepageContent({ ...DEFAULT_HOMEPAGE_CONTENT, ...settingsData.homepage_content });
+          if (settingsData.homepage_content.showcase_products) {
+            setShowcasePreviews(settingsData.homepage_content.showcase_products.map(p => p.image));
+          }
         }
       }
     } catch (err: any) {
@@ -387,11 +676,25 @@ export default function AdminDashboardPage() {
       if (heroFile) finalHeroUrl = await uploadFile(heroFile, "homepage");
       if (mfgFile) finalMfgUrl = await uploadFile(mfgFile, "homepage");
 
+      // Handle showcase product image uploads
+      const updatedShowcaseProducts = [...(homepageContent.showcase_products || DEFAULT_HOMEPAGE_CONTENT.showcase_products!)];
+      for (let i = 0; i < showcaseFiles.length; i++) {
+        if (showcaseFiles[i]) {
+          const uploadedUrl = await uploadFile(showcaseFiles[i]!, "showcase");
+          updatedShowcaseProducts[i] = { ...updatedShowcaseProducts[i], image: uploadedUrl };
+        }
+      }
+
+      const finalHomepageContent = {
+        ...homepageContent,
+        showcase_products: updatedShowcaseProducts,
+      };
+
       const { error } = await supabase.from("store_settings").upsert({
         id: 1,
         hero_image_url: finalHeroUrl,
         manufacturing_image_url: finalMfgUrl,
-        homepage_content: homepageContent,
+        homepage_content: finalHomepageContent,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
@@ -399,8 +702,13 @@ export default function AdminDashboardPage() {
       setMfgImageUrl(finalMfgUrl);
       if (finalHeroUrl) setHeroPreview(finalHeroUrl);
       if (finalMfgUrl) setMfgPreview(finalMfgUrl);
+      setHomepageContent(finalHomepageContent);
+      setShowcaseFiles([null, null, null]);
+      setShowcasePreviews(updatedShowcaseProducts.map(p => p.image));
       setSavedWebsite(true);
       setTimeout(() => setSavedWebsite(false), 2500);
+      // Refresh settings to update homepage
+      await refreshSettings();
     } catch (err: any) {
       alert("Error saving website content: " + err.message);
     } finally {
@@ -458,6 +766,7 @@ export default function AdminDashboardPage() {
     { id: "newsletter", label: "Newsletter", icon: Mail },
     { id: "website", label: "Website Content", icon: Monitor },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "docs", label: "Documentation", icon: BookOpen },
   ];
 
   // ── Status badge helper ──────────────────────────────────────────────────
@@ -546,7 +855,7 @@ export default function AdminDashboardPage() {
             <button className="md:hidden p-2 -ml-2 hover:bg-muted rounded-lg" onClick={() => setIsMobileMenuOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-bold capitalize">{activeTab === "website" ? "Website Content" : activeTab}</h1>
+            <h1 className="text-lg font-bold capitalize">{activeTab === "website" ? "Website Content" : activeTab === "docs" ? "Documentation" : activeTab}</h1>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={loadAdminDataset} title="Refresh">
@@ -1279,12 +1588,29 @@ export default function AdminDashboardPage() {
                                 placeholder="https://..."
                               />
                             </div>
+                            <div className="space-y-2">
+                              <SectionLabel>Or Upload New Image</SectionLabel>
+                              <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 hover:bg-muted/50 transition-colors">
+                                <Upload className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">{showcaseFiles[i] ? showcaseFiles[i].name : "Click to upload image…"}</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                  if (e.target.files?.[0]) {
+                                    const newFiles = [...showcaseFiles];
+                                    newFiles[i] = e.target.files[0];
+                                    setShowcaseFiles(newFiles);
+                                    const newPreviews = [...showcasePreviews];
+                                    newPreviews[i] = URL.createObjectURL(e.target.files[0]);
+                                    setShowcasePreviews(newPreviews);
+                                  }
+                                }} />
+                              </label>
+                            </div>
                           </div>
                           <div>
                             <SectionLabel>Preview</SectionLabel>
                             <div className="aspect-[4/3] rounded-xl overflow-hidden border bg-muted">
-                              {product.image ? (
-                                <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
+                              {showcasePreviews[i] || product.image ? (
+                                <img src={showcasePreviews[i] || product.image} alt={product.title} className="w-full h-full object-cover" />
                               ) : (
                                 <div className="flex items-center justify-center h-full text-muted-foreground">
                                   <ImageIcon className="h-8 w-8 opacity-40" />
@@ -1452,6 +1778,9 @@ export default function AdminDashboardPage() {
                   <SaveBanner saving={savingSettings} saved={savedSettings} />
                 </form>
               )}
+
+              {/* ── DOCUMENTATION ── */}
+              {activeTab === "docs" && <DocsTab />}
 
             </div>
           )}

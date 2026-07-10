@@ -48,6 +48,7 @@ export default function Home() {
     settings?.manufacturing_image_url,
     DEFAULT_MANUFACTURING_IMAGE,
   );
+
   const heroHeadline = content?.hero_headline || 'Manufacturing Excellence From China To The World';
   const heroSubheadline = content?.hero_subheadline || 'Jinyu combines manufacturing, OEM production, product development, and global supply chain solutions for distributors, wholesalers, contractors, and brands worldwide.';
   const stats = content?.stats?.length ? content.stats : DEFAULT_STATS;

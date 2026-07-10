@@ -4,29 +4,53 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PackageSearch } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { products as allProducts } from '@/data/products';
+import { supabase } from '@/lib/supabase';
 import ProductCard from './ProductCard';
+import { Product } from '@/data/products';
 
 interface ProductsListProps {
   selectedCategory: string;
 }
 
 const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
-  const [products, setProducts] = useState(allProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      let filtered = allProducts;
-      if (selectedCategory !== 'all') {
-        filtered = allProducts.filter(p => p.category === selectedCategory);
-      }
-      setProducts(filtered);
-      setLoading(false);
-    }, 500);
+    const fetchProducts = async () => {
+      setLoading(true);
+      let query = supabase
+        .from("products")
+        .select("*")
+        .order("name");
 
-    return () => clearTimeout(timer);
+      if (selectedCategory !== 'all') {
+        query = query.eq("category", selectedCategory);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching products:", error);
+        setProducts([]);
+      } else {
+        setProducts(
+          (data || []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            image: p.image || '',
+            description: p.description || '',
+            category: p.category || '',
+            rating: p.rating ?? 4.5,
+            reviews: p.reviews ?? 0,
+          }))
+        );
+      }
+      setLoading(false);
+    };
+
+    fetchProducts();
   }, [selectedCategory]);
 
   return (

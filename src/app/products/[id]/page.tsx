@@ -7,21 +7,58 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, Minus, Plus, XCircle, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { products as allProducts, Product } from '@/data/products';
+import { supabase } from '@/lib/supabase';
+
+interface ProductDetail {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  category: string;
+  gallery_images?: string[];
+  stock_quantity?: number;
+  specifications?: Record<string, string>;
+}
 
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
 
 export default function ProductDetailPage() {
   const { id } = useParams() as { id: string };
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const found = allProducts.find(p => p.id === id);
-    if (found) setProduct(found);
-    setLoading(false);
+    const fetchProduct = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error || !data) {
+        console.error("Error fetching product:", error);
+        setProduct(null);
+      } else {
+        setProduct({
+          id: data.id,
+          name: data.name,
+          price: data.price,
+          image: data.image || '',
+          description: data.description || '',
+          category: data.category || '',
+          gallery_images: data.gallery_images || [],
+          stock_quantity: data.stock_quantity,
+          specifications: data.specifications,
+        });
+      }
+      setLoading(false);
+    };
+
+    fetchProduct();
   }, [id]);
 
   const handleQuantityChange = useCallback((amount: number) => {
@@ -60,9 +97,15 @@ export default function ProductDetailPage() {
     );
   }
 
-  const images = [product.image];
-  const currentImage = images[currentImageIndex];
+  // Build images array: main image + gallery images
+  const images = [
+    product.image,
+    ...(product.gallery_images || []),
+  ].filter(Boolean);
+
+  const currentImage = images[currentImageIndex] || placeholderImage;
   const hasMultipleImages = images.length > 1;
+  const inStock = product.stock_quantity === undefined || product.stock_quantity > 0;
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-8 pt-24 min-h-screen bg-background">
@@ -75,7 +118,7 @@ export default function ProductDetailPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative">
           <div className="relative overflow-hidden rounded-2xl bg-muted h-[400px] md:h-[500px] flex items-center justify-center p-8">
             <img
-              src={currentImage || placeholderImage}
+              src={currentImage}
               alt={product.name}
               className="max-w-full max-h-full object-contain"
             />
@@ -96,11 +139,28 @@ export default function ProductDetailPage() {
               </>
             )}
           </div>
+
+          {/* Thumbnail strip */}
+          {hasMultipleImages && (
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+              {images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentImageIndex(i)}
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === currentImageIndex ? "border-primary ring-2 ring-primary/20" : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
           <span className="text-primary font-bold text-sm mb-2">{product.category}</span>
-          <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' }}>{product.name}</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' as any }}>{product.name}</h1>
 
           <div className="flex items-baseline gap-4 mb-8 pb-8 border-b">
             <span className="text-4xl font-bold">${product.price}</span>
@@ -109,6 +169,21 @@ export default function ProductDetailPage() {
           <div className="prose prose-sm md:prose-base dark:prose-invert text-muted-foreground mb-8">
             <p>{product.description}</p>
           </div>
+
+          {/* Specifications */}
+          {product.specifications && Object.keys(product.specifications).length > 0 && (
+            <div className="mb-8 border rounded-xl overflow-hidden">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider px-4 py-3 bg-muted/50 border-b">Specifications</h3>
+              <div className="divide-y">
+                {Object.entries(product.specifications).map(([key, val]) => (
+                  <div key={key} className="flex justify-between px-4 py-2.5 text-sm">
+                    <span className="text-muted-foreground">{key}</span>
+                    <span className="font-medium">{val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center gap-6 mb-8">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Quantity</h3>
@@ -130,8 +205,9 @@ export default function ProductDetailPage() {
               </Link>
             </Button>
 
-            <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 font-medium">
-              <CheckCircle size={16} /> In stock and ready to ship worldwide
+            <div className={`flex items-center justify-center gap-2 text-sm font-medium ${inStock ? "text-emerald-600" : "text-red-500"}`}>
+              <CheckCircle size={16} />
+              {inStock ? "In stock and ready to ship worldwide" : "Out of stock"}
             </div>
           </div>
         </motion.div>
