@@ -17,8 +17,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user has admin usertype
-  const isAdmin = user?.user_metadata?.usertype === 'admin';
+  // Authorization data must come from app metadata, which users cannot edit themselves.
+  const isAdmin = user?.app_metadata?.usertype === 'admin';
 
   useEffect(() => {
     // Retrieve active session user

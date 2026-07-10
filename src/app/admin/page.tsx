@@ -58,7 +58,7 @@ import { Input } from "@/components/ui/input";
 import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStoreSettings } from "@/components/StoreSettingsContext";
 import { DEFAULT_SHOWCASE } from "@/lib/default-images";
 
-type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "docs";
+type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs";
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
@@ -435,6 +435,14 @@ export default function AdminDashboardPage() {
   const [newSubscriberEmail, setNewSubscriberEmail] = useState("");
   const [addingSubscriber, setAddingSubscriber] = useState(false);
 
+  // Administrator management
+  const [adminName, setAdminName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminPasswordConfirmation, setAdminPasswordConfirmation] = useState("");
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
+  const [adminUserMessage, setAdminUserMessage] = useState("");
+
   // Quote editing
   const [editingQuote, setEditingQuote] = useState<string | null>(null);
   const [quoteEditData, setQuoteEditData] = useState<any>(null);
@@ -717,6 +725,46 @@ export default function AdminDashboardPage() {
 
   // ── Auth guard ───────────────────────────────────────────────────────────
 
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminUserMessage("");
+
+    if (adminPassword !== adminPasswordConfirmation) {
+      setAdminUserMessage("Passwords do not match.");
+      return;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setAdminUserMessage("Your session has expired. Please sign in again.");
+      return;
+    }
+
+    try {
+      setCreatingAdmin(true);
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ name: adminName, email: adminEmail, password: adminPassword }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to create the administrator.");
+
+      setAdminName("");
+      setAdminEmail("");
+      setAdminPassword("");
+      setAdminPasswordConfirmation("");
+      setAdminUserMessage(`Administrator account created for ${result.email}.`);
+    } catch (err: any) {
+      setAdminUserMessage(err.message || "Unable to create the administrator.");
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+
   if (authLoading) return (
     <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -765,6 +813,7 @@ export default function AdminDashboardPage() {
     { id: "newsletter", label: "Newsletter", icon: Mail },
     { id: "website", label: "Website Content", icon: Monitor },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "admins", label: "Admin Users", icon: Users },
     { id: "docs", label: "Documentation", icon: BookOpen, href: "/admin/documentation" },
   ];
 
@@ -1778,6 +1827,44 @@ export default function AdminDashboardPage() {
               )}
 
               {/* ── DOCUMENTATION ── */}
+              {activeTab === "admins" && (
+                <form onSubmit={handleCreateAdmin} className="max-w-2xl space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold">Add an administrator</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">New administrators can sign in and manage the website immediately.</p>
+                  </div>
+
+                  <div className="space-y-5 rounded-2xl border bg-card p-6 shadow-sm">
+                    <div className="space-y-2">
+                      <SectionLabel>Name</SectionLabel>
+                      <Input value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Administrator name" autoComplete="name" />
+                    </div>
+                    <div className="space-y-2">
+                      <SectionLabel>Email address</SectionLabel>
+                      <Input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="admin@example.com" autoComplete="email" required />
+                    </div>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <SectionLabel>Temporary password</SectionLabel>
+                        <Input type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} minLength={12} autoComplete="new-password" required />
+                      </div>
+                      <div className="space-y-2">
+                        <SectionLabel>Confirm password</SectionLabel>
+                        <Input type="password" value={adminPasswordConfirmation} onChange={e => setAdminPasswordConfirmation(e.target.value)} minLength={12} autoComplete="new-password" required />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Use at least 12 characters. Share the temporary password securely.</p>
+                    {adminUserMessage && <p className="rounded-lg bg-muted px-3 py-2 text-sm" role="status">{adminUserMessage}</p>}
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={creatingAdmin} className="gap-2">
+                        {creatingAdmin ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                        Create administrator
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
               {activeTab === "docs" && <DocsTab />}
 
             </div>
