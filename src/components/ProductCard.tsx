@@ -38,8 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           <p className="text-sm text-muted-foreground flex-grow line-clamp-3 leading-relaxed">
             {product.description}
           </p>
-          <div className="mt-4 pt-4 border-t flex justify-between items-center">
-            <span className="font-bold text-lg">${product.price}</span>
+          <div className="mt-4 pt-4 border-t flex justify-end items-center">
             <span className="text-sm text-primary font-medium">View Details →</span>
           </div>
         </div>

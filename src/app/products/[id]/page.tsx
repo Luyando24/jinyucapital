@@ -162,10 +162,6 @@ export default function ProductDetailPage() {
           <span className="text-primary font-bold text-sm mb-2">{product.category}</span>
           <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' as any }}>{product.name}</h1>
 
-          <div className="flex items-baseline gap-4 mb-8 pb-8 border-b">
-            <span className="text-4xl font-bold">${product.price}</span>
-          </div>
-
           <div className="prose prose-sm md:prose-base dark:prose-invert text-muted-foreground mb-8">
             <p>{product.description}</p>
           </div>

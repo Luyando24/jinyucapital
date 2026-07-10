@@ -35,14 +35,10 @@ export default function AdminEditProductPage() {
   // Form Input States
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Street Lamps");
-  const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [isWholesale, setIsWholesale] = useState(false);
-  const [moqPrice, setMoqPrice] = useState("");
-  const [moqQuantity, setMoqQuantity] = useState("10");
 
   // File Upload States
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
@@ -77,15 +73,11 @@ export default function AdminEditProductPage() {
 
         setName(data.name || "");
         setCategory(data.category || "Street Lamps");
-        setPrice(data.price ? String(data.price) : "");
         setStock(data.stock_quantity !== undefined ? String(data.stock_quantity) : "0");
         setImageUrl(data.image || "");
         setDescription(data.description || "");
         setMainImagePreview(data.image || "");
         setExistingSecondaryImages(data.images || []);
-        setIsWholesale(data.is_wholesale || false);
-        setMoqPrice(data.moq_price ? String(data.moq_price) : "");
-        setMoqQuantity(data.moq_quantity !== undefined ? String(data.moq_quantity) : "10");
       } catch (err: any) {
         console.error("Failed to load product details:", err);
         setError(err.message || "Failed to load product details.");
@@ -149,24 +141,13 @@ export default function AdminEditProductPage() {
   // Submit Changes
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !price || !stock) return;
+    if (!name.trim() || !stock) return;
 
     try {
       setSaving(true);
-      const priceVal = parseFloat(price);
       const stockVal = parseInt(stock);
 
-      if (isNaN(priceVal) || priceVal < 0) throw new Error("Please enter a valid price.");
       if (isNaN(stockVal) || stockVal < 0) throw new Error("Please enter a valid stock level.");
-
-      let moqPriceVal = null;
-      let moqQtyVal = 10;
-      if (isWholesale) {
-        moqPriceVal = parseFloat(moqPrice);
-        moqQtyVal = parseInt(moqQuantity);
-        if (isNaN(moqPriceVal) || moqPriceVal <= 0) throw new Error("Please enter a valid wholesale MOQ price.");
-        if (isNaN(moqQtyVal) || moqQtyVal < 1) throw new Error("Please enter a valid MOQ.");
-      }
 
       // 1. Re-upload main image if replaced
       let finalMainImageUrl = imageUrl;
@@ -189,14 +170,10 @@ export default function AdminEditProductPage() {
       const updatePayload = {
         name: name.trim(),
         category,
-        price: priceVal,
         stock_quantity: stockVal,
         image: finalMainImageUrl,
         images: combinedSecondaryUrls,
-        description: description.trim(),
-        is_wholesale: isWholesale,
-        moq_price: moqPriceVal,
-        moq_quantity: moqQtyVal
+        description: description.trim()
       };
 
       const { error: updateError } = await supabase
@@ -278,7 +255,7 @@ export default function AdminEditProductPage() {
                   <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Skyline Boulevard Street Lamp" />
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category *</Label>
                     <select
@@ -294,10 +271,6 @@ export default function AdminEditProductPage() {
                       <option value="Pendant Lamps">Pendant Lamps</option>
                       <option value="Industrial Lighting">Industrial Lighting</option>
                     </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price ($ USD) *</Label>
-                    <Input id="price" type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="0.00" />
                   </div>
                 </div>
 
@@ -319,33 +292,6 @@ export default function AdminEditProductPage() {
               </div>
             </section>
 
-            <section className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-              <div className="flex items-center justify-between border-b pb-4">
-                <h3 className="font-bold">Wholesale Settings</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{isWholesale ? "Enabled" : "Disabled"}</span>
-                  <button 
-                    onClick={() => setIsWholesale(!isWholesale)}
-                    className={`w-10 h-5 rounded-full transition-colors relative ${isWholesale ? "bg-primary" : "bg-muted"}`}
-                  >
-                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-transform ${isWholesale ? "translate-x-6" : "translate-x-1"}`} />
-                  </button>
-                </div>
-              </div>
-
-              {isWholesale && (
-                <div className="grid sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="moqPrice">MOQ Price ($ USD) *</Label>
-                    <Input id="moqPrice" type="number" step="0.01" value={moqPrice} onChange={e => setMoqPrice(e.target.value)} placeholder="0.00" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="moqQuantity">Min Order Quantity *</Label>
-                    <Input id="moqQuantity" type="number" value={moqQuantity} onChange={e => setMoqQuantity(e.target.value)} placeholder="10" />
-                  </div>
-                </div>
-              )}
-            </section>
           </div>
 
           {/* Right Column: Media */}

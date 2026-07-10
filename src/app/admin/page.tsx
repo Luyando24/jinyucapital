@@ -142,7 +142,6 @@ function DocsTab() {
           steps: [
             "Go to the Products tab and click 'Add Product' button",
             "Fill in the product name, description, and category",
-            "Set the price in your default currency",
             "Enter the stock quantity available",
             "Upload product images by clicking the upload area and selecting image files from your computer",
             "Click 'Save Product' to add the product to your catalog"
@@ -989,7 +988,6 @@ export default function AdminDashboardPage() {
                         <tr>
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Product</th>
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Category</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Price</th>
                           <th className="px-6 py-4 text-left font-medium text-muted-foreground">Stock</th>
                           <th className="px-6 py-4 text-center font-medium text-muted-foreground">Actions</th>
                         </tr>
@@ -1009,10 +1007,6 @@ export default function AdminDashboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 text-muted-foreground">{p.category}</td>
-                            <td className="px-6 py-4">
-                              <p className="font-bold">${p.price}</p>
-                              {p.is_wholesale && <p className="text-[10px] text-muted-foreground">MOQ ${p.moq_price} × {p.moq_quantity}</p>}
-                            </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <input

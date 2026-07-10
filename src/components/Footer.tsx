@@ -129,6 +129,14 @@ export default function Footer() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} {storeName}. All rights reserved.
           </p>
+          <a
+            href="https://www.spaceminds.agency/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
+          >
+            Website design by SpaceMinds
+          </a>
           <div className="flex space-x-8">
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
               Privacy Policy
