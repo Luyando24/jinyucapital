@@ -12,8 +12,59 @@ import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
 import { createClient } from "@supabase/supabase-js";
 
 export const metadata: Metadata = {
-  title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
+  metadataBase: new URL(process.env.SITE_URL || "https://jinyucapital.com"),
+  title: {
+    default: "Jinyu Capital | Premium Industrial & Landscape Lighting",
+    template: "%s | Jinyu Capital",
+  },
   description: "High-performance explosion-proof lighting, architectural landscape illumination, and custom OEM/ODM manufacturing solutions. Certified to ISO 9001 and ATEX/EX standards.",
+  keywords: [
+    "Jinyu Capital", 
+    "explosion proof lighting", 
+    "industrial lighting", 
+    "landscape lighting", 
+    "OEM lighting manufacturer", 
+    "ODM lighting manufacturer", 
+    "LED street lamps", 
+    "commercial outdoor lighting", 
+    "Guangzhou lighting manufacturer"
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
+    description: "High-performance explosion-proof lighting, architectural landscape illumination, and custom OEM/ODM manufacturing solutions.",
+    url: "https://jinyucapital.com",
+    siteName: "Jinyu Capital",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/logo2.png",
+        width: 800,
+        height: 800,
+        alt: "Jinyu Capital Logo",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
+    description: "High-performance explosion-proof lighting, architectural landscape illumination, and custom OEM/ODM manufacturing solutions.",
+    images: ["/logo2.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 async function getStoreSettings() {

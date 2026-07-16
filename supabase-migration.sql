@@ -119,6 +119,21 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── 9. Blog Posts Table ───────────────────────────────────────
+-- Stores articles, news, and insights
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title              TEXT NOT NULL,
+  slug               TEXT UNIQUE NOT NULL,
+  excerpt            TEXT NOT NULL,
+  content            TEXT NOT NULL,
+  category           TEXT NOT NULL,
+  author             TEXT NOT NULL DEFAULT 'Admin',
+  featured_image_url TEXT,
+  created_at         TIMESTAMPTZ DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
 -- Row Level Security (RLS) Configuration
 -- ============================================================
@@ -132,10 +147,12 @@ ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quote_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE distributor_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
 -- 2. Public Read Policies (Public access for storefront)
 CREATE POLICY "Public read products" ON products FOR SELECT USING (true);
 CREATE POLICY "Public read settings" ON store_settings FOR SELECT USING (true);
+CREATE POLICY "Public read blog_posts" ON blog_posts FOR SELECT USING (true);
 
 -- 3. Public Insert Policies (Lead generation & checkout)
 CREATE POLICY "Public submit orders" ON orders FOR INSERT WITH CHECK (true);
@@ -154,6 +171,7 @@ CREATE POLICY "Admin manage subscribers" ON newsletter_subscribers FOR ALL USING
 CREATE POLICY "Admin manage quotes" ON quote_requests FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin manage distributors" ON distributor_applications FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin manage contacts" ON contact_messages FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin manage blog_posts" ON blog_posts FOR ALL USING (auth.role() = 'authenticated');
 
 -- ============================================================
 -- Indexes for Performance
@@ -164,3 +182,5 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_quote_requests_status ON quote_requests(status);
 CREATE INDEX IF NOT EXISTS idx_distributor_applications_status ON distributor_applications(status);
 CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_category ON blog_posts(category);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);

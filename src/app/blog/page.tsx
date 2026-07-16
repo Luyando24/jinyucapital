@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/lib/supabase';
 
 const CATEGORIES = [
   'All',
@@ -16,52 +18,40 @@ const CATEGORIES = [
   'Product Updates'
 ];
 
-const MOCK_POSTS = [
-  {
-    id: '1',
-    title: 'Advancements in Explosion-Proof LED Technology',
-    slug: 'advancements-explosion-proof-led',
-    excerpt: 'Discover how new LED technologies are improving safety and efficiency in hazardous industrial environments.',
-    category: 'Explosion-Proof Lighting',
-    author: 'Admin',
-    publish_date: '2026-06-15',
-    featured_image_url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80'
-  },
-  {
-    id: '2',
-    title: 'Optimizing Industrial Lighting for Maximum Productivity',
-    slug: 'optimizing-industrial-lighting',
-    excerpt: 'Proper lighting design can significantly impact worker performance and safety. Learn the key factors for success.',
-    category: 'Industrial Equipment',
-    author: 'Admin',
-    publish_date: '2026-05-20',
-    featured_image_url: 'https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=80'
-  },
-  {
-    id: '3',
-    title: 'The Future of Smart Street Lighting in Modern Cities',
-    slug: 'future-smart-street-lighting',
-    excerpt: 'Smart cities require smart lighting. Explore how IoT-enabled street lamps are transforming urban infrastructure.',
-    category: 'Industry News & Insights',
-    author: 'Admin',
-    publish_date: '2026-04-10',
-    featured_image_url: 'https://images.unsplash.com/photo-1474112704763-f1119d8a6b3d?auto=format&fit=crop&q=80'
-  }
-];
-
 export default function BlogPage() {
+  const [posts, setPosts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data) {
+          setPosts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching blog posts:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchPosts();
+  }, []);
 
   const filteredPosts = useMemo(() => {
-    return MOCK_POSTS.filter(post => {
+    return posts.filter(post => {
       const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
       const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchTerm]);
+  }, [posts, selectedCategory, searchTerm]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -141,7 +131,7 @@ export default function BlogPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No articles found</h3>
               <p className="text-muted-foreground max-w-md">
-                No articles match your current filters.
+                No articles match your current filters or search terms.
               </p>
               <Button 
                 className="mt-6" 
@@ -165,28 +155,34 @@ export default function BlogPage() {
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                     className="group bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
                   >
-                    <div className="aspect-video overflow-hidden">
-                      <img 
-                        src={post.featured_image_url} 
-                        alt={post.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="p-6 flex flex-col flex-grow">
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
-                        {post.category}
-                      </span>
-                      <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
-                        {post.excerpt}
-                      </p>
-                      <div className="mt-auto pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
-                        <span>{post.publish_date}</span>
-                        <span className="font-bold text-primary">Read More →</span>
+                    <Link href={`/blog/${post.slug}`} className="flex flex-col h-full">
+                      <div className="aspect-video overflow-hidden bg-muted flex items-center justify-center">
+                        {post.featured_image_url ? (
+                          <img 
+                            src={post.featured_image_url} 
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <AlertCircle className="w-8 h-8 text-zinc-500" />
+                        )}
                       </div>
-                    </div>
+                      <div className="p-6 flex flex-col flex-grow">
+                        <span className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
+                          {post.category}
+                        </span>
+                        <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+                          {post.title}
+                        </h3>
+                        <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
+                          {post.excerpt}
+                        </p>
+                        <div className="mt-auto pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
+                          <span>{post.publish_date || (post.created_at ? new Date(post.created_at).toLocaleDateString() : '')}</span>
+                          <span className="font-bold text-primary group-hover:underline">Read More →</span>
+                        </div>
+                      </div>
+                    </Link>
                   </motion.div>
                 ))}
               </AnimatePresence>

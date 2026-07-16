@@ -55,10 +55,11 @@ import { supabase } from "@/lib/supabase";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStoreSettings } from "@/components/StoreSettingsContext";
 import { DEFAULT_SHOWCASE } from "@/lib/default-images";
 
-type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs";
+type AdminTab = "overview" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
@@ -447,6 +448,22 @@ export default function AdminDashboardPage() {
   const [editingQuote, setEditingQuote] = useState<string | null>(null);
   const [quoteEditData, setQuoteEditData] = useState<any>(null);
 
+  // Blog posts management states
+  const [blogPosts, setBlogPosts] = useState<any[]>([]);
+  const [blogSearch, setBlogSearch] = useState("");
+  const [isEditingBlog, setIsEditingBlog] = useState(false);
+  const [currentBlogId, setCurrentBlogId] = useState<string | null>(null);
+  const [blogTitle, setBlogTitle] = useState("");
+  const [blogSlug, setBlogSlug] = useState("");
+  const [blogExcerpt, setBlogExcerpt] = useState("");
+  const [blogContent, setBlogContent] = useState("");
+  const [blogCategory, setBlogCategory] = useState("Explosion-Proof Lighting");
+  const [blogFeaturedImage, setBlogFeaturedImage] = useState("");
+  const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
+  const [blogImagePreview, setBlogImagePreview] = useState("");
+  const [savingBlog, setSavingBlog] = useState(false);
+  const [blogMessage, setBlogMessage] = useState("");
+
   // ── Data loading ─────────────────────────────────────────────────────────
 
   const loadAdminDataset = async () => {
@@ -462,6 +479,7 @@ export default function AdminDashboardPage() {
         { data: quotesData },
         { data: distData },
         { data: contactData },
+        { data: blogData },
       ] = await Promise.all([
         supabase.from("products").select("*").order("name"),
         supabase.from("orders").select("*, order_items(*, products(*))").order("created_at", { ascending: false }),
@@ -470,6 +488,7 @@ export default function AdminDashboardPage() {
         supabase.from("quote_requests").select("*").order("created_at", { ascending: false }),
         supabase.from("distributor_applications").select("*").order("created_at", { ascending: false }),
         supabase.from("contact_messages").select("*").order("created_at", { ascending: false }),
+        supabase.from("blog_posts").select("*").order("created_at", { ascending: false }),
       ]);
 
       if (prodErr) throw prodErr;
@@ -485,6 +504,7 @@ export default function AdminDashboardPage() {
       setQuoteRequests(quotesData || []);
       setDistributorApplications(distData || []);
       setContactMessages(contactData || []);
+      setBlogPosts(blogData || []);
 
       if (settingsData) {
         setStoreSettings(settingsData);
@@ -765,6 +785,115 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Blog handlers
+  const handleOpenNewBlogForm = () => {
+    setCurrentBlogId(null);
+    setBlogTitle("");
+    setBlogSlug("");
+    setBlogExcerpt("");
+    setBlogContent("");
+    setBlogCategory("Explosion-Proof Lighting");
+    setBlogFeaturedImage("");
+    setBlogImageFile(null);
+    setBlogImagePreview("");
+    setBlogMessage("");
+    setIsEditingBlog(true);
+  };
+
+  const handleOpenEditBlogForm = (post: any) => {
+    setCurrentBlogId(post.id);
+    setBlogTitle(post.title);
+    setBlogSlug(post.slug);
+    setBlogExcerpt(post.excerpt);
+    setBlogContent(post.content);
+    setBlogCategory(post.category);
+    setBlogFeaturedImage(post.featured_image_url || "");
+    setBlogImageFile(null);
+    setBlogImagePreview(post.featured_image_url || "");
+    setBlogMessage("");
+    setIsEditingBlog(true);
+  };
+
+  const handleTitleChange = (val: string) => {
+    setBlogTitle(val);
+    const slugVal = val
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setBlogSlug(slugVal);
+  };
+
+  const handleSaveBlogPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blogTitle.trim() || !blogSlug.trim() || !blogExcerpt.trim() || !blogContent.trim()) {
+      setBlogMessage("Please fill in all required fields.");
+      return;
+    }
+
+    try {
+      setSavingBlog(true);
+      setBlogMessage("");
+
+      let imageUrl = blogFeaturedImage;
+      if (blogImageFile) {
+        imageUrl = await uploadFile(blogImageFile, "blog");
+      }
+
+      const postPayload = {
+        title: blogTitle.trim(),
+        slug: blogSlug.trim(),
+        excerpt: blogExcerpt.trim(),
+        content: blogContent.trim(),
+        category: blogCategory,
+        featured_image_url: imageUrl || null,
+        author: "Admin",
+        updated_at: new Date().toISOString()
+      };
+
+      if (currentBlogId) {
+        const { error } = await supabase
+          .from("blog_posts")
+          .update(postPayload)
+          .eq("id", currentBlogId);
+        if (error) throw error;
+        setBlogMessage("Blog post updated successfully!");
+      } else {
+        const { error } = await supabase
+          .from("blog_posts")
+          .insert({
+            ...postPayload,
+            created_at: new Date().toISOString()
+          });
+        if (error) throw error;
+        setBlogMessage("Blog post created successfully!");
+      }
+
+      await loadAdminDataset();
+      setTimeout(() => {
+        setIsEditingBlog(false);
+      }, 1000);
+    } catch (err: any) {
+      console.error("Save blog post failed:", err);
+      setBlogMessage(err.message || "Failed to save blog post.");
+    } finally {
+      setSavingBlog(false);
+    }
+  };
+
+  const handleDeleteBlogPost = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this blog post?")) return;
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      setBlogPosts(prev => prev.filter(p => p.id !== id));
+    } catch (err: any) {
+      alert("Delete failed: " + err.message);
+    }
+  };
+
   if (authLoading) return (
     <div className="flex items-center justify-center min-h-screen">
       <Loader2 className="animate-spin h-8 w-8 text-primary" />
@@ -796,6 +925,11 @@ export default function AdminDashboardPage() {
     p.category.toLowerCase().includes(productSearch.toLowerCase())
   );
 
+  const filteredBlogPosts = blogPosts.filter(p =>
+    p.title?.toLowerCase().includes(blogSearch.toLowerCase()) ||
+    p.category?.toLowerCase().includes(blogSearch.toLowerCase())
+  );
+
   const filteredOrders = orders.filter(o => {
     const q = orderSearch.toLowerCase();
     const matchSearch = o.first_name?.toLowerCase().includes(q) || o.last_name?.toLowerCase().includes(q) || o.email?.toLowerCase().includes(q) || o.id.toLowerCase().includes(q);
@@ -813,6 +947,7 @@ export default function AdminDashboardPage() {
     { id: "newsletter", label: "Newsletter", icon: Mail },
     { id: "website", label: "Website Content", icon: Monitor },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "blog", label: "News & Blog", icon: FileText },
     { id: "admins", label: "Admin Users", icon: Users },
     { id: "docs", label: "Documentation", icon: BookOpen, href: "/admin/documentation" },
   ];
@@ -1824,6 +1959,205 @@ export default function AdminDashboardPage() {
 
                   <SaveBanner saving={savingSettings} saved={savedSettings} />
                 </form>
+              )}
+
+              {/* ── BLOG MANAGEMENT ── */}
+              {activeTab === "blog" && (
+                <div className="space-y-6">
+                  {isEditingBlog ? (
+                    <form onSubmit={handleSaveBlogPost} className="space-y-6">
+                      <div className="flex items-center justify-between border-b pb-4">
+                        <div>
+                          <h2 className="text-xl font-bold">
+                            {currentBlogId ? "Edit Blog Post" : "Create Blog Post"}
+                          </h2>
+                          <p className="text-sm text-muted-foreground">
+                            Compose and publish articles to your website.
+                          </p>
+                        </div>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingBlog(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+
+                      <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
+                        <div className="space-y-2">
+                          <SectionLabel>Title *</SectionLabel>
+                          <Input 
+                            value={blogTitle} 
+                            onChange={e => handleTitleChange(e.target.value)} 
+                            placeholder="Enter article title" 
+                            required 
+                          />
+                        </div>
+
+                        <div className="grid gap-6 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <SectionLabel>Slug (URL) *</SectionLabel>
+                            <Input 
+                              value={blogSlug} 
+                              onChange={e => setBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, "-"))} 
+                              placeholder="article-url-slug" 
+                              required 
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <SectionLabel>Category *</SectionLabel>
+                            <select 
+                              value={blogCategory} 
+                              onChange={e => setBlogCategory(e.target.value)} 
+                              className="w-full text-sm rounded-lg border bg-background p-2.5 outline-none focus:ring-1 focus:ring-primary"
+                            >
+                              <option value="Explosion-Proof Lighting">Explosion-Proof Lighting</option>
+                              <option value="Industrial Equipment">Industrial Equipment</option>
+                              <option value="Industry News & Insights">Industry News & Insights</option>
+                              <option value="OEM/ODM Solutions">OEM/ODM Solutions</option>
+                              <option value="Product Updates">Product Updates</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <SectionLabel>Excerpt *</SectionLabel>
+                          <Input 
+                            value={blogExcerpt} 
+                            onChange={e => setBlogExcerpt(e.target.value)} 
+                            placeholder="Brief summary of the article for listings (1-2 sentences)" 
+                            required 
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <SectionLabel>Featured Image</SectionLabel>
+                          <div className="flex flex-col sm:flex-row gap-4 items-center">
+                            <div className="w-28 h-20 rounded-lg border overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
+                              {blogImagePreview ? (
+                                <img src={blogImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                              ) : (
+                                <FileText className="h-8 w-8 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <Input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={e => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    const file = e.target.files[0];
+                                    setBlogImageFile(file);
+                                    setBlogImagePreview(URL.createObjectURL(file));
+                                  }
+                                }} 
+                              />
+                              <p className="text-[10px] text-muted-foreground">Upload a PNG, JPG, or WEBP image. Will be uploaded to Supabase Storage.</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <SectionLabel>Content (Supports Markdown) *</SectionLabel>
+                          <Textarea 
+                            value={blogContent} 
+                            onChange={e => setBlogContent(e.target.value)} 
+                            placeholder="Write your article content here..." 
+                            rows={15} 
+                            required 
+                          />
+                        </div>
+
+                        {blogMessage && (
+                          <div className="rounded-lg bg-muted px-4 py-3 text-sm font-semibold text-primary" role="status">
+                            {blogMessage}
+                          </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-4 border-t">
+                          <Button type="button" variant="outline" onClick={() => setIsEditingBlog(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={savingBlog} className="gap-2">
+                            {savingBlog ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                            {currentBlogId ? "Update Post" : "Publish Post"}
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                        <div className="relative w-full sm:max-w-md">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            placeholder="Search articles…" 
+                            className="pl-10" 
+                            value={blogSearch} 
+                            onChange={e => setBlogSearch(e.target.value)} 
+                          />
+                        </div>
+                        <Button onClick={handleOpenNewBlogForm}>
+                          <Plus className="h-4 w-4 mr-2" />New Post
+                        </Button>
+                      </div>
+
+                      <div className="bg-card border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Article</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Category</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Published</th>
+                              <th className="px-6 py-4 text-center font-medium text-muted-foreground">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {filteredBlogPosts.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                                  No articles found. Click "New Post" to create your first article!
+                                </td>
+                              </tr>
+                            ) : (
+                              filteredBlogPosts.map(post => (
+                                <tr key={post.id} className="hover:bg-muted/30">
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-12 h-10 rounded-lg overflow-hidden border bg-muted flex-shrink-0">
+                                        {post.featured_image_url ? (
+                                          <img src={post.featured_image_url} alt={post.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                          <FileText className="w-full h-full p-2 text-muted-foreground" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="font-bold line-clamp-1">{post.title}</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-1">/{post.slug}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-muted-foreground">{post.category}</td>
+                                  <td className="px-6 py-4 text-muted-foreground text-xs">
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Button variant="outline" size="sm" onClick={() => handleOpenEditBlogForm(post)}>
+                                        <Pencil className="h-3 w-3 mr-1.5" />Edit
+                                      </Button>
+                                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200" onClick={() => handleDeleteBlogPost(post.id)}>
+                                        <Trash2 className="h-3 w-3 mr-1.5" />Delete
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ── DOCUMENTATION ── */}
