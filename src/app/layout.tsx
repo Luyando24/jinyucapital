@@ -9,17 +9,36 @@ import { CartProvider } from "@/components/CartContext";
 import { CurrencyProvider } from "@/components/CurrencyContext";
 import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
 import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
+import { createClient } from "@supabase/supabase-js";
 
 export const metadata: Metadata = {
   title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
   description: "High-performance explosion-proof lighting, architectural landscape illumination, and custom OEM/ODM manufacturing solutions. Certified to ISO 9001 and ATEX/EX standards.",
 };
 
-export default function RootLayout({
+async function getStoreSettings() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+  try {
+    const client = createClient(supabaseUrl, supabaseAnonKey);
+    const { data } = await client.from("store_settings").select("*").eq("id", 1).single();
+    return data;
+  } catch (error) {
+    console.error("Failed to prefetch store settings:", error);
+    return null;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialSettings = await getStoreSettings();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -44,7 +63,7 @@ export default function RootLayout({
           <AuthProvider>
             <CartProvider>
               <CurrencyProvider>
-                <StoreSettingsProvider>
+                <StoreSettingsProvider initialSettings={initialSettings}>
                   <Navbar />
                   <main className="flex-grow">
                     {children}

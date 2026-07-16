@@ -6,12 +6,7 @@ import { motion } from 'framer-motion';
 import { Factory, ShieldCheck, Lightbulb, ArrowRight, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStoreSettings } from '@/components/StoreSettingsContext';
-import {
-  DEFAULT_HERO_IMAGE,
-  DEFAULT_MANUFACTURING_IMAGE,
-  DEFAULT_SHOWCASE,
-  resolveImageUrl,
-} from '@/lib/default-images';
+import { resolveImageUrl } from '@/lib/default-images';
 
 // Static fallback content
 const DEFAULT_STATS = [
@@ -43,10 +38,10 @@ export default function Home() {
   const { settings } = useStoreSettings();
   const content = settings?.homepage_content;
 
-  const heroImage = resolveImageUrl(settings?.hero_image_url, DEFAULT_HERO_IMAGE);
+  const heroImage = resolveImageUrl(settings?.hero_image_url, '');
   const manufacturingImage = resolveImageUrl(
     settings?.manufacturing_image_url,
-    DEFAULT_MANUFACTURING_IMAGE,
+    '',
   );
 
   const heroHeadline = content?.hero_headline || 'Manufacturing Excellence From China To The World';
@@ -55,20 +50,19 @@ export default function Home() {
   const manufacturingHeadline = content?.manufacturing_headline || 'Manufacturing excellence';
   const manufacturingBody = content?.manufacturing_body || 'Built on a foundation of engineering expertise, we deliver reliable products that meet the demands of global markets. Our Guangzhou facility represents the pinnacle of modern production capabilities.';
   const showcaseProducts = content?.showcase_products?.length
-    ? content.showcase_products.map((product, index) => ({
+    ? content.showcase_products.map((product) => ({
         ...product,
-        image: resolveImageUrl(
-          product.image,
-          DEFAULT_SHOWCASE[index]?.image ?? DEFAULT_SHOWCASE[0].image,
-        ),
+        image: resolveImageUrl(product.image, ''),
       }))
-    : DEFAULT_SHOWCASE;
+    : [];
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] flex items-center justify-center bg-cover bg-center" style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.55)), url(${heroImage})`
+        backgroundImage: heroImage 
+          ? `linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.55)), url(${heroImage})`
+          : 'linear-gradient(to bottom, #09090b, #18181b)'
       }}>
         <div className="section-container py-20 text-center text-white">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -151,7 +145,15 @@ export default function Home() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="relative">
-              <img src={manufacturingImage} alt="Jinyu in-house production and assembly workshop" className="rounded-2xl shadow-xl w-full object-cover aspect-[4/3]" />
+              {manufacturingImage ? (
+                <img src={manufacturingImage} alt="Jinyu in-house production and assembly workshop" className="rounded-2xl shadow-xl w-full object-cover aspect-[4/3]" />
+              ) : (
+                <div className="rounded-2xl shadow-xl w-full aspect-[4/3] bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center text-zinc-500 font-bold border border-zinc-800 p-6 text-center gap-2">
+                  <Factory className="w-12 h-12 text-zinc-600 mb-2" />
+                  <span className="text-sm font-semibold tracking-wider uppercase text-zinc-400">Guangzhou Production Facility</span>
+                  <span className="text-xs font-normal text-zinc-500 max-w-xs">High-performance manufacturing, assembly, and testing workshop</span>
+                </div>
+              )}
               <div className="absolute -bottom-6 -left-6 bg-background p-6 rounded-xl shadow-lg border hidden md:block">
                 <div className="text-4xl font-bold text-primary mb-1">10k+</div>
                 <div className="text-sm font-medium text-muted-foreground">Sq.m Production Area</div>
@@ -162,39 +164,47 @@ export default function Home() {
       </section>
 
       {/* Products Showcase Section */}
-      <section className="py-24 bg-muted">
-        <div className="section-container">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ textWrap: 'balance' }}>
-                Featured product lines
-              </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Explore our signature street lighting collections, engineered for superior outdoor performance, longevity, and aesthetic appeal.
-              </p>
+      {showcaseProducts.length > 0 && (
+        <section className="py-24 bg-muted">
+          <div className="section-container">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+              <div className="max-w-2xl">
+                <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ textWrap: 'balance' }}>
+                  Featured product lines
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Explore our signature street lighting collections, engineered for superior outdoor performance, longevity, and aesthetic appeal.
+                </p>
+              </div>
+              <Button asChild variant="outline" className="flex-shrink-0">
+                <Link href="/products">View all products</Link>
+              </Button>
             </div>
-            <Button asChild variant="outline" className="flex-shrink-0">
-              <Link href="/products">View all products</Link>
-            </Button>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {showcaseProducts.map((product, index) => (
-              <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }} className="group bg-background rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border">
-                <div className="aspect-[4/3] overflow-hidden bg-secondary/50">
-                  <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="p-6 flex flex-col h-full">
-                  <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm">
-                    {product.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {showcaseProducts.map((product, index) => (
+                <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: index * 0.1 }} className="group bg-background rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border">
+                  <div className="aspect-[4/3] overflow-hidden bg-secondary/50 flex items-center justify-center">
+                    {product.image ? (
+                      <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500">
+                        <Lightbulb className="w-8 h-8 text-zinc-700" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 flex flex-col h-full">
+                    <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed text-sm">
+                      {product.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-24 bg-background text-foreground border-t">

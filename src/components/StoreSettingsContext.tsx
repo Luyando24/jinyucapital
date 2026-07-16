@@ -49,13 +49,21 @@ interface StoreSettingsContextType {
 
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
-export function StoreSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+export function StoreSettingsProvider({ 
+  children,
+  initialSettings = null
+}: { 
+  children: React.ReactNode;
+  initialSettings?: StoreSettings | null;
+}) {
+  const [settings, setSettings] = useState<StoreSettings | null>(initialSettings);
+  const [loading, setLoading] = useState(!initialSettings);
 
   const fetchSettings = async () => {
     try {
-      setLoading(true);
+      if (!settings) {
+        setLoading(true);
+      }
       const { data, error } = await supabase
         .from("store_settings")
         .select("*")
