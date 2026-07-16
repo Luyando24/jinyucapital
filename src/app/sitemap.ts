@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { SITE_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.SITE_URL || 'https://jinyucapital.com';
+  const baseUrl = SITE_URL;
   
   const staticRoutes = [
     '',
@@ -20,14 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Fetch dynamic product URLs from Supabase
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
   let productRoutes: MetadataRoute.Sitemap = [];
   let blogRoutes: MetadataRoute.Sitemap = [];
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     try {
-      const client = createClient(supabaseUrl, supabaseAnonKey);
+      const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
       // Products
       const { data: products } = await client

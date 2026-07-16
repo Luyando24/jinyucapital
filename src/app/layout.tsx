@@ -10,9 +10,10 @@ import { CurrencyProvider } from "@/components/CurrencyContext";
 import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
 import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
 import { createClient } from "@supabase/supabase-js";
+import { SITE_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "https://jinyucapital.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Jinyu Capital | Premium Industrial & Landscape Lighting",
     template: "%s | Jinyu Capital",
@@ -29,13 +30,10 @@ export const metadata: Metadata = {
     "commercial outdoor lighting", 
     "Guangzhou lighting manufacturer"
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "Jinyu Capital | Premium Industrial & Landscape Lighting",
     description: "High-performance explosion-proof lighting, architectural landscape illumination, and custom OEM/ODM manufacturing solutions.",
-    url: "https://jinyucapital.com",
+    url: SITE_URL,
     siteName: "Jinyu Capital",
     locale: "en_US",
     type: "website",
@@ -68,13 +66,11 @@ export const metadata: Metadata = {
 };
 
 async function getStoreSettings() {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return null;
   }
   try {
-    const client = createClient(supabaseUrl, supabaseAnonKey);
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data } = await client.from("store_settings").select("*").eq("id", 1).single();
     return data;
   } catch (error) {
@@ -99,6 +95,24 @@ export default async function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "Jinyu Capital",
+                  url: SITE_URL,
+                  logo: `${SITE_URL}/logo2.png`,
+                  description: "OEM/ODM manufacturer of industrial, landscape, and explosion-proof lighting solutions.",
+                },
+                { "@type": "WebSite", name: "Jinyu Capital", url: SITE_URL },
+              ],
+            }),
+          }}
         />
       </head>
       <body
