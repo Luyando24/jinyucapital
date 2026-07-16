@@ -7,6 +7,7 @@ import { Factory, ShieldCheck, Lightbulb, ArrowRight, Globe } from 'lucide-react
 import { Button } from '@/components/ui/button';
 import { useStoreSettings } from '@/components/StoreSettingsContext';
 import { resolveImageUrl } from '@/lib/default-images';
+import { supabase } from '@/lib/supabase';
 
 // Static fallback content
 const DEFAULT_STATS = [
@@ -37,6 +38,26 @@ const DEFAULT_FEATURES = [
 export default function Home() {
   const { settings } = useStoreSettings();
   const content = settings?.homepage_content;
+
+  const [recentPosts, setRecentPosts] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    async function fetchRecentPosts() {
+      try {
+        const { data, error } = await supabase
+          .from('blog_posts')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        if (!error && data) {
+          setRecentPosts(data);
+        }
+      } catch (err) {
+        console.error('Error fetching recent posts:', err);
+      }
+    }
+    fetchRecentPosts();
+  }, []);
 
   const heroImage = resolveImageUrl(settings?.hero_image_url, '');
   const manufacturingImage = resolveImageUrl(
@@ -199,6 +220,70 @@ export default function Home() {
                       {product.description}
                     </p>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recent Blog Posts Section */}
+      {recentPosts.length > 0 && (
+        <section className="py-24 bg-background border-t">
+          <div className="section-container">
+            <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+              <div className="max-w-2xl">
+                <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ textWrap: 'balance' }}>
+                  Latest news & insights
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Stay updated with our latest technology breakthroughs, lighting guides, and company announcements.
+                </p>
+              </div>
+              <Button asChild variant="outline" className="flex-shrink-0">
+                <Link href="/blog">Read all insights</Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {recentPosts.map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col"
+                >
+                  <Link href={`/blog/${post.slug}`} className="flex flex-col h-full">
+                    <div className="aspect-video overflow-hidden bg-muted flex items-center justify-center">
+                      {post.featured_image_url ? (
+                        <img 
+                          src={post.featured_image_url} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500">
+                          <Factory className="w-8 h-8 text-zinc-700" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-6 flex flex-col flex-grow">
+                      <span className="text-xs font-bold text-primary uppercase tracking-wider mb-3 block">
+                        {post.category}
+                      </span>
+                      <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
+                        {post.excerpt}
+                      </p>
+                      <div className="mt-auto pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
+                        <span>{new Date(post.created_at).toLocaleDateString()}</span>
+                        <span className="font-bold text-primary group-hover:underline">Read More →</span>
+                      </div>
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
