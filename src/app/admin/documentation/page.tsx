@@ -27,6 +27,15 @@ const sections = [
     ],
   },
   {
+    title: "Customer Relationship Management",
+    guides: [
+      ["CRM Dashboard", "Open CRM from the left menu to review pipeline value, weighted forecast, won revenue, win rate, upcoming work, and recent customer activity."],
+      ["Contacts and Companies", "Create complete contact and company profiles, assign lifecycle and lead statuses, score prospects, add tags, schedule follow-ups, and export filtered contacts to CSV."],
+      ["Sales Pipeline", "Create revenue opportunities in Pipeline, assign contacts and companies, set value and closing dates, then move each deal through Lead, Qualified, Proposal, Negotiation, Won, or Lost."],
+      ["Tasks and Activity History", "Record notes, calls, emails, meetings, and tasks. Mark work complete and use the Overdue view to keep follow-ups from being missed."],
+    ],
+  },
+  {
     title: "Website Content",
     guides: [
       ["Customize the Homepage", "Use Website Content to update the hero, statistics, manufacturing section, and featured products, then save your changes."],
