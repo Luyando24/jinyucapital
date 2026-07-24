@@ -29,6 +29,12 @@ export const DEFAULT_SHOWCASE = [
   },
 ] as const;
 
+export const DEFAULT_HERO_IMAGES = [
+  DEFAULT_HERO_IMAGE,
+  DEFAULT_MANUFACTURING_IMAGE,
+  'https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&q=80&w=1920',
+] as const;
+
 const DEAD_CDN_HOST = 'horizons-cdn.hostinger.com';
 
 /** Replace broken Hostinger CDN URLs (403) with a working fallback. */

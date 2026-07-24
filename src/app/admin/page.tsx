@@ -42,6 +42,7 @@ import {
   RefreshCcw,
   Check,
   BookOpen,
+  ChevronLeft,
   ChevronRight,
   Info,
   Lightbulb,
@@ -58,7 +59,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStoreSettings } from "@/components/StoreSettingsContext";
-import { DEFAULT_SHOWCASE } from "@/lib/default-images";
+import { DEFAULT_HERO_IMAGES, DEFAULT_SHOWCASE } from "@/lib/default-images";
 import CRMTab from "@/components/admin/CRMTab";
 
 type AdminTab = "overview" | "crm" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
@@ -66,6 +67,7 @@ type AdminTab = "overview" | "crm" | "products" | "orders" | "quotes" | "distrib
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
   hero_subheadline: "Jinyu combines manufacturing, OEM production, product development, and global supply chain solutions for distributors, wholesalers, contractors, and brands worldwide.",
+  hero_images: [...DEFAULT_HERO_IMAGES],
   stats: [
     { value: "150+", label: "Product lines" },
     { value: "10k", label: "Sq.m facility" },
@@ -223,10 +225,10 @@ function DocsTab() {
           description: "Changing hero and manufacturing images",
           steps: [
             "Go to the Website Content tab",
-            "In the Hero Section, click 'Click to upload image…' to select a new hero image from your computer",
+            "In the Hero Slider, add, remove, reorder, upload, or paste URLs for up to eight background images",
             "In the Manufacturing Section, click 'Click to upload image…' to select a new manufacturing image",
             "Alternatively, paste a direct image URL in the URL input fields",
-            "Preview your images before saving",
+            "Use each slide card to preview its image and order before saving",
             "Click 'Save All Changes' to upload and apply the new images",
             "The homepage will automatically refresh with the new images"
           ]
@@ -410,9 +412,10 @@ export default function AdminDashboardPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
 
-  // Hero image upload
-  const [heroFile, setHeroFile] = useState<File | null>(null);
-  const [heroPreview, setHeroPreview] = useState<string>("");
+  // Hero slider uploads
+  const [heroSlideUrls, setHeroSlideUrls] = useState<string[]>([...DEFAULT_HERO_IMAGES]);
+  const [heroSlideFiles, setHeroSlideFiles] = useState<(File | null)[]>(DEFAULT_HERO_IMAGES.map(() => null));
+  const [heroSlidePreviews, setHeroSlidePreviews] = useState<string[]>([...DEFAULT_HERO_IMAGES]);
   const [mfgFile, setMfgFile] = useState<File | null>(null);
   const [mfgPreview, setMfgPreview] = useState<string>("");
 
@@ -422,7 +425,6 @@ export default function AdminDashboardPage() {
 
   // Homepage content local state
   const [homepageContent, setHomepageContent] = useState<HomepageContent>(DEFAULT_HOMEPAGE_CONTENT);
-  const [heroImageUrl, setHeroImageUrl] = useState("");
   const [mfgImageUrl, setMfgImageUrl] = useState("");
 
   // Search & filter
@@ -511,13 +513,26 @@ export default function AdminDashboardPage() {
       if (settingsData) {
         setStoreSettings(settingsData);
         if (settingsData.logo_url) setLogoPreview(settingsData.logo_url);
-        if (settingsData.hero_image_url) { setHeroImageUrl(settingsData.hero_image_url); setHeroPreview(settingsData.hero_image_url); }
         if (settingsData.manufacturing_image_url) { setMfgImageUrl(settingsData.manufacturing_image_url); setMfgPreview(settingsData.manufacturing_image_url); }
         if (settingsData.homepage_content && Object.keys(settingsData.homepage_content).length > 0) {
           setHomepageContent({ ...DEFAULT_HOMEPAGE_CONTENT, ...settingsData.homepage_content });
+          const storedHeroSlides = Array.isArray(settingsData.homepage_content.hero_images)
+            ? settingsData.homepage_content.hero_images.filter((url: unknown): url is string => typeof url === "string" && url.trim().length > 0)
+            : [];
+          const initialHeroSlides = storedHeroSlides.length
+            ? storedHeroSlides
+            : [settingsData.hero_image_url, ...DEFAULT_HERO_IMAGES].filter((url, index, all): url is string => Boolean(url) && all.indexOf(url) === index).slice(0, 3);
+          setHeroSlideUrls(initialHeroSlides);
+          setHeroSlidePreviews(initialHeroSlides);
+          setHeroSlideFiles(initialHeroSlides.map(() => null));
           if (settingsData.homepage_content.showcase_products) {
         setShowcasePreviews(settingsData.homepage_content.showcase_products.map((p: ShowcaseProduct) => p.image));
           }
+        } else {
+          const initialHeroSlides = [settingsData.hero_image_url, ...DEFAULT_HERO_IMAGES].filter((url, index, all): url is string => Boolean(url) && all.indexOf(url) === index).slice(0, 3);
+          setHeroSlideUrls(initialHeroSlides);
+          setHeroSlidePreviews(initialHeroSlides);
+          setHeroSlideFiles(initialHeroSlides.map(() => null));
         }
       }
     } catch (err: any) {
@@ -544,6 +559,48 @@ export default function AdminDashboardPage() {
     if (error) throw error;
     const { data } = supabase.storage.from("product-images").getPublicUrl(path);
     return data.publicUrl;
+  };
+
+  const addHeroSlide = () => {
+    if (heroSlideUrls.length >= 8) return;
+    setHeroSlideUrls(prev => [...prev, ""]);
+    setHeroSlideFiles(prev => [...prev, null]);
+    setHeroSlidePreviews(prev => [...prev, ""]);
+  };
+
+  const updateHeroSlideUrl = (index: number, url: string) => {
+    setHeroSlideUrls(prev => prev.map((item, i) => i === index ? url : item));
+    setHeroSlideFiles(prev => prev.map((item, i) => i === index ? null : item));
+    setHeroSlidePreviews(prev => prev.map((item, i) => i === index ? url : item));
+  };
+
+  const updateHeroSlideFile = (index: number, file: File) => {
+    const previewUrl = URL.createObjectURL(file);
+    setHeroSlideFiles(prev => prev.map((item, i) => i === index ? file : item));
+    setHeroSlidePreviews(prev => prev.map((item, i) => i === index ? previewUrl : item));
+  };
+
+  const removeHeroSlide = (index: number) => {
+    if (heroSlideUrls.length === 1) {
+      updateHeroSlideUrl(0, "");
+      return;
+    }
+    setHeroSlideUrls(prev => prev.filter((_, i) => i !== index));
+    setHeroSlideFiles(prev => prev.filter((_, i) => i !== index));
+    setHeroSlidePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const moveHeroSlide = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= heroSlideUrls.length) return;
+    const swap = <T,>(items: T[]) => {
+      const next = [...items];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    };
+    setHeroSlideUrls(swap);
+    setHeroSlideFiles(swap);
+    setHeroSlidePreviews(swap);
   };
 
   // ── Products ─────────────────────────────────────────────────────────────
@@ -699,11 +756,22 @@ export default function AdminDashboardPage() {
     if (savingWebsite) return;
     setSavingWebsite(true);
     try {
-      let finalHeroUrl = heroImageUrl;
       let finalMfgUrl = mfgImageUrl;
 
-      if (heroFile) finalHeroUrl = await uploadFile(heroFile, "homepage");
       if (mfgFile) finalMfgUrl = await uploadFile(mfgFile, "homepage");
+
+      const finalHeroImages: string[] = [];
+      for (let i = 0; i < heroSlideUrls.length; i++) {
+        if (heroSlideFiles[i]) {
+          finalHeroImages.push(await uploadFile(heroSlideFiles[i]!, "homepage/hero"));
+        } else if (heroSlideUrls[i]?.trim()) {
+          finalHeroImages.push(heroSlideUrls[i].trim());
+        }
+      }
+
+      if (finalHeroImages.length === 0) {
+        finalHeroImages.push(...DEFAULT_HERO_IMAGES);
+      }
 
       // Handle showcase product image uploads
       const updatedShowcaseProducts = [...(homepageContent.showcase_products || DEFAULT_HOMEPAGE_CONTENT.showcase_products!)];
@@ -716,20 +784,22 @@ export default function AdminDashboardPage() {
 
       const finalHomepageContent = {
         ...homepageContent,
+        hero_images: finalHeroImages,
         showcase_products: updatedShowcaseProducts,
       };
 
       const { error } = await supabase.from("store_settings").upsert({
         id: 1,
-        hero_image_url: finalHeroUrl,
+        hero_image_url: finalHeroImages[0],
         manufacturing_image_url: finalMfgUrl,
         homepage_content: finalHomepageContent,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
-      setHeroImageUrl(finalHeroUrl);
       setMfgImageUrl(finalMfgUrl);
-      if (finalHeroUrl) setHeroPreview(finalHeroUrl);
+      setHeroSlideUrls(finalHeroImages);
+      setHeroSlidePreviews(finalHeroImages);
+      setHeroSlideFiles(finalHeroImages.map(() => null));
       if (finalMfgUrl) setMfgPreview(finalMfgUrl);
       setHomepageContent(finalHomepageContent);
       setShowcaseFiles([null, null, null]);
@@ -1588,59 +1658,77 @@ export default function AdminDashboardPage() {
 
                   {/* Hero Section */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><Star className="h-4 w-4 text-primary" />Hero Section</h3>
-                    <div className="grid lg:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <SectionLabel>Hero Headline</SectionLabel>
-                          <textarea
-                            rows={2}
-                            value={homepageContent.hero_headline || ""}
-                            onChange={e => setHomepageContent({ ...homepageContent, hero_headline: e.target.value })}
-                            className="w-full bg-background border rounded-xl p-3 text-sm resize-none"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <SectionLabel>Hero Sub-headline</SectionLabel>
-                          <textarea
-                            rows={4}
-                            value={homepageContent.hero_subheadline || ""}
-                            onChange={e => setHomepageContent({ ...homepageContent, hero_subheadline: e.target.value })}
-                            className="w-full bg-background border rounded-xl p-3 text-sm resize-none"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <SectionLabel>Hero Image URL</SectionLabel>
-                          <Input
-                            value={heroImageUrl}
-                            onChange={e => { setHeroImageUrl(e.target.value); setHeroPreview(e.target.value); }}
-                            placeholder="https://..."
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <SectionLabel>Or Upload New Hero Image</SectionLabel>
-                          <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 hover:bg-muted/50 transition-colors">
-                            <Upload className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">{heroFile ? heroFile.name : "Click to upload image…"}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) { setHeroFile(e.target.files[0]); setHeroPreview(URL.createObjectURL(e.target.files[0])); } }} />
-                          </label>
-                        </div>
-                      </div>
+                    <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <SectionLabel>Preview</SectionLabel>
-                        <div className="aspect-video rounded-xl overflow-hidden border bg-muted relative">
-                          {heroPreview ? (
-                            <img src={heroPreview} alt="Hero preview" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-muted-foreground">
-                              <ImageIcon className="h-8 w-8 opacity-40" />
+                        <h3 className="font-bold flex items-center gap-2"><Star className="h-4 w-4 text-primary" />Hero Slider</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">Slides rotate automatically every six seconds. Visitors can pause or navigate manually.</p>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={addHeroSlide} disabled={heroSlideUrls.length >= 8}>
+                        <Plus className="mr-2 h-4 w-4" />Add slide
+                      </Button>
+                    </div>
+                    <div className="grid lg:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <SectionLabel>Hero Headline</SectionLabel>
+                        <textarea
+                          rows={3}
+                          value={homepageContent.hero_headline || ""}
+                          onChange={e => setHomepageContent({ ...homepageContent, hero_headline: e.target.value })}
+                          className="w-full bg-background border rounded-xl p-3 text-sm resize-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <SectionLabel>Hero Sub-headline</SectionLabel>
+                        <textarea
+                          rows={3}
+                          value={homepageContent.hero_subheadline || ""}
+                          onChange={e => setHomepageContent({ ...homepageContent, hero_subheadline: e.target.value })}
+                          className="w-full bg-background border rounded-xl p-3 text-sm resize-none"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                      {heroSlideUrls.map((url, index) => (
+                        <div key={index} className="overflow-hidden rounded-2xl border bg-background">
+                          <div className="relative aspect-video bg-muted">
+                            {heroSlidePreviews[index] ? (
+                              <img src={heroSlidePreviews[index]} alt={`Hero slide ${index + 1} preview`} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-muted-foreground">
+                                <ImageIcon className="h-8 w-8 opacity-40" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/75 via-black/15 to-transparent p-4">
+                              <div className="min-w-0">
+                                <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-white/70">Slide {index + 1}</span>
+                                <p className="line-clamp-2 text-xs font-bold text-white">{homepageContent.hero_headline}</p>
+                              </div>
                             </div>
-                          )}
-                          <div className="absolute inset-0 bg-black/40 flex items-end p-4">
-                            <p className="text-white text-xs font-bold line-clamp-2">{homepageContent.hero_headline}</p>
+                            <div className="absolute right-2 top-2 flex gap-1">
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, -1)} disabled={index === 0} aria-label={`Move slide ${index + 1} left`}>
+                                <ChevronLeft className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, 1)} disabled={index === heroSlideUrls.length - 1} aria-label={`Move slide ${index + 1} right`}>
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90 text-destructive" onClick={() => removeHeroSlide(index)} aria-label={`Remove slide ${index + 1}`}>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="space-y-3 p-4">
+                            <div>
+                              <SectionLabel>Image URL</SectionLabel>
+                              <Input value={url} onChange={e => updateHeroSlideUrl(index, e.target.value)} placeholder="https://..." className="text-xs" />
+                            </div>
+                            <label className="flex cursor-pointer items-center gap-2 rounded-xl border p-3 transition-colors hover:bg-muted/50">
+                              <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <span className="truncate text-xs text-muted-foreground">{heroSlideFiles[index]?.name || "Upload replacement image"}</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) updateHeroSlideFile(index, e.target.files[0]); }} />
+                            </label>
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
 

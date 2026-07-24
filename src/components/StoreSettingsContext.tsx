@@ -17,6 +17,7 @@ export interface HomepageStat {
 export interface HomepageContent {
   hero_headline?: string;
   hero_subheadline?: string;
+  hero_images?: string[];
   stats?: HomepageStat[];
   manufacturing_headline?: string;
   manufacturing_body?: string;

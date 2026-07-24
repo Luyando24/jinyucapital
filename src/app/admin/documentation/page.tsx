@@ -39,7 +39,8 @@ const sections = [
     title: "Website Content",
     guides: [
       ["Customize the Homepage", "Use Website Content to update the hero, statistics, manufacturing section, and featured products, then save your changes."],
-      ["Upload Homepage Images", "Upload a hero or manufacturing image, or enter a direct image URL. Check the preview before saving."],
+      ["Manage the Hero Slider", "Use Website Content to add, remove, reorder, upload, or paste URLs for hero background slides. The homepage rotates them automatically and provides visitor controls."],
+      ["Upload Homepage Images", "Upload hero slider or manufacturing images, or enter direct image URLs. Check each preview before saving."],
       ["Configure Store Settings", "Use Settings to maintain store contact details, branding, social links, exchange rates, and wholesale minimum order quantity."],
     ],
   },
