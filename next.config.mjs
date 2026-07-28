@@ -6,14 +6,24 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // React Compiler is experimental, ensure it's off if causing issues
   output: 'standalone',
   turbopack: {
     root: __dirname,
   },
-  experimental: {
-    // reactCompiler: false, // Default is false
+  experimental: {},
+
+  // Redirect www → non-www so Google never sees duplicate URLs
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.jinyucapital.com' }],
+        destination: 'https://jinyucapital.com/:path*',
+        permanent: true, // 301 redirect — Google treats this as canonical
+      },
+    ];
   },
+
   images: {
     remotePatterns: [
       {

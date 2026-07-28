@@ -14,6 +14,9 @@ import { SITE_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: './', // relative → Next.js resolves per-page; layout-level sets the base
+  },
   title: {
     default: "Jinyu Capital | Premium Industrial & Landscape Lighting",
     template: "%s | Jinyu Capital",
