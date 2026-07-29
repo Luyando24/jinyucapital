@@ -32,9 +32,9 @@ import {
   Activity,
   Sparkles,
   Layers,
-  ArrowUpRight,
   Filter,
   CheckCircle2,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -72,7 +72,7 @@ export default function AnalyticsTab({
     return new Date(0); // All time
   }, [timeFrame]);
 
-  // ── Filtered Datasets ───────────────────────────────────────────────────
+  // ── Filtered Datasets (Real Database Data) ──────────────────────────────
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       const d = o.created_at ? new Date(o.created_at) : new Date();
@@ -108,7 +108,7 @@ export default function AnalyticsTab({
     });
   }, [subscribers, cutoffDate]);
 
-  // ── Calculated Metrics ──────────────────────────────────────────────────
+  // ── Calculated Real Metrics ──────────────────────────────────────────────
   const validOrders = useMemo(
     () => filteredOrders.filter((o) => o.status !== "Cancelled"),
     [filteredOrders]
@@ -122,21 +122,6 @@ export default function AnalyticsTab({
   const avgOrderValue = useMemo(
     () => (validOrders.length > 0 ? totalRevenue / validOrders.length : 0),
     [validOrders, totalRevenue]
-  );
-
-  const totalCompletedOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "Shipped" || o.status === "Delivered").length,
-    [filteredOrders]
-  );
-
-  const totalPendingOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "Pending" || o.status === "Processing").length,
-    [filteredOrders]
-  );
-
-  const totalCancelledOrders = useMemo(
-    () => filteredOrders.filter((o) => o.status === "Cancelled").length,
-    [filteredOrders]
   );
 
   // Stock Metrics
@@ -155,7 +140,7 @@ export default function AnalyticsTab({
     [products]
   );
 
-  // ── Revenue & Orders Trend Chart Data ────────────────────────────────────
+  // ── Revenue & Orders Trend Chart Data (Pure Real Data) ───────────────────
   const trendData = useMemo(() => {
     const map: Record<string, { date: string; revenue: number; orders: number }> = {};
 
@@ -179,22 +164,10 @@ export default function AnalyticsTab({
       map[dateKey].orders += 1;
     });
 
-    const result = Object.values(map);
-    if (result.length === 0) {
-      return [
-        { date: "Day 1", revenue: 4200, orders: 3 },
-        { date: "Day 2", revenue: 6800, orders: 5 },
-        { date: "Day 3", revenue: 5100, orders: 4 },
-        { date: "Day 4", revenue: 9400, orders: 7 },
-        { date: "Day 5", revenue: 12500, orders: 9 },
-        { date: "Day 6", revenue: 8900, orders: 6 },
-        { date: "Day 7", revenue: 14200, orders: 11 },
-      ];
-    }
-    return result;
+    return Object.values(map);
   }, [filteredOrders, timeFrame]);
 
-  // ── Category Revenue Breakdown ───────────────────────────────────────────
+  // ── Category Revenue Breakdown (Pure Real Data) ──────────────────────────
   const categoryData = useMemo(() => {
     const map: Record<string, { category: string; revenue: number; items: number }> = {};
 
@@ -211,40 +184,23 @@ export default function AnalyticsTab({
       }
     });
 
-    const result = Object.values(map).sort((a, b) => b.revenue - a.revenue);
-
-    if (result.length === 0) {
-      return [
-        { category: "Explosion-Proof", revenue: 48500, items: 64 },
-        { category: "Landscape Illumination", revenue: 32400, items: 88 },
-        { category: "Industrial LED", revenue: 27900, items: 42 },
-        { category: "Street & Area Lighting", revenue: 19800, items: 30 },
-        { category: "Custom OEM/ODM", revenue: 15600, items: 12 },
-      ];
-    }
-    return result;
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue);
   }, [filteredOrders]);
 
-  // ── Lead Funnel Data ─────────────────────────────────────────────────────
+  // ── Lead Funnel Data (Pure Real Counts) ──────────────────────────────────
   const leadFunnelData = useMemo(() => {
     return [
-      { name: "Quote Requests", value: filteredQuotes.length || 14, icon: FileText, fill: "#2563eb" },
-      { name: "Distributor Leads", value: filteredDistributors.length || 8, icon: Building2, fill: "#10b981" },
-      { name: "Contact Messages", value: filteredMessages.length || 22, icon: Mail, fill: "#8b5cf6" },
-      { name: "Newsletter Signups", value: filteredSubscribers.length || 45, icon: Users, fill: "#f59e0b" },
+      { name: "Quote Requests", value: filteredQuotes.length, icon: FileText, fill: "#2563eb" },
+      { name: "Distributor Leads", value: filteredDistributors.length, icon: Building2, fill: "#10b981" },
+      { name: "Contact Messages", value: filteredMessages.length, icon: Mail, fill: "#8b5cf6" },
+      { name: "Newsletter Signups", value: filteredSubscribers.length, icon: Users, fill: "#f59e0b" },
     ];
   }, [filteredQuotes, filteredDistributors, filteredMessages, filteredSubscribers]);
 
-  // ── Order Status Pie Chart Data ──────────────────────────────────────────
+  // ── Order Status Pie Chart Data (Pure Real Counts) ───────────────────────
   const statusPieData = useMemo(() => {
-    if (filteredOrders.length === 0) {
-      return [
-        { name: "Shipped", value: 18, color: "#10b981" },
-        { name: "Processing", value: 7, color: "#2563eb" },
-        { name: "Pending", value: 4, color: "#f59e0b" },
-        { name: "Cancelled", value: 2, color: "#ef4444" },
-      ];
-    }
+    if (filteredOrders.length === 0) return [];
+
     const counts: Record<string, number> = {};
     filteredOrders.forEach((o) => {
       const st = o.status || "Pending";
@@ -289,9 +245,6 @@ export default function AnalyticsTab({
       ["Total Orders", filteredOrders.length],
       ["Valid/Paid Orders", validOrders.length],
       ["Average Order Value", `$${avgOrderValue.toFixed(2)}`],
-      ["Completed Orders", totalCompletedOrders],
-      ["Pending Orders", totalPendingOrders],
-      ["Cancelled Orders", totalCancelledOrders],
       ["Total Products", products.length],
       ["Low Stock Alert Count", lowStockProducts.length],
       ["Out of Stock Count", outOfStockProducts.length],
@@ -325,9 +278,9 @@ export default function AnalyticsTab({
               <Activity className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Business Intelligence & Analytics</h2>
+              <h2 className="text-xl font-bold tracking-tight">Real-Time Business Analytics</h2>
               <p className="text-sm text-muted-foreground">
-                Real-time performance metrics, sales revenue trends, and conversion analytics.
+                Live performance data from database orders, inquiries, product inventory, and user activity.
               </p>
             </div>
           </div>
@@ -366,7 +319,7 @@ export default function AnalyticsTab({
         </div>
       </div>
 
-      {/* ── KPI Summary Grid ───────────────────────────────────────────────── */}
+      {/* ── KPI Summary Grid (Strictly Real Data) ──────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Card 1: Total Revenue */}
         <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
@@ -383,13 +336,12 @@ export default function AnalyticsTab({
             <span className="text-2xl font-black tracking-tight">
               ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="flex items-center text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <TrendingUp className="h-3.5 w-3.5 mr-1" />
-              +14.2%
+            <span className="flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
+              {validOrders.length} Paid Orders
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <Clock className="h-3 w-3" /> Based on {validOrders.length} paid orders
+            <Clock className="h-3 w-3" /> Filtered by selected timeframe
           </p>
         </div>
 
@@ -408,17 +360,13 @@ export default function AnalyticsTab({
             <span className="text-2xl font-black tracking-tight">
               ${avgOrderValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
-            <span className="flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-              <ArrowUpRight className="h-3.5 w-3.5 mr-0.5" />
-              Healthy
-            </span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Per transaction average across timeframe
+            Per transaction average from database orders
           </p>
         </div>
 
-        {/* Card 3: B2B Quote Pipeline */}
+        {/* Card 3: B2B Quote & Lead Inquiries */}
         <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
           <div className="flex items-center justify-between mb-3">
@@ -434,7 +382,7 @@ export default function AnalyticsTab({
               {(filteredQuotes.length + filteredDistributors.length)} Inquiries
             </span>
             <span className="flex items-center text-xs font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
-              {filteredQuotes.filter((q) => q.status === "new").length} New
+              {filteredQuotes.filter((q) => q.status === "new").length} New Quotes
             </span>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
@@ -465,12 +413,12 @@ export default function AnalyticsTab({
             ) : (
               <span className="flex items-center text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                Optimal
+                In Stock
               </span>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Total Inventory Value: ${totalCatalogValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            Catalog Value: ${totalCatalogValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </p>
         </div>
       </div>
@@ -486,7 +434,7 @@ export default function AnalyticsTab({
                 Revenue & Order Volume Trend
               </h3>
               <p className="text-xs text-muted-foreground">
-                Revenue trajectories ($) and total order volume
+                Live database order revenue ($) and transaction count
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs font-medium">
@@ -502,55 +450,63 @@ export default function AnalyticsTab({
           </div>
 
           <div className="h-[300px] w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1e293b",
-                    borderColor: "#334155",
-                    borderRadius: "0.75rem",
-                    color: "#fff",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: any, name: any) => [
-                    name === "revenue" ? `$${Number(value).toLocaleString()}` : value,
-                    name === "revenue" ? "Revenue" : "Order Volume",
-                  ]}
-                />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#2563eb"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                />
-                <Area
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="orders"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorOrders)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {trendData.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-2 border border-dashed rounded-xl bg-muted/20">
+                <Inbox className="h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-foreground">No order revenue recorded in this timeframe</p>
+                <p className="text-[11px] text-muted-foreground">Real customer orders will automatically populate this chart.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      borderColor: "#334155",
+                      borderRadius: "0.75rem",
+                      color: "#fff",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: any, name: any) => [
+                      name === "revenue" ? `$${Number(value).toLocaleString()}` : value,
+                      name === "revenue" ? "Revenue" : "Order Volume",
+                    ]}
+                  />
+                  <Area
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#2563eb"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                  />
+                  <Area
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="orders"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorOrders)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -562,53 +518,68 @@ export default function AnalyticsTab({
               Order Status Distribution
             </h3>
             <p className="text-xs text-muted-foreground">
-              Order processing & fulfillment status breakdown
+              Real-time order processing status from database
             </p>
           </div>
 
           <div className="h-[220px] w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {statusPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1e293b",
-                    borderColor: "#334155",
-                    borderRadius: "0.75rem",
-                    color: "#fff",
-                    fontSize: "12px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black">{filteredOrders.length}</span>
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Orders</span>
-            </div>
+            {statusPieData.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-1 border border-dashed rounded-xl bg-muted/20">
+                <Inbox className="h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-foreground">No orders in timeframe</p>
+              </div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {statusPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#1e293b",
+                        borderColor: "#334155",
+                        borderRadius: "0.75rem",
+                        color: "#fff",
+                        fontSize: "12px",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black">{filteredOrders.length}</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Orders</span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
-            {statusPieData.map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="font-medium text-muted-foreground">{item.name}</span>
-                </div>
-                <span className="font-bold">{item.value}</span>
+            {statusPieData.length === 0 ? (
+              <div className="col-span-2 text-center text-muted-foreground text-xs py-1">
+                Zero orders logged for this period
               </div>
-            ))}
+            ) : (
+              statusPieData.map((item) => (
+                <div key={item.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="font-medium text-muted-foreground">{item.name}</span>
+                  </div>
+                  <span className="font-bold">{item.value}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -623,29 +594,36 @@ export default function AnalyticsTab({
               Category Revenue Breakdown
             </h3>
             <p className="text-xs text-muted-foreground">
-              Estimated revenue share by product classification
+              Revenue distribution calculated from database order items
             </p>
           </div>
 
           <div className="h-[260px] w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={100} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1e293b",
-                    borderColor: "#334155",
-                    borderRadius: "0.75rem",
-                    color: "#fff",
-                    fontSize: "12px",
-                  }}
-                  formatter={(value: any) => [`$${Number(value).toLocaleString()}`, "Revenue"]}
-                />
-                <Bar dataKey="revenue" fill="#2563eb" radius={[0, 8, 8, 0]} barSize={20} />
-              </BarChart>
-            </ResponsiveContainer>
+            {categoryData.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-2 border border-dashed rounded-xl bg-muted/20">
+                <Inbox className="h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-foreground">No category sales recorded in this timeframe</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryData} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                  <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={100} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      borderColor: "#334155",
+                      borderRadius: "0.75rem",
+                      color: "#fff",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, "Revenue"]}
+                  />
+                  <Bar dataKey="revenue" fill="#2563eb" radius={[0, 8, 8, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -654,10 +632,10 @@ export default function AnalyticsTab({
           <div>
             <h3 className="font-bold text-base flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Customer Inquiry & Lead Acquisition
+              Customer Inquiries & Lead Touchpoints
             </h3>
             <p className="text-xs text-muted-foreground">
-              Incoming customer touchpoints & B2B pipeline conversion sources
+              Live counts from database tables
             </p>
           </div>
 
@@ -684,14 +662,14 @@ export default function AnalyticsTab({
           <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex items-start gap-3 mt-4 text-xs text-blue-900">
             <InfoIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold">B2B Conversion Insight: </span>
-              Quote Requests represent the highest intent purchasing signals. Ensure new quote submissions are reviewed within 24 hours.
+              <span className="font-bold">Real-time Lead Pipeline: </span>
+              Inquiries map directly to active Supabase tables (`quote_requests`, `distributor_applications`, `contact_messages`, `newsletter_subscribers`).
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Product Inventory & Stock Velocity Table ───────────────────────── */}
+      {/* ── Product Inventory & Stock Velocity Table (Pure Real Data) ──────── */}
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -700,7 +678,7 @@ export default function AnalyticsTab({
               Product Inventory & Stock Status
             </h3>
             <p className="text-xs text-muted-foreground">
-              Monitor product catalog stock health, pricing, and availability
+              Real-time inventory levels from the products database table
             </p>
           </div>
 
@@ -738,7 +716,7 @@ export default function AnalyticsTab({
               {filteredProductsList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No products match the selected category filter.
+                    No products found in database for the selected category.
                   </td>
                 </tr>
               ) : (
