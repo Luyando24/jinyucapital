@@ -61,8 +61,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStoreSettings } from "@/components/StoreSettingsContext";
 import { DEFAULT_HERO_IMAGES, DEFAULT_SHOWCASE } from "@/lib/default-images";
 import CRMTab from "@/components/admin/CRMTab";
+import AnalyticsTab from "@/components/admin/AnalyticsTab";
 
-type AdminTab = "overview" | "crm" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
+type AdminTab = "overview" | "analytics" | "crm" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
@@ -1011,6 +1012,7 @@ export default function AdminDashboardPage() {
 
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "crm", label: "CRM", icon: ContactRound },
     { id: "products", label: "Products", icon: Package },
     { id: "orders", label: "Orders", icon: ShoppingBag },
@@ -1115,7 +1117,7 @@ export default function AdminDashboardPage() {
             <button className="md:hidden p-2 -ml-2 hover:bg-muted rounded-lg" onClick={() => setIsMobileMenuOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-bold capitalize">{activeTab === "website" ? "Website Content" : activeTab === "docs" ? "Documentation" : activeTab === "crm" ? "CRM" : activeTab}</h1>
+            <h1 className="text-lg font-bold capitalize">{activeTab === "website" ? "Website Content" : activeTab === "analytics" ? "Analytics & Reports" : activeTab === "docs" ? "Documentation" : activeTab === "crm" ? "CRM" : activeTab}</h1>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={loadAdminDataset} title="Refresh">
@@ -1224,6 +1226,19 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* ── ANALYTICS ── */}
+              {activeTab === "analytics" && (
+                <AnalyticsTab
+                  orders={orders}
+                  products={products}
+                  quoteRequests={quoteRequests}
+                  distributorApplications={distributorApplications}
+                  contactMessages={contactMessages}
+                  subscribers={subscribers}
+                  loading={loading}
+                />
               )}
 
               {/* ── CRM ── */}
