@@ -399,6 +399,7 @@ export default function AdminDashboardPage() {
   const [quoteRequests, setQuoteRequests] = useState<any[]>([]);
   const [distributorApplications, setDistributorApplications] = useState<any[]>([]);
   const [contactMessages, setContactMessages] = useState<any[]>([]);
+  const [pageViews, setPageViews] = useState<any[]>([]);
   const [storeSettings, setStoreSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -510,6 +511,18 @@ export default function AdminDashboardPage() {
       setDistributorApplications(distData || []);
       setContactMessages(contactData || []);
       setBlogPosts(blogData || []);
+
+      // Fetch page_views safely
+      try {
+        const { data: pvData } = await supabase
+          .from("page_views")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(2000);
+        setPageViews(pvData || []);
+      } catch (pvErr) {
+        setPageViews([]);
+      }
 
       if (settingsData) {
         setStoreSettings(settingsData);
@@ -1237,6 +1250,7 @@ export default function AdminDashboardPage() {
                   distributorApplications={distributorApplications}
                   contactMessages={contactMessages}
                   subscribers={subscribers}
+                  pageViews={pageViews}
                   loading={loading}
                 />
               )}

@@ -35,6 +35,14 @@ import {
   Filter,
   CheckCircle2,
   Inbox,
+  Globe,
+  Smartphone,
+  Laptop,
+  Compass,
+  Link as LinkIcon,
+  UserCheck,
+  Eye,
+  Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -45,10 +53,13 @@ interface AnalyticsTabProps {
   distributorApplications: any[];
   contactMessages: any[];
   subscribers: any[];
+  pageViews?: any[];
   loading?: boolean;
 }
 
 type TimeFrame = "7d" | "30d" | "90d" | "ytd" | "all";
+
+const DEVICE_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6"];
 
 export default function AnalyticsTab({
   orders = [],
@@ -57,6 +68,7 @@ export default function AnalyticsTab({
   distributorApplications = [],
   contactMessages = [],
   subscribers = [],
+  pageViews = [],
   loading = false,
 }: AnalyticsTabProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("30d");
@@ -72,7 +84,7 @@ export default function AnalyticsTab({
     return new Date(0); // All time
   }, [timeFrame]);
 
-  // ── Filtered Datasets (Real Database Data) ──────────────────────────────
+  // ── Filtered Datasets ───────────────────────────────────────────────────
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       const d = o.created_at ? new Date(o.created_at) : new Date();
@@ -108,7 +120,130 @@ export default function AnalyticsTab({
     });
   }, [subscribers, cutoffDate]);
 
-  // ── Calculated Real Metrics ──────────────────────────────────────────────
+  const filteredPageViews = useMemo(() => {
+    return pageViews.filter((pv) => {
+      const d = pv.created_at ? new Date(pv.created_at) : new Date();
+      return d >= cutoffDate;
+    });
+  }, [pageViews, cutoffDate]);
+
+  // ── Active Users Calculation (5m, 15m, 24h) ──────────────────────────────
+  const activeUsers5m = useMemo(() => {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const set = new Set<string>();
+    pageViews.forEach((pv) => {
+      const d = pv.created_at ? new Date(pv.created_at) : new Date();
+      if (d >= fiveMinAgo && pv.session_id) set.add(pv.session_id);
+    });
+    return set.size;
+  }, [pageViews]);
+
+  const activeUsers15m = useMemo(() => {
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const set = new Set<string>();
+    pageViews.forEach((pv) => {
+      const d = pv.created_at ? new Date(pv.created_at) : new Date();
+      if (d >= fifteenMinAgo && pv.session_id) set.add(pv.session_id);
+    });
+    return set.size;
+  }, [pageViews]);
+
+  const activeUsers24h = useMemo(() => {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const set = new Set<string>();
+    pageViews.forEach((pv) => {
+      const d = pv.created_at ? new Date(pv.created_at) : new Date();
+      if (d >= oneDayAgo && pv.session_id) set.add(pv.session_id);
+    });
+    return set.size;
+  }, [pageViews]);
+
+  // ── Traffic Sources & Referring Links ────────────────────────────────────
+  const trafficSources = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredPageViews.forEach((pv) => {
+      let ref = pv.referrer || "Direct / None";
+      if (!ref || ref === "" || ref.includes(window.location.hostname)) {
+        ref = "Direct Navigation";
+      } else if (ref.includes("google.")) {
+        ref = "Google Search";
+      } else if (ref.includes("bing.") || ref.includes("duckduckgo") || ref.includes("yahoo")) {
+        ref = "Search Engines";
+      } else if (
+        ref.includes("linkedin.com") ||
+        ref.includes("t.co") ||
+        ref.includes("twitter.com") ||
+        ref.includes("facebook.com") ||
+        ref.includes("instagram.com")
+      ) {
+        ref = "Social Networks";
+      } else if (ref.startsWith("http")) {
+        try {
+          const u = new URL(ref);
+          ref = u.hostname;
+        } catch (e) {}
+      }
+      map[ref] = (map[ref] || 0) + 1;
+    });
+
+    return Object.entries(map)
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPageViews]);
+
+  // ── Country & Regional Distribution ───────────────────────────────────────
+  const countryDistribution = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredPageViews.forEach((pv) => {
+      const c = pv.country && pv.country !== "Unknown" ? pv.country : "Direct Locale";
+      map[c] = (map[c] || 0) + 1;
+    });
+    distributorApplications.forEach((d) => {
+      if (d.country) {
+        map[d.country] = (map[d.country] || 0) + 3; // Weight distributor apps
+      }
+    });
+
+    return Object.entries(map)
+      .map(([country, count]) => ({ country, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPageViews, distributorApplications]);
+
+  // ── Device Type & Browser Breakdown ──────────────────────────────────────
+  const deviceBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredPageViews.forEach((pv) => {
+      const dev = pv.device || "Desktop";
+      map[dev] = (map[dev] || 0) + 1;
+    });
+    const result = Object.entries(map).map(([name, value]) => ({ name, value }));
+    return result;
+  }, [filteredPageViews]);
+
+  const browserBreakdown = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredPageViews.forEach((pv) => {
+      const b = pv.browser || "Other";
+      map[b] = (map[b] || 0) + 1;
+    });
+    return Object.entries(map)
+      .map(([browser, count]) => ({ browser, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPageViews]);
+
+  // ── Top Visited Pages ────────────────────────────────────────────────────
+  const topVisitedPages = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredPageViews.forEach((pv) => {
+      const p = pv.path || "/";
+      map[p] = (map[p] || 0) + 1;
+    });
+    return Object.entries(map)
+      .map(([path, count]) => ({ path, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredPageViews]);
+
+  // ── Calculated Real E-Commerce Metrics ───────────────────────────────────
   const validOrders = useMemo(
     () => filteredOrders.filter((o) => o.status !== "Cancelled"),
     [filteredOrders]
@@ -140,7 +275,7 @@ export default function AnalyticsTab({
     [products]
   );
 
-  // ── Revenue & Orders Trend Chart Data (Pure Real Data) ───────────────────
+  // ── Revenue & Orders Trend Chart Data ────────────────────────────────────
   const trendData = useMemo(() => {
     const map: Record<string, { date: string; revenue: number; orders: number }> = {};
 
@@ -167,7 +302,7 @@ export default function AnalyticsTab({
     return Object.values(map);
   }, [filteredOrders, timeFrame]);
 
-  // ── Category Revenue Breakdown (Pure Real Data) ──────────────────────────
+  // ── Category Revenue Breakdown ───────────────────────────────────────────
   const categoryData = useMemo(() => {
     const map: Record<string, { category: string; revenue: number; items: number }> = {};
 
@@ -185,41 +320,6 @@ export default function AnalyticsTab({
     });
 
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [filteredOrders]);
-
-  // ── Lead Funnel Data (Pure Real Counts) ──────────────────────────────────
-  const leadFunnelData = useMemo(() => {
-    return [
-      { name: "Quote Requests", value: filteredQuotes.length, icon: FileText, fill: "#2563eb" },
-      { name: "Distributor Leads", value: filteredDistributors.length, icon: Building2, fill: "#10b981" },
-      { name: "Contact Messages", value: filteredMessages.length, icon: Mail, fill: "#8b5cf6" },
-      { name: "Newsletter Signups", value: filteredSubscribers.length, icon: Users, fill: "#f59e0b" },
-    ];
-  }, [filteredQuotes, filteredDistributors, filteredMessages, filteredSubscribers]);
-
-  // ── Order Status Pie Chart Data (Pure Real Counts) ───────────────────────
-  const statusPieData = useMemo(() => {
-    if (filteredOrders.length === 0) return [];
-
-    const counts: Record<string, number> = {};
-    filteredOrders.forEach((o) => {
-      const st = o.status || "Pending";
-      counts[st] = (counts[st] || 0) + 1;
-    });
-
-    const statusColors: Record<string, string> = {
-      Shipped: "#10b981",
-      Delivered: "#059669",
-      Processing: "#2563eb",
-      Pending: "#f59e0b",
-      Cancelled: "#ef4444",
-    };
-
-    return Object.entries(counts).map(([name, value]) => ({
-      name,
-      value,
-      color: statusColors[name] || "#8b5cf6",
-    }));
   }, [filteredOrders]);
 
   // ── Product Stock Performance Table ──────────────────────────────────────
@@ -241,6 +341,10 @@ export default function AnalyticsTab({
     const headers = ["Metric", "Value"];
     const rows = [
       ["Timeframe", timeFrame],
+      ["Active Users (5 min)", activeUsers5m],
+      ["Active Users (15 min)", activeUsers15m],
+      ["Active Users (24 hours)", activeUsers24h],
+      ["Total Page Views", filteredPageViews.length],
       ["Total Revenue", `$${totalRevenue.toFixed(2)}`],
       ["Total Orders", filteredOrders.length],
       ["Valid/Paid Orders", validOrders.length],
@@ -248,7 +352,6 @@ export default function AnalyticsTab({
       ["Total Products", products.length],
       ["Low Stock Alert Count", lowStockProducts.length],
       ["Out of Stock Count", outOfStockProducts.length],
-      ["Total Catalog Stock Value", `$${totalCatalogValue.toFixed(2)}`],
       ["Quote Requests", filteredQuotes.length],
       ["Distributor Applications", filteredDistributors.length],
       ["Contact Messages", filteredMessages.length],
@@ -278,9 +381,9 @@ export default function AnalyticsTab({
               <Activity className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Real-Time Business Analytics</h2>
+              <h2 className="text-xl font-bold tracking-tight">Real-Time Traffic & User Analytics</h2>
               <p className="text-sm text-muted-foreground">
-                Live performance data from database orders, inquiries, product inventory, and user activity.
+                Active website visitors, referring traffic links, country locales, device types, and sales revenue.
               </p>
             </div>
           </div>
@@ -314,108 +417,326 @@ export default function AnalyticsTab({
 
           <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-2 rounded-xl border-slate-300">
             <Download className="h-4 w-4 text-primary" />
-            Export CSV
+            Export Report
           </Button>
         </div>
       </div>
 
-      {/* ── KPI Summary Grid (Strictly Real Data) ──────────────────────────── */}
+      {/* ── ACTIVE USERS & REAL-TIME VISITOR METRICS ────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {/* Active Now (5 min) */}
+        <div className="bg-emerald-950/5 border border-emerald-500/20 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              Active Users Now
+            </span>
+            <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+              <UserCheck className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-3xl font-black text-emerald-900 tracking-tight">{activeUsers5m}</div>
+          <p className="text-xs text-emerald-700 mt-1">Live visitors active in last 5 minutes</p>
+        </div>
+
+        {/* Active (15 min) */}
+        <div className="bg-blue-950/5 border border-blue-500/20 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              15-Min Active Visitors
+            </span>
+            <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
+              <Eye className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-3xl font-black text-blue-900 tracking-tight">{activeUsers15m}</div>
+          <p className="text-xs text-blue-700 mt-1">Unique session visitors in last 15 mins</p>
+        </div>
+
+        {/* Active 24 Hours */}
+        <div className="bg-violet-950/5 border border-violet-500/20 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-violet-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              24-Hour Active Users
+            </span>
+            <div className="p-2 bg-violet-100 text-violet-700 rounded-xl">
+              <Monitor className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="text-3xl font-black text-violet-900 tracking-tight">{activeUsers24h}</div>
+          <p className="text-xs text-violet-700 mt-1">Unique user sessions recorded today</p>
+        </div>
+      </div>
+
+      {/* ── TRAFFIC SOURCES & GEOGRAPHICAL LOCALE GRID ──────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Referring Link / Traffic Channels */}
+        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <LinkIcon className="h-5 w-5 text-primary" />
+                Traffic Sources & Referring Links
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Origins and acquisition links of website traffic
+              </p>
+            </div>
+            <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+              {filteredPageViews.length} Pageviews
+            </span>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            {trafficSources.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border border-dashed rounded-xl text-xs">
+                No referral traffic recorded in this timeframe yet.
+              </div>
+            ) : (
+              trafficSources.slice(0, 6).map((item) => {
+                const pct = filteredPageViews.length > 0 ? ((item.count / filteredPageViews.length) * 100).toFixed(1) : 0;
+                return (
+                  <div key={item.source} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-foreground truncate max-w-[240px]">
+                        {item.source}
+                      </span>
+                      <span className="font-mono text-muted-foreground font-medium">
+                        {item.count} views ({pct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        style={{ width: `${Math.max(Number(pct), 4)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Country & Geographical Distribution */}
+        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Geographical Country Traffic
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Global visitor locations & B2B distributor regions
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            {countryDistribution.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border border-dashed rounded-xl text-xs">
+                No location traffic data recorded in this timeframe yet.
+              </div>
+            ) : (
+              countryDistribution.slice(0, 6).map((item) => {
+                return (
+                  <div key={item.country} className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                        {item.country.slice(0, 2).toUpperCase()}
+                      </div>
+                      <span className="font-bold text-xs text-foreground">{item.country}</span>
+                    </div>
+                    <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                      {item.count} interactions
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── DEVICE TYPES & TOP VISITED PAGES GRID ───────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Device & Browser Distribution */}
+        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4 flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-base flex items-center gap-2">
+              <Laptop className="h-5 w-5 text-primary" />
+              Device Types & Browsers
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Desktop vs Mobile vs Tablet ratio
+            </p>
+          </div>
+
+          <div className="h-[200px] w-full relative">
+            {deviceBreakdown.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-1 border border-dashed rounded-xl bg-muted/20">
+                <Smartphone className="h-8 w-8 text-muted-foreground/40" />
+                <p className="font-semibold text-foreground">No device data</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={deviceBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {deviceBreakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={DEVICE_COLORS[index % DEVICE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1e293b",
+                      borderColor: "#334155",
+                      borderRadius: "0.75rem",
+                      color: "#fff",
+                      fontSize: "12px",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="space-y-2 pt-2 border-t text-xs">
+            {deviceBreakdown.map((dev, idx) => (
+              <div key={dev.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: DEVICE_COLORS[idx % DEVICE_COLORS.length] }} />
+                  <span className="font-medium text-muted-foreground">{dev.name}</span>
+                </div>
+                <span className="font-bold">{dev.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Visited Pages List (2 Cols) */}
+        <div className="lg:col-span-2 bg-card border p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base flex items-center gap-2">
+                <Compass className="h-5 w-5 text-primary" />
+                Top Visited Pages & Content Traffic
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Page URL paths with highest visitor traffic
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto pt-1">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-muted/50 border-b font-semibold text-muted-foreground">
+                <tr>
+                  <th className="p-3">Page URL Path</th>
+                  <th className="p-3 text-right">Page Views</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {topVisitedPages.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="p-8 text-center text-muted-foreground">
+                      No page views recorded in this timeframe yet.
+                    </td>
+                  </tr>
+                ) : (
+                  topVisitedPages.slice(0, 7).map((item) => (
+                    <tr key={item.path} className="hover:bg-muted/30 transition-colors">
+                      <td className="p-3 font-mono font-medium text-foreground">{item.path}</td>
+                      <td className="p-3 text-right font-bold text-primary">{item.count} views</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* ── E-COMMERCE & SALES PERFORMANCE SUMMARY ────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Total Revenue */}
-        <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+        {/* Total Revenue */}
+        <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Revenue
+              Total Sales Revenue
             </span>
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
               <DollarSign className="h-5 w-5" />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black tracking-tight">
-              ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-            <span className="flex items-center text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
-              {validOrders.length} Paid Orders
-            </span>
+          <div className="text-2xl font-black tracking-tight">
+            ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <Clock className="h-3 w-3" /> Filtered by selected timeframe
+          <p className="text-xs text-muted-foreground mt-2">
+            Based on {validOrders.length} paid orders
           </p>
         </div>
 
-        {/* Card 2: Average Order Value */}
-        <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+        {/* Avg Order Value */}
+        <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Avg Order Value (AOV)
+              Average Order Value
             </span>
             <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
               <ShoppingBag className="h-5 w-5" />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black tracking-tight">
-              ${avgOrderValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
+          <div className="text-2xl font-black tracking-tight">
+            ${avgOrderValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Per transaction average from database orders
+            Per transaction average
           </p>
         </div>
 
-        {/* Card 3: B2B Quote & Lead Inquiries */}
-        <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+        {/* B2B Inquiries */}
+        <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Quote & Distributor Leads
+              Quote & Partner Leads
             </span>
             <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl">
               <FileText className="h-5 w-5" />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black tracking-tight">
-              {(filteredQuotes.length + filteredDistributors.length)} Inquiries
-            </span>
-            <span className="flex items-center text-xs font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
-              {filteredQuotes.filter((q) => q.status === "new").length} New Quotes
-            </span>
+          <div className="text-2xl font-black tracking-tight">
+            {(filteredQuotes.length + filteredDistributors.length)} Inquiries
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             {filteredQuotes.length} Quotes & {filteredDistributors.length} Distributor Apps
           </p>
         </div>
 
-        {/* Card 4: Inventory & Catalog Health */}
-        <div className="bg-card border p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
+        {/* Catalog Stock */}
+        <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Catalog Stock Health
+              Catalog Products
             </span>
             <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
               <Package className="h-5 w-5" />
             </div>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black tracking-tight">
-              {products.length} Products
-            </span>
-            {lowStockProducts.length > 0 ? (
-              <span className="flex items-center text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-                {lowStockProducts.length} Low Stock
-              </span>
-            ) : (
-              <span className="flex items-center text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                In Stock
-              </span>
-            )}
+          <div className="text-2xl font-black tracking-tight">
+            {products.length} Items
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             Catalog Value: ${totalCatalogValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
@@ -423,253 +744,7 @@ export default function AnalyticsTab({
         </div>
       </div>
 
-      {/* ── Main Charts Grid ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue & Orders Trend Area Chart (2 Cols) */}
-        <div className="lg:col-span-2 bg-card border p-6 rounded-2xl shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-base flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Revenue & Order Volume Trend
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Live database order revenue ($) and transaction count
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-600 inline-block" />
-                <span>Revenue ($)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block" />
-                <span>Orders</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-[300px] w-full pt-4">
-            {trendData.length === 0 ? (
-              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-2 border border-dashed rounded-xl bg-muted/20">
-                <Inbox className="h-8 w-8 text-muted-foreground/40" />
-                <p className="font-semibold text-foreground">No order revenue recorded in this timeframe</p>
-                <p className="text-[11px] text-muted-foreground">Real customer orders will automatically populate this chart.</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="left" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      borderColor: "#334155",
-                      borderRadius: "0.75rem",
-                      color: "#fff",
-                      fontSize: "12px",
-                    }}
-                    formatter={(value: any, name: any) => [
-                      name === "revenue" ? `$${Number(value).toLocaleString()}` : value,
-                      name === "revenue" ? "Revenue" : "Order Volume",
-                    ]}
-                  />
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#2563eb"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
-                  />
-                  <Area
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="orders"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorOrders)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Order Fulfillment Status Pie Chart (1 Col) */}
-        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-base flex items-center gap-2">
-              <PieIcon className="h-5 w-5 text-primary" />
-              Order Status Distribution
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Real-time order processing status from database
-            </p>
-          </div>
-
-          <div className="h-[220px] w-full relative">
-            {statusPieData.length === 0 ? (
-              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-1 border border-dashed rounded-xl bg-muted/20">
-                <Inbox className="h-8 w-8 text-muted-foreground/40" />
-                <p className="font-semibold text-foreground">No orders in timeframe</p>
-              </div>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusPieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {statusPieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#1e293b",
-                        borderColor: "#334155",
-                        borderRadius: "0.75rem",
-                        color: "#fff",
-                        fontSize: "12px",
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-black">{filteredOrders.length}</span>
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Orders</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
-            {statusPieData.length === 0 ? (
-              <div className="col-span-2 text-center text-muted-foreground text-xs py-1">
-                Zero orders logged for this period
-              </div>
-            ) : (
-              statusPieData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/40">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="font-medium text-muted-foreground">{item.name}</span>
-                  </div>
-                  <span className="font-bold">{item.value}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Second Row Charts: Category Sales & Lead Funnel ────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Sales & Revenue Bar Chart */}
-        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-base flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Category Revenue Breakdown
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Revenue distribution calculated from database order items
-            </p>
-          </div>
-
-          <div className="h-[260px] w-full pt-2">
-            {categoryData.length === 0 ? (
-              <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-2 border border-dashed rounded-xl bg-muted/20">
-                <Inbox className="h-8 w-8 text-muted-foreground/40" />
-                <p className="font-semibold text-foreground">No category sales recorded in this timeframe</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                  <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={100} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1e293b",
-                      borderColor: "#334155",
-                      borderRadius: "0.75rem",
-                      color: "#fff",
-                      fontSize: "12px",
-                    }}
-                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, "Revenue"]}
-                  />
-                  <Bar dataKey="revenue" fill="#2563eb" radius={[0, 8, 8, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Lead Conversion Funnel */}
-        <div className="bg-card border p-6 rounded-2xl shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-base flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Customer Inquiries & Lead Touchpoints
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Live counts from database tables
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            {leadFunnelData.map((lead) => {
-              const IconComp = lead.icon;
-              return (
-                <div
-                  key={lead.name}
-                  className="p-4 rounded-xl border bg-muted/20 flex items-center gap-3.5 hover:bg-muted/40 transition-colors"
-                >
-                  <div className="p-3 rounded-xl text-white shadow-sm" style={{ backgroundColor: lead.fill }}>
-                    <IconComp className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-black tracking-tight">{lead.value}</div>
-                    <div className="text-xs font-semibold text-muted-foreground">{lead.name}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex items-start gap-3 mt-4 text-xs text-blue-900">
-            <InfoIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold">Real-time Lead Pipeline: </span>
-              Inquiries map directly to active Supabase tables (`quote_requests`, `distributor_applications`, `contact_messages`, `newsletter_subscribers`).
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Product Inventory & Stock Velocity Table (Pure Real Data) ──────── */}
+      {/* ── Product Inventory Table ────────────────────────────────────── */}
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
         <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -767,26 +842,5 @@ export default function AnalyticsTab({
         )}
       </div>
     </div>
-  );
-}
-
-function InfoIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
-    </svg>
   );
 }

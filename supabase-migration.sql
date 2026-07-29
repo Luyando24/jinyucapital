@@ -134,8 +134,21 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   updated_at         TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── 10. Page Views Table ──────────────────────────────────────
+-- Real-time visitor activity, traffic sources, countries, and devices
+CREATE TABLE IF NOT EXISTS page_views (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id  TEXT NOT NULL,
+  path        TEXT NOT NULL,
+  referrer    TEXT,
+  device      TEXT DEFAULT 'Desktop', -- Desktop, Mobile, Tablet
+  browser     TEXT DEFAULT 'Other',   -- Chrome, Safari, Firefox, Edge, etc.
+  country     TEXT DEFAULT 'Unknown', -- Country / Region code or name
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
--- Row Level Security (RLS) Configuration
+-- Row Level Security (RLS) Configuration (Idempotent)
 -- ============================================================
 
 -- 1. Enable RLS on all tables
@@ -148,30 +161,70 @@ ALTER TABLE quote_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE distributor_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
 
 -- 2. Public Read Policies (Public access for storefront)
+DROP POLICY IF EXISTS "Public read products" ON products;
 CREATE POLICY "Public read products" ON products FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read settings" ON store_settings;
 CREATE POLICY "Public read settings" ON store_settings FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read blog_posts" ON blog_posts;
 CREATE POLICY "Public read blog_posts" ON blog_posts FOR SELECT USING (true);
 
--- 3. Public Insert Policies (Lead generation & checkout)
+-- 3. Public Insert Policies (Lead generation, checkout & analytics)
+DROP POLICY IF EXISTS "Public submit orders" ON orders;
 CREATE POLICY "Public submit orders" ON orders FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public submit order_items" ON order_items;
 CREATE POLICY "Public submit order_items" ON order_items FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public subscribe newsletter" ON newsletter_subscribers;
 CREATE POLICY "Public subscribe newsletter" ON newsletter_subscribers FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public submit quote" ON quote_requests;
 CREATE POLICY "Public submit quote" ON quote_requests FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public submit distributor" ON distributor_applications;
 CREATE POLICY "Public submit distributor" ON distributor_applications FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public submit contact" ON contact_messages;
 CREATE POLICY "Public submit contact" ON contact_messages FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public insert page_views" ON page_views;
+CREATE POLICY "Public insert page_views" ON page_views FOR INSERT WITH CHECK (true);
+
 -- 4. Admin Full Access Policies (Authenticated users only)
+DROP POLICY IF EXISTS "Admin manage products" ON products;
 CREATE POLICY "Admin manage products" ON products FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage orders" ON orders;
 CREATE POLICY "Admin manage orders" ON orders FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage order_items" ON order_items;
 CREATE POLICY "Admin manage order_items" ON order_items FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage settings" ON store_settings;
 CREATE POLICY "Admin manage settings" ON store_settings FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage subscribers" ON newsletter_subscribers;
 CREATE POLICY "Admin manage subscribers" ON newsletter_subscribers FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage quotes" ON quote_requests;
 CREATE POLICY "Admin manage quotes" ON quote_requests FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage distributors" ON distributor_applications;
 CREATE POLICY "Admin manage distributors" ON distributor_applications FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage contacts" ON contact_messages;
 CREATE POLICY "Admin manage contacts" ON contact_messages FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage blog_posts" ON blog_posts;
 CREATE POLICY "Admin manage blog_posts" ON blog_posts FOR ALL USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Admin manage page_views" ON page_views;
+CREATE POLICY "Admin manage page_views" ON page_views FOR ALL USING (auth.role() = 'authenticated');
 
 -- ============================================================
 -- Indexes for Performance
@@ -184,3 +237,5 @@ CREATE INDEX IF NOT EXISTS idx_distributor_applications_status ON distributor_ap
 CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status);
 CREATE INDEX IF NOT EXISTS idx_blog_posts_category ON blog_posts(category);
 CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
+CREATE INDEX IF NOT EXISTS idx_page_views_created_at ON page_views(created_at);
+CREATE INDEX IF NOT EXISTS idx_page_views_session_id ON page_views(session_id);

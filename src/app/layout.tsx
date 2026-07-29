@@ -9,6 +9,7 @@ import { CartProvider } from "@/components/CartContext";
 import { CurrencyProvider } from "@/components/CurrencyContext";
 import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
 import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { createClient } from "@supabase/supabase-js";
 import { SITE_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/site";
 
@@ -135,6 +136,7 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`antialiased font-sans min-h-screen flex flex-col bg-white text-black`}
       >
+        <AnalyticsTracker />
         <ServiceWorkerCleanup />
         <ThemeProvider
           attribute="class"
