@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -56,7 +56,7 @@ function detectCountryFromTimezoneOrLocale(): string {
   return "Global / Unknown";
 }
 
-export default function AnalyticsTracker() {
+function AnalyticsTrackerInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const lastTrackedPath = useRef<string | null>(null);
@@ -107,4 +107,12 @@ export default function AnalyticsTracker() {
   }, [pathname, searchParams]);
 
   return null;
+}
+
+export default function AnalyticsTracker() {
+  return (
+    <Suspense fallback={null}>
+      <AnalyticsTrackerInner />
+    </Suspense>
+  );
 }
