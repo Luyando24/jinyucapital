@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 const CATEGORIES = [
   'All',
@@ -19,6 +20,7 @@ const CATEGORIES = [
 ];
 
 export default function BlogPage() {
+  const { t } = useWebsiteLanguage();
   const [posts, setPosts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,10 +69,10 @@ export default function BlogPage() {
               className="text-4xl md:text-5xl font-bold leading-tight mb-6"
               style={{ letterSpacing: '-0.02em', textWrap: 'balance' }}
             >
-              Industry Insights & News
+              {t("Industry Insights & News")}
             </h1>
             <p className="text-lg leading-relaxed opacity-90 max-w-2xl">
-              Stay informed with the latest trends in industrial manufacturing, explosion-proof technology, and robust engineering solutions.
+              {t("Stay informed with the latest trends in industrial manufacturing, explosion-proof technology, and robust engineering solutions.")}
             </p>
           </motion.div>
         </div>
@@ -93,7 +95,7 @@ export default function BlogPage() {
                         : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground'
                     }`}
                   >
-                    {cat}
+                    {t(cat)}
                   </button>
                 );
               })}
@@ -102,7 +104,7 @@ export default function BlogPage() {
             <div className="relative max-w-sm w-full md:w-64 flex-shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Search articles..." 
+                placeholder={t("Search products...")} 
                 className="pl-10 rounded-full bg-muted/30 border-transparent focus-visible:ring-primary/50"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

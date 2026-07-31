@@ -3,9 +3,11 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Send, FileText, Sparkles, Shield, Clock, HelpCircle, Loader2 } from "lucide-react";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 function QuoteContent() {
   const searchParams = useSearchParams();
+  const { t } = useWebsiteLanguage();
   const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
 
   // Form Fields
@@ -69,13 +71,13 @@ function QuoteContent() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
           <div className="max-w-3xl space-y-4">
             <span className="inline-flex items-center text-xs font-bold text-primary border border-primary/20 bg-primary/5 px-3 py-1 rounded-full uppercase tracking-wider" style={{ fontFamily: "var(--font-display)" }}>
-              B2B & Commercial Inquiry
+              {t("B2B & Commercial Inquiry")}
             </span>
             <h1 className="text-3xl md:text-5xl font-display font-extrabold text-black tracking-tight uppercase">
-              Request a Project Quote
+              {t("Request a Project Quote")}
             </h1>
             <p className="text-neutral-500 text-sm md:text-base leading-relaxed font-light">
-              Submit your architectural, street, or landscape lighting requirements below. Our engineering and sales team will review your specifications and provide a competitive wholesale quote.
+              {t("Submit your architectural, street, or landscape lighting requirements below. Our engineering and sales team will review your specifications and provide a competitive wholesale quote.")}
             </p>
           </div>
         </div>
@@ -90,10 +92,10 @@ function QuoteContent() {
                   ✓
                 </div>
                 <h3 className="font-display text-2xl font-extrabold uppercase tracking-wider text-black">
-                  Quote Request Received
+                  {t("Quote Request Received")}
                 </h3>
                 <p className="text-sm text-neutral-500 max-w-md mx-auto font-light leading-relaxed">
-                  Thank you for submitting your project specifications. Our sales engineers are reviewing your request and will contact you within 24 business hours.
+                  {t("Thank you for submitting your project specifications. Our sales engineers are reviewing your request and will contact you within 24 business hours.")}
                 </p>
                 <button
                   onClick={() => {

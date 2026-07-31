@@ -3,8 +3,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import DistributorForm from '@/components/DistributorForm';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 export default function DistributorPage() {
+  const { t } = useWebsiteLanguage();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-grow">
@@ -18,10 +21,10 @@ export default function DistributorPage() {
               className="max-w-3xl mx-auto text-center"
             >
               <h1 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-                Become a Global Distributor
+                {t("Become a Global Distributor")}
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                Partner with Jinyu Capital to bring high-quality, innovative lighting and appliance solutions to your local market. Fill out the application below to start the conversation.
+                {t("Partner with Jinyu Capital to bring high-quality, innovative lighting and appliance solutions to your local market. Fill out the application below to start the conversation.")}
               </p>
             </motion.div>
           </div>

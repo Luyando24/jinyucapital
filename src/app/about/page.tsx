@@ -3,21 +3,28 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Award, Users } from 'lucide-react';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 export default function AboutPage() {
-  const values = [{
-    icon: Target,
-    title: 'Precision',
-    description: 'We maintain strict tolerances and rigorous quality control in every stage of our manufacturing process.'
-  }, {
-    icon: Award,
-    title: 'Innovation',
-    description: 'We continuously invest in R&D to develop energy-efficient lighting and smarter, more durable appliances.'
-  }, {
-    icon: Users,
-    title: 'Partnership',
-    description: 'We build lasting relationships with our global distributors through transparency and consistent delivery.'
-  }];
+  const { t } = useWebsiteLanguage();
+
+  const values = [
+    {
+      icon: Target,
+      title: t('Precision'),
+      description: t('We maintain strict tolerances and rigorous quality control in every stage of our manufacturing process.')
+    },
+    {
+      icon: Award,
+      title: t('Innovation'),
+      description: t('We continuously invest in R&D to develop energy-efficient lighting and smarter, more durable appliances.')
+    },
+    {
+      icon: Users,
+      title: t('Partnership'),
+      description: t('We build lasting relationships with our global distributors through transparency and consistent delivery.')
+    }
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -26,10 +33,10 @@ export default function AboutPage() {
         <div className="section-container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6" style={{ letterSpacing: '-0.02em', textWrap: 'balance' }}>
-              Engineering Innovation Industrial Reliability
+              {t("Engineering Innovation Industrial Reliability")}
             </h1>
             <p className="text-lg leading-relaxed opacity-90">
-              Jinyu specializes in the design, manufacturing, and supply of explosion-proof lighting and industrial electrical solutions for global markets
+              {t("Jinyu specializes in the design, manufacturing, and supply of explosion-proof lighting and industrial electrical solutions for global markets")}
             </p>
           </motion.div>
         </div>
@@ -41,17 +48,17 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
               <h2 className="text-3xl md:text-4xl font-semibold mb-6" style={{ textWrap: 'balance' }}>
-                Our story
+                {t("Our story")}
               </h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
-                  Driven by innovation and quality, Jinyu has developed a complete manufacturing ecosystem covering mold development, die-casting, production, assembly, and OEM/ODM customization.
+                  {t("Driven by innovation and quality, Jinyu has developed a complete manufacturing ecosystem covering mold development, die-casting, production, assembly, and OEM/ODM customization.")}
                 </p>
                 <p>
-                  Annual production exceeds 2.4 million units, supported by advanced facilities, experienced engineering teams, and strict quality control systems.
+                  {t("Annual production exceeds 2.4 million units, supported by advanced facilities, experienced engineering teams, and strict quality control systems.")}
                 </p>
                 <p>
-                  Backed by 80+ patents and international certifications including ISO, CCC, EX, and ATEX, we deliver reliable solutions for industrial and hazardous environments worldwide.
+                  {t("Backed by 80+ patents and international certifications including ISO, CCC, EX, and ATEX, we deliver reliable solutions for industrial and hazardous environments worldwide.")}
                 </p>
               </div>
             </motion.div>
@@ -69,8 +76,8 @@ export default function AboutPage() {
       <section className="py-24 bg-muted">
         <div className="section-container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ textWrap: 'balance' }}>Our Core Values</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">The principles that guide our manufacturing processes and client relationships.</p>
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4" style={{ textWrap: 'balance' }}>{t("Our Core Values")}</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">{t("The principles that guide our manufacturing processes and client relationships.")}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {values.map((value, index) => (

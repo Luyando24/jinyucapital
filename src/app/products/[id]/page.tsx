@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, CheckCircle, Minus, Plus, XCircle, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 interface ProductDetail {
   id: string;
@@ -25,6 +26,7 @@ const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWln
 
 export default function ProductDetailPage() {
   const { id } = useParams() as { id: string };
+  const { t } = useWebsiteLanguage();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -87,11 +89,11 @@ export default function ProductDetailPage() {
       <div className="max-w-5xl mx-auto p-8 pt-24 min-h-screen">
         <Link href="/products" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft size={16} />
-          Go back
+          {t("Go back")}
         </Link>
         <div className="text-center bg-destructive/10 text-destructive p-8 rounded-2xl">
           <XCircle className="mx-auto h-16 w-16 mb-4" />
-          <p className="mb-6 font-medium">Product not found</p>
+          <p className="mb-6 font-medium">{t("Product not found")}</p>
         </div>
       </div>
     );
@@ -111,7 +113,7 @@ export default function ProductDetailPage() {
     <div className="max-w-5xl mx-auto p-4 sm:p-8 pt-24 min-h-screen bg-background">
       <Link href="/products" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6">
         <ArrowLeft size={16} />
-        Back to Products
+        {t("Back to Products")}
       </Link>
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
@@ -159,7 +161,7 @@ export default function ProductDetailPage() {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
-          <span className="text-primary font-bold text-sm mb-2">{product.category}</span>
+          <span className="text-primary font-bold text-sm mb-2">{t(product.category)}</span>
           <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' as any }}>{product.name}</h1>
 
           <div className="prose prose-sm md:prose-base dark:prose-invert text-muted-foreground mb-8">
@@ -169,7 +171,7 @@ export default function ProductDetailPage() {
           {/* Specifications */}
           {product.specifications && Object.keys(product.specifications).length > 0 && (
             <div className="mb-8 border rounded-xl overflow-hidden">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider px-4 py-3 bg-muted/50 border-b">Specifications</h3>
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider px-4 py-3 bg-muted/50 border-b">{t("Specifications")}</h3>
               <div className="divide-y">
                 {Object.entries(product.specifications).map(([key, val]) => (
                   <div key={key} className="flex justify-between px-4 py-2.5 text-sm">
@@ -182,7 +184,7 @@ export default function ProductDetailPage() {
           )}
 
           <div className="flex items-center gap-6 mb-8">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Quantity</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">{t("Quantity")}</h3>
             <div className="flex items-center border rounded-full p-1 bg-background shadow-sm">
               <Button onClick={() => handleQuantityChange(-1)} variant="ghost" size="icon" className="rounded-full h-10 w-10"><Minus size={16} /></Button>
               <span className="w-12 text-center font-bold text-lg">{quantity}</span>
@@ -197,13 +199,13 @@ export default function ProductDetailPage() {
               className="w-full h-14 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
             >
               <Link href={`/request-quote?product=${encodeURIComponent(product.name)}&quantity=${quantity}`}>
-                <Mail className="mr-3 h-5 w-5" /> Request a Quote
+                <Mail className="mr-3 h-5 w-5" /> {t("Request a Quote")}
               </Link>
             </Button>
 
             <div className={`flex items-center justify-center gap-2 text-sm font-medium ${inStock ? "text-emerald-600" : "text-red-500"}`}>
               <CheckCircle size={16} />
-              {inStock ? "In stock and ready to ship worldwide" : "Out of stock"}
+              {inStock ? t("In stock and ready to ship worldwide") : t("Out of Stock")}
             </div>
           </div>
         </motion.div>

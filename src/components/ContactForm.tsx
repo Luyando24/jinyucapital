@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 export default function ContactForm() {
+  const { t } = useWebsiteLanguage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -93,7 +95,7 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name">{t("Full Name")} *</Label>
           <Input
             id="name"
             name="name"
@@ -109,7 +111,7 @@ export default function ContactForm() {
         </div>
 
         <div>
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">{t("Email Address")} *</Label>
           <Input
             id="email"
             name="email"
@@ -127,7 +129,7 @@ export default function ContactForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">{t("Phone Number")}</Label>
           <Input
             id="phone"
             name="phone"
@@ -140,7 +142,7 @@ export default function ContactForm() {
         </div>
 
         <div>
-          <Label htmlFor="company">Company</Label>
+          <Label htmlFor="company">{t("Company Name")}</Label>
           <Input
             id="company"
             name="company"
@@ -154,7 +156,7 @@ export default function ContactForm() {
       </div>
 
       <div>
-        <Label htmlFor="message">Message *</Label>
+        <Label htmlFor="message">{t("Project Type / Details")} *</Label>
         <Textarea
           id="message"
           name="message"
@@ -173,7 +175,7 @@ export default function ContactForm() {
         className="w-full"
         disabled={isSubmitting}
       >
-        {isSubmitting ? 'Sending...' : 'Send message'}
+        {isSubmitting ? '...' : t('Send Message')}
       </Button>
     </form>
   );

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import CategorySidebar from '@/components/CategorySidebar';
 import ProductsList from '@/components/ProductsList';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 const streamlinedCategories = [
   { id: 'Street Lamps', name: 'Street Lighting' },
@@ -16,6 +17,7 @@ const streamlinedCategories = [
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { t } = useWebsiteLanguage();
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -38,10 +40,10 @@ export default function ProductsPage() {
             className="max-w-3xl"
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6" style={{ letterSpacing: '-0.02em', textWrap: 'balance' }}>
-              Product Portfolio
+              {t("Product Portfolio")}
             </h1>
             <p className="text-lg md:text-xl leading-relaxed opacity-90 max-w-2xl">
-              Browse our focused range of high-performance municipal and commercial lighting solutions, engineered for precision, durability, and contemporary aesthetics.
+              {t("Browse our focused range of high-performance municipal and commercial lighting solutions, engineered for precision, durability, and contemporary aesthetics.")}
             </p>
           </motion.div>
         </div>
