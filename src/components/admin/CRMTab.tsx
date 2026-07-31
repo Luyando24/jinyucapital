@@ -40,6 +40,15 @@ import { Textarea } from "@/components/ui/textarea";
 
 type CRMView = "dashboard" | "contacts" | "companies" | "pipeline" | "activities";
 type ModalType = "contact" | "company" | "deal" | "activity" | null;
+type ConversionStage =
+  | "new_inquiry"
+  | "quoted_price"
+  | "negotiating_price"
+  | "pi_pending_confirmation"
+  | "deposit_received"
+  | "customs_clearance_and_shipment"
+  | "full_payment_settled";
+type DealStage = ConversionStage | "lost";
 
 interface Company {
   id: string;
@@ -70,6 +79,8 @@ interface Contact {
   lead_status: "new" | "attempted" | "contacted" | "qualified" | "nurturing" | "unqualified";
   source: "manual" | "website" | "quote" | "order" | "distributor" | "import" | "referral";
   lead_score: number;
+  conversion_stage: ConversionStage;
+  conversion_probability: number;
   tags: string[];
   marketing_opt_in: boolean;
   notes: string | null;
@@ -84,7 +95,7 @@ interface Deal {
   contact_id: string | null;
   company_id: string | null;
   title: string;
-  stage: "lead" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
+  stage: DealStage;
   amount: number;
   currency: string;
   probability: number;
@@ -114,13 +125,31 @@ interface CRMActivity {
   updated_at: string;
 }
 
-const DEAL_STAGES: Array<{ id: Deal["stage"]; label: string; probability: number; color: string }> = [
-  { id: "lead", label: "Lead", probability: 10, color: "bg-slate-500" },
-  { id: "qualified", label: "Qualified", probability: 30, color: "bg-blue-500" },
-  { id: "proposal", label: "Proposal", probability: 55, color: "bg-violet-500" },
-  { id: "negotiation", label: "Negotiation", probability: 75, color: "bg-amber-500" },
-  { id: "won", label: "Won", probability: 100, color: "bg-emerald-500" },
-  { id: "lost", label: "Lost", probability: 0, color: "bg-rose-500" },
+const CONVERSION_STAGES: Array<{
+  id: ConversionStage;
+  label: string;
+  probability: number;
+  color: string;
+  description: string;
+}> = [
+  { id: "new_inquiry", label: "New inquiry", probability: 10, color: "bg-slate-500", description: "Website enquiry received or contact added manually" },
+  { id: "quoted_price", label: "Quoted price", probability: 25, color: "bg-sky-500", description: "Quotation sent to the customer" },
+  { id: "negotiating_price", label: "Negotiating price", probability: 40, color: "bg-blue-500", description: "Price and 40% deposit terms under negotiation" },
+  { id: "pi_pending_confirmation", label: "PI pending confirmation", probability: 60, color: "bg-violet-500", description: "Proforma invoice awaiting customer confirmation" },
+  { id: "deposit_received", label: "Deposit received", probability: 80, color: "bg-amber-500", description: "Customer's 40% order deposit received" },
+  { id: "customs_clearance_and_shipment", label: "Customs clearance and shipment", probability: 95, color: "bg-orange-500", description: "Order in customs clearance or shipment" },
+  { id: "full_payment_settled", label: "Full payment settled", probability: 100, color: "bg-emerald-500", description: "Full order payment received and settled" },
+];
+
+const DEAL_STAGES: Array<{
+  id: DealStage;
+  label: string;
+  probability: number;
+  color: string;
+  description: string;
+}> = [
+  ...CONVERSION_STAGES,
+  { id: "lost", label: "Lost / closed", probability: 0, color: "bg-rose-500", description: "Opportunity closed without conversion" },
 ];
 
 const LIFECYCLE_STAGES: Contact["lifecycle_stage"][] = ["lead", "prospect", "opportunity", "customer", "partner", "inactive"];
@@ -139,6 +168,8 @@ const EMPTY_CONTACT = {
   lead_status: "new" as Contact["lead_status"],
   source: "manual" as Contact["source"],
   lead_score: 20,
+  conversion_stage: "new_inquiry" as ConversionStage,
+  conversion_probability: 10,
   tags: "",
   marketing_opt_in: false,
   notes: "",
@@ -162,7 +193,7 @@ const EMPTY_DEAL = {
   title: "",
   contact_id: "",
   company_id: "",
-  stage: "lead" as Deal["stage"],
+  stage: "new_inquiry" as Deal["stage"],
   amount: "0",
   currency: "USD",
   probability: 10,
@@ -225,6 +256,10 @@ function titleCase(value: string) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function conversionStageConfig(stage: DealStage | ConversionStage) {
+  return DEAL_STAGES.find((item) => item.id === stage);
+}
+
 function CRMSelect({
   value,
   onChange,
@@ -263,9 +298,13 @@ function StageBadge({ stage }: { stage: string }) {
     partner: "border-blue-200 bg-blue-50 text-blue-700",
     inactive: "border-zinc-200 bg-zinc-50 text-zinc-600",
     qualified: "border-blue-200 bg-blue-50 text-blue-700",
-    proposal: "border-violet-200 bg-violet-50 text-violet-700",
-    negotiation: "border-amber-200 bg-amber-50 text-amber-700",
-    won: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    new_inquiry: "border-slate-200 bg-slate-50 text-slate-700",
+    quoted_price: "border-sky-200 bg-sky-50 text-sky-700",
+    negotiating_price: "border-blue-200 bg-blue-50 text-blue-700",
+    pi_pending_confirmation: "border-violet-200 bg-violet-50 text-violet-700",
+    deposit_received: "border-amber-200 bg-amber-50 text-amber-700",
+    customs_clearance_and_shipment: "border-orange-200 bg-orange-50 text-orange-700",
+    full_payment_settled: "border-emerald-200 bg-emerald-50 text-emerald-700",
     lost: "border-rose-200 bg-rose-50 text-rose-700",
     new: "border-sky-200 bg-sky-50 text-sky-700",
     contacted: "border-indigo-200 bg-indigo-50 text-indigo-700",
@@ -274,7 +313,7 @@ function StageBadge({ stage }: { stage: string }) {
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${colors[stage] || colors.inactive}`}>
-      {titleCase(stage)}
+      {conversionStageConfig(stage as DealStage)?.label || titleCase(stage)}
     </span>
   );
 }
@@ -349,6 +388,7 @@ export default function CRMTab() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [lifecycleFilter, setLifecycleFilter] = useState("all");
+  const [conversionFilter, setConversionFilter] = useState("all");
   const [activityFilter, setActivityFilter] = useState("open");
   const [modal, setModal] = useState<ModalType>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -386,6 +426,8 @@ export default function CRMTab() {
   };
 
   useEffect(() => {
+    // This effect synchronizes the CRM view with its external Supabase data source.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadCRM();
   }, []);
 
@@ -394,13 +436,16 @@ export default function CRMTab() {
   const dealById = useMemo(() => new Map(deals.map((deal) => [deal.id, deal])), [deals]);
   const selectedContact = selectedContactId ? contactById.get(selectedContactId) || null : null;
 
-  const openPipeline = deals.filter((deal) => !["won", "lost"].includes(deal.stage));
-  const wonDeals = deals.filter((deal) => deal.stage === "won");
-  const closedDeals = deals.filter((deal) => ["won", "lost"].includes(deal.stage));
-  const wonRevenue = wonDeals.reduce((sum, deal) => sum + Number(deal.amount), 0);
+  const openPipeline = deals.filter((deal) => !["full_payment_settled", "lost"].includes(deal.stage));
+  const settledDeals = deals.filter((deal) => deal.stage === "full_payment_settled");
+  const closedDeals = deals.filter((deal) => ["full_payment_settled", "lost"].includes(deal.stage));
+  const settledRevenue = settledDeals.reduce((sum, deal) => sum + Number(deal.amount), 0);
   const openPipelineValue = openPipeline.reduce((sum, deal) => sum + Number(deal.amount), 0);
   const weightedPipelineValue = openPipeline.reduce((sum, deal) => sum + Number(deal.amount) * (deal.probability / 100), 0);
-  const conversionRate = closedDeals.length ? Math.round((wonDeals.length / closedDeals.length) * 100) : 0;
+  const conversionRate = closedDeals.length ? Math.round((settledDeals.length / closedDeals.length) * 100) : 0;
+  const averageConversionProbability = contacts.length
+    ? Math.round(contacts.reduce((sum, contact) => sum + (contact.conversion_probability || 10), 0) / contacts.length)
+    : 0;
   const overdueTasks = activities.filter(
     (item) => item.status === "open" && item.due_at && new Date(item.due_at) < new Date(),
   );
@@ -418,7 +463,9 @@ export default function CRMTab() {
       contact.phone?.toLowerCase().includes(query) ||
       company?.name.toLowerCase().includes(query) ||
       contact.tags?.some((tag) => tag.toLowerCase().includes(query));
-    return matchesSearch && (lifecycleFilter === "all" || contact.lifecycle_stage === lifecycleFilter);
+    const matchesLifecycle = lifecycleFilter === "all" || contact.lifecycle_stage === lifecycleFilter;
+    const matchesConversion = conversionFilter === "all" || contact.conversion_stage === conversionFilter;
+    return matchesSearch && matchesLifecycle && matchesConversion;
   });
 
   const filteredCompanies = companies.filter((company) => {
@@ -452,6 +499,8 @@ export default function CRMTab() {
       lead_status: contact.lead_status,
       source: contact.source,
       lead_score: contact.lead_score,
+      conversion_stage: contact.conversion_stage || "new_inquiry",
+      conversion_probability: contact.conversion_probability || 10,
       tags: (contact.tags || []).join(", "),
       marketing_opt_in: contact.marketing_opt_in,
       notes: contact.notes || "",
@@ -484,12 +533,16 @@ export default function CRMTab() {
   };
 
   const openNewDeal = (contact?: Contact | null) => {
+    const contactStage = contact?.conversion_stage || "new_inquiry";
+    const stageConfig = conversionStageConfig(contactStage);
     setEditingId(null);
     setDealForm({
       ...EMPTY_DEAL,
       contact_id: contact?.id || "",
       company_id: contact?.company_id || "",
       title: contact ? `${displayName(contact)} opportunity` : "",
+      stage: contactStage,
+      probability: stageConfig?.probability || 10,
     });
     setModal("deal");
   };
@@ -559,6 +612,7 @@ export default function CRMTab() {
       lead_status: contactForm.lead_status,
       source: contactForm.source,
       lead_score: Number(contactForm.lead_score) || 0,
+      conversion_stage: editingId ? contactForm.conversion_stage : "new_inquiry",
       tags: contactForm.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       marketing_opt_in: contactForm.marketing_opt_in,
       notes: contactForm.notes.trim() || null,
@@ -604,7 +658,8 @@ export default function CRMTab() {
     event.preventDefault();
     if (!dealForm.title.trim()) return toast.error("Deal title is required.");
     setSaving(true);
-    const isClosed = ["won", "lost"].includes(dealForm.stage);
+    const stageConfig = conversionStageConfig(dealForm.stage)!;
+    const isClosed = ["full_payment_settled", "lost"].includes(dealForm.stage);
     const payload = {
       title: dealForm.title.trim(),
       contact_id: dealForm.contact_id || null,
@@ -612,7 +667,7 @@ export default function CRMTab() {
       stage: dealForm.stage,
       amount: Number(dealForm.amount) || 0,
       currency: dealForm.currency.toUpperCase(),
-      probability: Number(dealForm.probability) || 0,
+      probability: stageConfig.probability,
       priority: dealForm.priority,
       expected_close_date: dealForm.expected_close_date || null,
       source: dealForm.source,
@@ -664,16 +719,17 @@ export default function CRMTab() {
       .update({
         stage,
         probability: stageConfig.probability,
-        closed_at: ["won", "lost"].includes(stage) ? new Date().toISOString() : null,
+        closed_at: ["full_payment_settled", "lost"].includes(stage) ? new Date().toISOString() : null,
       })
       .eq("id", deal.id);
     if (result.error) return toast.error(result.error.message);
     setDeals((current) => current.map((item) => (
       item.id === deal.id
-        ? { ...item, stage, probability: stageConfig.probability, closed_at: ["won", "lost"].includes(stage) ? new Date().toISOString() : null }
+        ? { ...item, stage, probability: stageConfig.probability, closed_at: ["full_payment_settled", "lost"].includes(stage) ? new Date().toISOString() : null }
         : item
     )));
     toast.success(`Moved to ${stageConfig.label}.`);
+    await loadCRM();
   };
 
   const completeActivity = async (item: CRMActivity) => {
@@ -710,7 +766,7 @@ export default function CRMTab() {
 
   const exportContacts = () => {
     const rows = [
-      ["First name", "Last name", "Email", "Phone", "Company", "Lifecycle", "Lead status", "Score", "Source", "Tags"],
+      ["First name", "Last name", "Email", "Phone", "Company", "Lifecycle", "Lead status", "Lead score", "Conversion stage", "Conversion probability", "Source", "Tags"],
       ...filteredContacts.map((contact) => [
         contact.first_name,
         contact.last_name,
@@ -720,6 +776,8 @@ export default function CRMTab() {
         contact.lifecycle_stage,
         contact.lead_status,
         contact.lead_score,
+        conversionStageConfig(contact.conversion_stage || "new_inquiry")?.label,
+        contact.conversion_probability || 10,
         contact.source,
         contact.tags.join("; "),
       ]),
@@ -821,12 +879,13 @@ export default function CRMTab() {
 
       {view === "dashboard" && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {[
               { label: "Open pipeline", value: formatMoney(openPipelineValue), detail: `${openPipeline.length} active deals`, icon: CircleDollarSign, iconClass: "bg-blue-500/10 text-blue-600" },
               { label: "Weighted forecast", value: formatMoney(weightedPipelineValue), detail: "Probability adjusted", icon: TrendingUp, iconClass: "bg-violet-500/10 text-violet-600" },
-              { label: "Won revenue", value: formatMoney(wonRevenue), detail: `${wonDeals.length} closed-won deals`, icon: Target, iconClass: "bg-emerald-500/10 text-emerald-600" },
-              { label: "Win rate", value: `${conversionRate}%`, detail: `${closedDeals.length} closed deals`, icon: CheckCircle2, iconClass: "bg-amber-500/10 text-amber-600" },
+              { label: "Average conversion", value: `${averageConversionProbability}%`, detail: `${contacts.length} customer records`, icon: Target, iconClass: "bg-sky-500/10 text-sky-600" },
+              { label: "Settled revenue", value: formatMoney(settledRevenue), detail: `${settledDeals.length} fully settled deals`, icon: CheckCircle2, iconClass: "bg-emerald-500/10 text-emerald-600" },
+              { label: "Settlement rate", value: `${conversionRate}%`, detail: `${closedDeals.length} closed deals`, icon: CheckCircle2, iconClass: "bg-amber-500/10 text-amber-600" },
             ].map((metric) => (
               <div key={metric.label} className="rounded-2xl border bg-card p-5 shadow-sm">
                 <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${metric.iconClass}`}>
@@ -844,19 +903,19 @@ export default function CRMTab() {
               <div className="flex items-center justify-between border-b p-5">
                 <div>
                   <h3 className="font-bold">Pipeline health</h3>
-                  <p className="text-xs text-muted-foreground">Value and volume by sales stage</p>
+                  <p className="text-xs text-muted-foreground">Value, volume, and probability by conversion stage</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setView("pipeline")}>View pipeline<ArrowRight className="ml-2 h-4 w-4" /></Button>
               </div>
               <div className="space-y-5 p-5">
-                {DEAL_STAGES.filter((stage) => !["won", "lost"].includes(stage.id)).map((stage) => {
+                {CONVERSION_STAGES.filter((stage) => stage.id !== "full_payment_settled").map((stage) => {
                   const stageDeals = deals.filter((deal) => deal.stage === stage.id);
                   const stageValue = stageDeals.reduce((sum, deal) => sum + Number(deal.amount), 0);
                   const width = openPipelineValue ? Math.max(4, (stageValue / openPipelineValue) * 100) : 0;
                   return (
                     <div key={stage.id}>
                       <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 font-medium"><span className={`h-2 w-2 rounded-full ${stage.color}`} />{stage.label}</span>
+                        <span className="flex items-center gap-2 font-medium"><span className={`h-2 w-2 rounded-full ${stage.color}`} />{stage.label}<span className="text-xs text-muted-foreground">{stage.probability}%</span></span>
                         <span><strong>{formatMoney(stageValue)}</strong><span className="ml-2 text-xs text-muted-foreground">{stageDeals.length} deals</span></span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -937,10 +996,14 @@ export default function CRMTab() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email, company, phone, or tag…" className="pl-10" />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <CRMSelect value={lifecycleFilter} onChange={(event) => setLifecycleFilter(event.target.value)} ariaLabel="Filter by lifecycle stage">
                 <option value="all">All lifecycle stages</option>
                 {LIFECYCLE_STAGES.map((stage) => <option key={stage} value={stage}>{titleCase(stage)}</option>)}
+              </CRMSelect>
+              <CRMSelect value={conversionFilter} onChange={(event) => setConversionFilter(event.target.value)} ariaLabel="Filter by conversion stage">
+                <option value="all">All conversion stages</option>
+                {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
               </CRMSelect>
               <Button variant="outline" size="icon" onClick={exportContacts} title="Export filtered contacts"><Download className="h-4 w-4" /></Button>
               <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />Add contact</Button>
@@ -949,14 +1012,14 @@ export default function CRMTab() {
 
           {filteredContacts.length ? (
             <div className="overflow-x-auto rounded-2xl border bg-card shadow-sm">
-              <table className="w-full min-w-[920px] text-sm">
+              <table className="w-full min-w-[1060px] text-sm">
                 <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
                   <tr>
                     <th className="px-5 py-3 font-medium">Contact</th>
                     <th className="px-5 py-3 font-medium">Company</th>
                     <th className="px-5 py-3 font-medium">Lifecycle</th>
                     <th className="px-5 py-3 font-medium">Lead status</th>
-                    <th className="px-5 py-3 font-medium">Score</th>
+                    <th className="px-5 py-3 font-medium">Conversion</th>
                     <th className="px-5 py-3 font-medium">Next follow-up</th>
                     <th className="px-5 py-3 text-right font-medium">Actions</th>
                   </tr>
@@ -982,9 +1045,12 @@ export default function CRMTab() {
                       <td className="px-5 py-4"><StageBadge stage={contact.lifecycle_stage} /></td>
                       <td className="px-5 py-4 text-xs font-medium">{titleCase(contact.lead_status)}</td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-14 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${contact.lead_score}%` }} /></div>
-                          <span className="text-xs font-bold">{contact.lead_score}</span>
+                        <div className="space-y-2">
+                          <StageBadge stage={contact.conversion_stage || "new_inquiry"} />
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${contact.conversion_probability || 10}%` }} /></div>
+                            <span className="text-xs font-bold">{contact.conversion_probability || 10}%</span>
+                          </div>
                         </div>
                       </td>
                       <td className={`px-5 py-4 text-xs ${contact.next_follow_up_at && new Date(contact.next_follow_up_at) < new Date() ? "font-medium text-rose-600" : "text-muted-foreground"}`}>
@@ -1003,7 +1069,7 @@ export default function CRMTab() {
             <EmptyState
               icon={UserRound}
               title={contacts.length ? "No contacts match your filters" : "Build your customer database"}
-              description={contacts.length ? "Try a different search term or lifecycle stage." : "Add the people your team sells to, supports, and partners with."}
+              description={contacts.length ? "Try a different search term, lifecycle stage, or conversion stage." : "Add the people your team sells to, supports, and partners with."}
               action={!contacts.length ? <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />Add first contact</Button> : undefined}
             />
           )}
@@ -1024,7 +1090,7 @@ export default function CRMTab() {
               {filteredCompanies.map((company) => {
                 const companyContacts = contacts.filter((contact) => contact.company_id === company.id);
                 const companyDeals = deals.filter((deal) => deal.company_id === company.id);
-                const activeValue = companyDeals.filter((deal) => !["won", "lost"].includes(deal.stage)).reduce((sum, deal) => sum + Number(deal.amount), 0);
+                const activeValue = companyDeals.filter((deal) => !["full_payment_settled", "lost"].includes(deal.stage)).reduce((sum, deal) => sum + Number(deal.amount), 0);
                 return (
                   <article key={company.id} className="rounded-2xl border bg-card p-5 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
@@ -1086,7 +1152,7 @@ export default function CRMTab() {
                       <h4 className="flex items-center gap-2 text-sm font-bold"><span className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />{stage.label}</h4>
                       <span className="rounded-full bg-background px-2 py-0.5 text-xs">{stageDeals.length}</span>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{formatMoney(stageValue)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{stage.probability}% probability · {formatMoney(stageValue)}</p>
                   </div>
                   <div className="min-h-48 space-y-3 p-3">
                     {stageDeals.map((deal) => (
@@ -1098,6 +1164,9 @@ export default function CRMTab() {
                           {deal.priority === "high" && <span title="High priority" className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
                         </div>
                         <p className="mt-2 text-lg font-bold">{formatMoney(deal.amount, deal.currency)}</p>
+                        <p className="mt-1 text-xs font-medium text-primary">
+                          {deal.probability}% · {formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency)} weighted
+                        </p>
                         <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                           {deal.contact_id && <p className="truncate"><UserRound className="mr-1 inline h-3.5 w-3.5" />{displayName(contactById.get(deal.contact_id))}</p>}
                           <p><CalendarClock className="mr-1 inline h-3.5 w-3.5" />{formatDate(deal.expected_close_date)}</p>
@@ -1109,7 +1178,7 @@ export default function CRMTab() {
                             className="w-full text-xs"
                             ariaLabel={`Move ${deal.title} to another stage`}
                           >
-                            {DEAL_STAGES.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                            {DEAL_STAGES.map((option) => <option key={option.id} value={option.id}>{option.label} ({option.probability}%)</option>)}
                           </CRMSelect>
                         </div>
                       </article>
@@ -1242,13 +1311,38 @@ export default function CRMTab() {
                 </CRMSelect>
               </div>
               <div>
+                <FieldLabel>Conversion stage</FieldLabel>
+                {editingId ? (
+                  <CRMSelect value={contactForm.conversion_stage} onChange={(event) => {
+                    const conversionStage = event.target.value as ConversionStage;
+                    const probability = conversionStageConfig(conversionStage)?.probability || 10;
+                    setContactForm({ ...contactForm, conversion_stage: conversionStage, conversion_probability: probability });
+                  }} className="w-full">
+                    {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
+                  </CRMSelect>
+                ) : (
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">New inquiry (10%)</div>
+                )}
+              </div>
+              <div>
+                <FieldLabel>Conversion probability</FieldLabel>
+                <div className="rounded-md border bg-muted/30 px-3 py-2">
+                  <p className="text-sm font-bold">{contactForm.conversion_probability}%</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {editingId
+                      ? conversionStageConfig(contactForm.conversion_stage)?.description
+                      : "Applied automatically when the contact is created."}
+                  </p>
+                </div>
+              </div>
+              <div>
                 <FieldLabel>Source</FieldLabel>
                 <CRMSelect value={contactForm.source} onChange={(event) => setContactForm({ ...contactForm, source: event.target.value as Contact["source"] })} className="w-full">
                   {SOURCES.map((source) => <option key={source} value={source}>{titleCase(source)}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Lead score (0–100)</FieldLabel>
+                <FieldLabel>Lead score / quality (0–100)</FieldLabel>
                 <Input type="number" min={0} max={100} value={contactForm.lead_score} onChange={(event) => setContactForm({ ...contactForm, lead_score: Number(event.target.value) })} />
               </div>
               <div>
@@ -1321,12 +1415,12 @@ export default function CRMTab() {
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Stage</FieldLabel>
+                <FieldLabel>Conversion stage</FieldLabel>
                 <CRMSelect value={dealForm.stage} onChange={(event) => {
                   const stage = event.target.value as Deal["stage"];
                   setDealForm({ ...dealForm, stage, probability: DEAL_STAGES.find((item) => item.id === stage)?.probability ?? dealForm.probability });
                 }} className="w-full">
-                  {DEAL_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label}</option>)}
+                  {DEAL_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
                 </CRMSelect>
               </div>
               <div>
@@ -1340,7 +1434,13 @@ export default function CRMTab() {
                   <Input type="number" min={0} step="0.01" value={dealForm.amount} onChange={(event) => setDealForm({ ...dealForm, amount: event.target.value })} className="rounded-l-none border-l-0" aria-label="Deal value" />
                 </div>
               </div>
-              <div><FieldLabel>Probability (%)</FieldLabel><Input type="number" min={0} max={100} value={dealForm.probability} onChange={(event) => setDealForm({ ...dealForm, probability: Number(event.target.value) })} /></div>
+              <div>
+                <FieldLabel>Conversion probability</FieldLabel>
+                <div className="rounded-md border bg-muted/30 px-3 py-2">
+                  <p className="text-sm font-bold">{dealForm.probability}%</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{conversionStageConfig(dealForm.stage)?.description}. Used to weight this deal in the sales forecast.</p>
+                </div>
+              </div>
               <div>
                 <FieldLabel>Priority</FieldLabel>
                 <CRMSelect value={dealForm.priority} onChange={(event) => setDealForm({ ...dealForm, priority: event.target.value as Deal["priority"] })} className="w-full">
@@ -1471,7 +1571,12 @@ function ContactDrawer({
             <div className="min-w-0">
               <h2 className="text-2xl font-bold">{displayName(contact)}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{contact.job_title || "No title"}{company ? ` at ${company.name}` : ""}</p>
-              <div className="mt-3 flex flex-wrap gap-2"><StageBadge stage={contact.lifecycle_stage} /><StageBadge stage={contact.lead_status} /></div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <StageBadge stage={contact.lifecycle_stage} />
+                <StageBadge stage={contact.lead_status} />
+                <StageBadge stage={contact.conversion_stage || "new_inquiry"} />
+                <span className="text-xs font-bold text-primary">{contact.conversion_probability || 10}%</span>
+              </div>
             </div>
           </div>
 
@@ -1492,6 +1597,7 @@ function ContactDrawer({
               <div><dt className="text-xs text-muted-foreground">Company</dt><dd className="mt-1 font-medium">{company?.name || "Not assigned"}</dd></div>
               <div><dt className="text-xs text-muted-foreground">Source</dt><dd className="mt-1 font-medium">{titleCase(contact.source)}</dd></div>
               <div><dt className="text-xs text-muted-foreground">Lead score</dt><dd className="mt-1 font-medium">{contact.lead_score}/100</dd></div>
+              <div><dt className="text-xs text-muted-foreground">Conversion probability</dt><dd className="mt-1 font-medium">{contact.conversion_probability || 10}%</dd></div>
               <div><dt className="text-xs text-muted-foreground">Next follow-up</dt><dd className="mt-1 font-medium">{formatDate(contact.next_follow_up_at)}</dd></div>
               <div className="col-span-2"><dt className="text-xs text-muted-foreground">Tags</dt><dd className="mt-2 flex flex-wrap gap-1">{contact.tags.length ? contact.tags.map((tag) => <span key={tag} className="rounded-full bg-muted px-2 py-1 text-xs">{tag}</span>) : <span className="text-muted-foreground">No tags</span>}</dd></div>
               {contact.notes && <div className="col-span-2"><dt className="text-xs text-muted-foreground">Notes</dt><dd className="mt-1 whitespace-pre-wrap leading-6">{contact.notes}</dd></div>}
@@ -1506,8 +1612,8 @@ function ContactDrawer({
             <div className="divide-y">
               {deals.map((deal) => (
                 <div key={deal.id} className="flex items-center justify-between gap-3 p-4">
-                  <div className="min-w-0"><p className="truncate text-sm font-medium">{deal.title}</p><div className="mt-1"><StageBadge stage={deal.stage} /></div></div>
-                  <p className="shrink-0 text-sm font-bold">{formatMoney(deal.amount, deal.currency)}</p>
+                  <div className="min-w-0"><p className="truncate text-sm font-medium">{deal.title}</p><div className="mt-1 flex items-center gap-2"><StageBadge stage={deal.stage} /><span className="text-xs font-bold text-primary">{deal.probability}%</span></div></div>
+                  <div className="shrink-0 text-right"><p className="text-sm font-bold">{formatMoney(deal.amount, deal.currency)}</p><p className="text-[10px] text-muted-foreground">{formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency)} weighted</p></div>
                 </div>
               ))}
               {!deals.length && <p className="p-6 text-center text-sm text-muted-foreground">No deals linked to this contact.</p>}
