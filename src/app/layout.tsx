@@ -8,6 +8,7 @@ import { AuthProvider } from "@/components/AuthContext";
 import { CartProvider } from "@/components/CartContext";
 import { CurrencyProvider } from "@/components/CurrencyContext";
 import { StoreSettingsProvider } from "@/components/StoreSettingsContext";
+import { WebsiteLanguageProvider } from "@/components/WebsiteLanguageContext";
 import ServiceWorkerCleanup from "@/components/ServiceWorkerCleanup";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { createClient } from "@supabase/supabase-js";
@@ -145,18 +146,20 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <CartProvider>
-              <CurrencyProvider>
-                <StoreSettingsProvider initialSettings={initialSettings}>
-                  <Navbar />
-                  <main className="flex-grow">
-                    {children}
-                  </main>
-                  <Footer />
-                  <Toaster />
-                </StoreSettingsProvider>
-              </CurrencyProvider>
-            </CartProvider>
+            <WebsiteLanguageProvider>
+              <CartProvider>
+                <CurrencyProvider>
+                  <StoreSettingsProvider initialSettings={initialSettings}>
+                    <Navbar />
+                    <main className="flex-grow">
+                      {children}
+                    </main>
+                    <Footer />
+                    <Toaster />
+                  </StoreSettingsProvider>
+                </CurrencyProvider>
+              </CartProvider>
+            </WebsiteLanguageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

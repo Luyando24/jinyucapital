@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Product } from '@/data/products';
 import Link from 'next/link';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,7 @@ interface ProductCardProps {
 const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K";
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
+  const { t } = useWebsiteLanguage();
   return (
     <Link href={`/products/${product.id}`}>
       <motion.div
@@ -30,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           />
           <div className="absolute inset-0 bg-black/5 group-hover:bg-black/10 transition-all duration-300" />
           <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm text-foreground text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border">
-            {product.category}
+            {t(product.category)}
           </div>
         </div>
         <div className="p-6 flex flex-col flex-grow">
@@ -39,7 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
             {product.description}
           </p>
           <div className="mt-4 pt-4 border-t flex justify-end items-center">
-            <span className="text-sm text-primary font-medium">View Details →</span>
+            <span className="text-sm text-primary font-medium">{t("View Details")} →</span>
           </div>
         </div>
       </motion.div>

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useStoreSettings } from '@/components/StoreSettingsContext';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 const DEFAULTS = {
   email: 'sales@jinyucapital.com',
@@ -18,6 +19,7 @@ const DEFAULTS = {
 export default function Footer() {
   const pathname = usePathname();
   const { settings } = useStoreSettings();
+  const { t } = useWebsiteLanguage();
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -44,27 +46,27 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
-              Your trusted manufacturer of premium lighting equipment and appliances, delivering engineering excellence and quality since 2018.
+              {t("Your trusted manufacturer of premium lighting equipment and appliances, delivering engineering excellence and quality since 2018.")}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Quick links</h3>
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">{t("Quick links")}</h3>
             <ul className="space-y-4">
               <li>
                 <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                  About us
+                  {t("About")}
                 </Link>
               </li>
               <li>
                 <Link href="/products" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                  Products
+                  {t("Products")}
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-                  Contact
+                  {t("Contact")}
                 </Link>
               </li>
             </ul>
@@ -72,7 +74,7 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Contact</h3>
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">{t("Contact")}</h3>
             <ul className="space-y-4">
               <li className="flex items-start space-x-3 text-sm text-muted-foreground">
                 <Mail size={18} className="mt-0.5 flex-shrink-0 text-foreground" />
@@ -91,7 +93,7 @@ export default function Footer() {
 
           {/* Social Media */}
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">Follow us</h3>
+            <h3 className="font-bold text-sm uppercase tracking-wider mb-6">{t("Follow us")}</h3>
             <div className="flex space-x-5">
               {facebook && (
                 <a href={facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors duration-200" aria-label="Facebook">
@@ -127,7 +129,7 @@ export default function Footer() {
 
         <div className="mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} {storeName}. All rights reserved.
+            © {new Date().getFullYear()} {storeName}. {t("All rights reserved.")}
           </p>
           <a
             href="https://www.spaceminds.agency/"

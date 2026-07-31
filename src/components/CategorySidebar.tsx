@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Layers, ChevronDown } from 'lucide-react';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 interface Category {
   id: string;
@@ -16,6 +17,7 @@ interface CategorySidebarProps {
 
 const CategorySidebar: React.FC<CategorySidebarProps> = ({ categories, selectedCategory, onCategorySelect }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useWebsiteLanguage();
 
   const allCategories = [{ id: 'all', name: 'All Products' }, ...categories];
   const selected = allCategories.find(c => c.id === selectedCategory) || allCategories[0];
@@ -36,7 +38,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ categories, selectedC
                   : 'bg-background border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
               }`}
             >
-              {cat.name}
+              {t(cat.name)}
             </button>
           ))}
         </div>
@@ -55,7 +57,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ categories, selectedC
           >
             <span className="flex items-center gap-3">
               <Layers className="w-5 h-5" />
-              All Products
+              {t("All Categories")}
             </span>
           </button>
         </div>
@@ -71,7 +73,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({ categories, selectedC
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
             >
-              {category.name}
+              {t(category.name)}
             </button>
           ))}
         </div>

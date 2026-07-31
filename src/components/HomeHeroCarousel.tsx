@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Globe, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 interface HomeHeroCarouselProps {
   heroImages: string[];
@@ -17,6 +18,7 @@ export default function HomeHeroCarousel({
   heroHeadline,
   heroSubheadline,
 }: HomeHeroCarouselProps) {
+  const { t } = useWebsiteLanguage();
   const [activeHeroSlide, setActiveHeroSlide] = React.useState(0);
   const [heroPaused, setHeroPaused] = React.useState(false);
   const [heroInteractionPaused, setHeroInteractionPaused] = React.useState(false);
@@ -101,7 +103,7 @@ export default function HomeHeroCarousel({
           <div className="flex flex-col sm:flex-row gap-5 justify-center mb-12">
             <Button asChild size="lg" className="text-base px-8 h-12">
               <Link href="/products" className="flex items-center">
-                Explore our products
+                {t("Explore products")}
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
             </Button>
@@ -111,20 +113,20 @@ export default function HomeHeroCarousel({
               variant="outline"
               className="text-base bg-white/10 backdrop-blur-sm border-white/20 text-white hover:bg-white/20 px-8 h-12"
             >
-              <Link href="/request-quote">Request a quote</Link>
+              <Link href="/request-quote">{t("Request a quote")}</Link>
             </Button>
           </div>
 
           <div className="pt-6 border-t border-white/20 max-w-md mx-auto">
             <p className="text-sm text-white/70 mb-3">
-              Looking to expand your business?
+              {t("Looking to expand your business?")}
             </p>
             <Link
               href="/distributor"
               className="inline-flex items-center text-white hover:text-primary transition-colors font-semibold text-lg"
             >
               <Globe className="w-5 h-5 mr-2.5" />
-              Become a Global Distributor
+              {t("Become a Distributor")}
             </Link>
           </div>
         </motion.div>

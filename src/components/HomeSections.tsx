@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Factory, ShieldCheck, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ export interface BlogPost {
 // ─── Stats Bar ────────────────────────────────────────────────────────────────
 
 export function HomeStatsSection({ stats }: { stats: HomepageStat[] }) {
+  const { t } = useWebsiteLanguage();
   return (
     <section className="py-16 bg-primary text-primary-foreground">
       <div className="section-container">
@@ -50,7 +52,7 @@ export function HomeStatsSection({ stats }: { stats: HomepageStat[] }) {
               >
                 {stat.value}
               </div>
-              <div className="text-sm md:text-base opacity-90">{stat.label}</div>
+              <div className="text-sm md:text-base opacity-90">{t(stat.label)}</div>
             </motion.div>
           ))}
         </div>
@@ -91,6 +93,7 @@ export function HomeManufacturingSection({
   body: string;
   image: string;
 }) {
+  const { t } = useWebsiteLanguage();
   return (
     <section className="py-24 bg-background">
       <div className="section-container">
@@ -104,10 +107,10 @@ export function HomeManufacturingSection({
               className="text-3xl md:text-4xl font-semibold mb-6"
               style={{ textWrap: "balance" }}
             >
-              {headline}
+              {t(headline)}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-              {body}
+              {t(body)}
             </p>
 
             <div className="space-y-8">
@@ -119,9 +122,9 @@ export function HomeManufacturingSection({
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                    <h3 className="text-xl font-semibold mb-2">{t(feature.title)}</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      {feature.description}
+                      {t(feature.description)}
                     </p>
                   </div>
                 </div>
@@ -172,6 +175,7 @@ export function HomeProductsSection({
 }: {
   products: ShowcaseProduct[];
 }) {
+  const { t } = useWebsiteLanguage();
   if (products.length === 0) return null;
   return (
     <section className="py-24 bg-muted">
@@ -182,15 +186,14 @@ export function HomeProductsSection({
               className="text-3xl md:text-4xl font-semibold mb-4"
               style={{ textWrap: "balance" }}
             >
-              Featured product lines
+              {t("Featured Product Lines")}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Explore our signature street lighting collections, engineered for
-              superior outdoor performance, longevity, and aesthetic appeal.
+              {t("Explore our signature street lighting collections, engineered for superior outdoor performance, longevity, and aesthetic appeal.")}
             </p>
           </div>
           <Button asChild variant="outline" className="flex-shrink-0">
-            <Link href="/products">View all products</Link>
+            <Link href="/products">{t("View all products")}</Link>
           </Button>
         </div>
 
@@ -233,6 +236,7 @@ export function HomeProductsSection({
 // ─── Blog Posts ───────────────────────────────────────────────────────────────
 
 export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
+  const { t } = useWebsiteLanguage();
   if (posts.length === 0) return null;
   return (
     <section className="py-24 bg-background border-t">
@@ -243,15 +247,14 @@ export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
               className="text-3xl md:text-4xl font-semibold mb-4"
               style={{ textWrap: "balance" }}
             >
-              Latest news &amp; insights
+              {t("Latest news & insights")}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Stay updated with our latest technology breakthroughs, lighting
-              guides, and company announcements.
+              {t("Stay updated with our latest technology breakthroughs, lighting guides, and company announcements.")}
             </p>
           </div>
           <Button asChild variant="outline" className="flex-shrink-0">
-            <Link href="/blog">Read all insights</Link>
+            <Link href="/blog">{t("Read all insights")}</Link>
           </Button>
         </div>
 
@@ -293,7 +296,7 @@ export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
                     <span className="font-bold text-primary group-hover:underline">
-                      Read More →
+                      {t("Read More →")}
                     </span>
                   </div>
                 </div>
@@ -309,6 +312,7 @@ export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
 // ─── CTA ──────────────────────────────────────────────────────────────────────
 
 export function HomeCtaSection() {
+  const { t } = useWebsiteLanguage();
   return (
     <section className="py-24 bg-background text-foreground border-t">
       <div className="section-container text-center">
@@ -321,14 +325,13 @@ export function HomeCtaSection() {
             className="text-3xl md:text-5xl font-extrabold mb-6"
             style={{ textWrap: "balance" }}
           >
-            Partner with a reliable manufacturer
+            {t("Partner with a reliable manufacturer")}
           </h2>
           <p className="text-lg leading-relaxed max-w-2xl mx-auto mb-10 text-muted-foreground">
-            Whether you need OEM services or bulk orders of our standard product
-            lines, our team is ready to support your business.
+            {t("Whether you need OEM services or bulk orders of our standard product lines, our team is ready to support your business.")}
           </p>
           <Button asChild size="lg" className="px-8 h-12 text-base">
-            <Link href="/request-quote">Contact our sales team</Link>
+            <Link href="/request-quote">{t("Contact sales")}</Link>
           </Button>
         </motion.div>
       </div>

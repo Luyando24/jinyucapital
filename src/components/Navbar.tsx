@@ -6,10 +6,13 @@ import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/Logo';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
+import WebsiteLanguageSelector from '@/components/WebsiteLanguageSelector';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useWebsiteLanguage();
 
   if (pathname?.startsWith("/admin")) {
     return null;
@@ -51,25 +54,29 @@ export default function Navbar() {
                   : 'text-foreground hover:text-primary hover:bg-muted'
               }`}
             >
-              {link.name}
+              {t(link.name)}
             </Link>
           ))}
         </div>
 
-        <div className="hidden md:block">
+        <div className="hidden md:flex md:items-center md:space-x-3">
+          <WebsiteLanguageSelector />
           <Button asChild>
-            <Link href="/request-quote">Request a quote</Link>
+            <Link href="/request-quote">{t("Request a quote")}</Link>
           </Button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          className="md:hidden p-2 text-foreground hover:text-primary transition-colors duration-200"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex md:hidden items-center gap-2">
+          <WebsiteLanguageSelector />
+          <button
+            className="p-2 text-foreground hover:text-primary transition-colors duration-200"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Navigation */}
@@ -87,13 +94,13 @@ export default function Navbar() {
                     : 'text-foreground hover:text-primary hover:bg-muted'
                 }`}
               >
-                {link.name}
+                {t(link.name)}
               </Link>
             ))}
             <div className="pt-2">
               <Button asChild className="w-full">
                 <Link href="/request-quote" onClick={() => setMobileMenuOpen(false)}>
-                  Request a quote
+                  {t("Request a quote")}
                 </Link>
               </Button>
             </div>

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import ProductCard from './ProductCard';
 import { Product } from '@/data/products';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 interface ProductsListProps {
   selectedCategory: string;
@@ -15,6 +16,7 @@ interface ProductsListProps {
 const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useWebsiteLanguage();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -80,7 +82,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
               <div className="w-20 h-20 bg-background rounded-2xl flex items-center justify-center mb-6 shadow-sm border">
                 <PackageSearch className="w-10 h-10 text-muted-foreground" />
               </div>
-              <h3 className="text-2xl font-semibold mb-3 text-foreground">No products found</h3>
+              <h3 className="text-2xl font-semibold mb-3 text-foreground">{t("No products found")}</h3>
               <p className="text-muted-foreground max-w-md leading-relaxed text-lg">
                 We couldn&apos;t find any products in this category. Please try another category.
               </p>
