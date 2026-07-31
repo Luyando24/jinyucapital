@@ -1230,7 +1230,7 @@ export default function AdminDashboardPage() {
                                 <p className="font-bold">{o.first_name} {o.last_name}</p>
                                 <p className="text-xs text-muted-foreground">{o.email}</p>
                               </td>
-                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</td>
+                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</td>
                               <td className="px-6 py-4 font-bold">${Number(o.total_amount).toLocaleString()}</td>
                               <td className="px-6 py-4"><span className={statusBadge(o.status)}>{t(o.status)}</span></td>
                             </tr>
@@ -1377,7 +1377,7 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground">{o.email}</p>
                               </td>
                               <td className="px-6 py-4 font-bold">${Number(o.total_amount).toLocaleString()}</td>
-                              <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</td>
+                              <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</td>
                               <td className="px-6 py-4">
                                 <select value={o.status} onChange={e => handleUpdateStatus(o.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold outline-none">
                                   {["Pending","Processing","Shipped","Cancelled"].map(s => <option key={s} value={s}>{t(s)}</option>)}
@@ -1442,7 +1442,7 @@ export default function AdminDashboardPage() {
                               <p className="text-muted-foreground text-sm">{q.company_name}</p>
                             </div>
                             <p className="text-xs text-muted-foreground">{q.email} {q.phone && `· ${q.phone}`}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">{new Date(q.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">{new Date(q.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</p>
                           </div>
                           <div className="flex gap-2 items-center">
                             <span className={statusBadge(q.status)}>{t(q.status === "new" ? "New" : q.status === "quoted" ? "Quoted" : q.status === "closed" ? "Closed" : q.status)}</span>
@@ -1529,7 +1529,7 @@ export default function AdminDashboardPage() {
                         <div>
                           <p className="font-bold">{d.contact_name} · <span className="text-muted-foreground font-normal">{d.company_name}</span></p>
                           <p className="text-xs text-muted-foreground mt-1">{d.email} · {d.country} · {d.business_type}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(d.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(d.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</p>
                         </div>
                         <div className="flex gap-2 items-center">
                           <select value={d.status} onChange={e => handleUpdateDistributorStatus(d.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold">
@@ -1578,7 +1578,7 @@ export default function AdminDashboardPage() {
                             {c.status === "unread" && <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">{t("NEW")}</span>}
                           </div>
                           <p className="text-xs text-muted-foreground">{c.email}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(c.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(c.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</p>
                         </div>
                         <div className="flex gap-2 items-center">
                           <select value={c.status} onChange={e => handleUpdateContactStatus(c.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold">
@@ -1635,7 +1635,7 @@ export default function AdminDashboardPage() {
                           {subscribers.map(s => (
                             <tr key={s.id} className="hover:bg-muted/30">
                               <td className="px-6 py-4">{s.email}</td>
-                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.subscribed_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}</td>
+                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.subscribed_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}</td>
                               <td className="px-6 py-4">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-500 border-gray-200"}`}>
                                   {t(s.is_active ? "Active" : "Inactive")}
@@ -2264,7 +2264,7 @@ export default function AdminDashboardPage() {
                                   </td>
                                   <td className="px-6 py-4 text-muted-foreground">{t(post.category)}</td>
                                   <td className="px-6 py-4 text-muted-foreground text-xs">
-                                    {new Date(post.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US")}
+                                    {new Date(post.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : language === "fr" ? "fr-FR" : "en-US")}
                                   </td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center justify-center gap-2">
