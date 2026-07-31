@@ -381,7 +381,7 @@ function CRMModal({
 
 export default function CRMTab() {
   const { language, t } = useAdminLanguage();
-  const dateLocale = language === "zh" ? "zh-CN" : "en-US";
+  const dateLocale = language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US";
   const [view, setView] = useState<CRMView>("dashboard");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -1558,7 +1558,7 @@ function ContactDrawer({
   onAddActivity: (type: CRMActivity["type"]) => void;
 }) {
   const { language, t } = useAdminLanguage();
-  const dateLocale = language === "zh" ? "zh-CN" : "en-US";
+  const dateLocale = language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US";
 
   return (
     <div className="fixed inset-0 z-[70]">

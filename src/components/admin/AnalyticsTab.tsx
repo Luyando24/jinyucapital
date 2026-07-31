@@ -289,8 +289,8 @@ export default function AnalyticsTab({
       const d = o.created_at ? new Date(o.created_at) : new Date();
       const dateKey =
         timeFrame === "7d" || timeFrame === "30d"
-          ? d.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric" })
-          : d.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { month: "short", year: "2-digit" });
+          ? d.toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { month: "short", day: "numeric" })
+          : d.toLocaleDateString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { month: "short", year: "2-digit" });
 
       if (!map[dateKey]) {
         map[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
@@ -684,7 +684,7 @@ export default function AnalyticsTab({
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            ${totalRevenue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${totalRevenue.toLocaleString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             {t("Based on {count} paid orders", { count: validOrders.length })}
@@ -702,7 +702,7 @@ export default function AnalyticsTab({
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            ${avgOrderValue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${avgOrderValue.toLocaleString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             {t("Per transaction average")}
@@ -741,7 +741,7 @@ export default function AnalyticsTab({
             {t("{count} Items", { count: products.length })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            {t("Catalog Value: {value}", { value: `$${totalCatalogValue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { maximumFractionDigits: 0 })}` })}
+            {t("Catalog Value: {value}", { value: `$${totalCatalogValue.toLocaleString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { maximumFractionDigits: 0 })}` })}
           </p>
         </div>
       </div>
@@ -828,7 +828,7 @@ export default function AnalyticsTab({
                       <td className="p-4 text-muted-foreground">{t(prod.category || "General")}</td>
                       <td className="p-4 font-medium">${price.toFixed(2)}</td>
                       <td className="p-4 font-medium">{t("{count} units", { count: qty })}</td>
-                      <td className="p-4 font-bold text-foreground">${val.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2 })}</td>
+                      <td className="p-4 font-bold text-foreground">${val.toLocaleString(language === "zh" ? "zh-CN" : language === "ru" ? "ru-RU" : "en-US", { minimumFractionDigits: 2 })}</td>
                       <td className="p-4">{statusBadge}</td>
                     </tr>
                   );
