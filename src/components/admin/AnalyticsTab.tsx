@@ -45,6 +45,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
 
 interface AnalyticsTabProps {
   orders: any[];
@@ -71,6 +72,7 @@ export default function AnalyticsTab({
   pageViews = [],
   loading = false,
 }: AnalyticsTabProps) {
+  const { language, t } = useAdminLanguage();
   const [timeFrame, setTimeFrame] = useState<TimeFrame>("30d");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -287,8 +289,8 @@ export default function AnalyticsTab({
       const d = o.created_at ? new Date(o.created_at) : new Date();
       const dateKey =
         timeFrame === "7d" || timeFrame === "30d"
-          ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-          : d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+          ? d.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric" })
+          : d.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { month: "short", year: "2-digit" });
 
       if (!map[dateKey]) {
         map[dateKey] = { date: dateKey, revenue: 0, orders: 0 };
@@ -300,7 +302,7 @@ export default function AnalyticsTab({
     });
 
     return Object.values(map);
-  }, [filteredOrders, timeFrame]);
+  }, [filteredOrders, language, timeFrame]);
 
   // ── Category Revenue Breakdown ───────────────────────────────────────────
   const categoryData = useMemo(() => {
@@ -338,24 +340,24 @@ export default function AnalyticsTab({
 
   // ── Export Analytics Data to CSV ─────────────────────────────────────────
   const handleExportCSV = () => {
-    const headers = ["Metric", "Value"];
+    const headers = [t("Metric"), t("Value")];
     const rows = [
-      ["Timeframe", timeFrame],
-      ["Active Users (5 min)", activeUsers5m],
-      ["Active Users (15 min)", activeUsers15m],
-      ["Active Users (24 hours)", activeUsers24h],
-      ["Total Page Views", filteredPageViews.length],
-      ["Total Revenue", `$${totalRevenue.toFixed(2)}`],
-      ["Total Orders", filteredOrders.length],
-      ["Valid/Paid Orders", validOrders.length],
-      ["Average Order Value", `$${avgOrderValue.toFixed(2)}`],
-      ["Total Products", products.length],
-      ["Low Stock Alert Count", lowStockProducts.length],
-      ["Out of Stock Count", outOfStockProducts.length],
-      ["Quote Requests", filteredQuotes.length],
-      ["Distributor Applications", filteredDistributors.length],
-      ["Contact Messages", filteredMessages.length],
-      ["Newsletter Subscribers", filteredSubscribers.length],
+      [t("Timeframe"), timeFrame],
+      [t("Active Users (5 min)"), activeUsers5m],
+      [t("Active Users (15 min)"), activeUsers15m],
+      [t("Active Users (24 hours)"), activeUsers24h],
+      [t("Total Page Views"), filteredPageViews.length],
+      [t("Total Revenue"), `$${totalRevenue.toFixed(2)}`],
+      [t("Total Orders"), filteredOrders.length],
+      [t("Valid/Paid Orders"), validOrders.length],
+      [t("Average Order Value"), `$${avgOrderValue.toFixed(2)}`],
+      [t("Total Products"), products.length],
+      [t("Low Stock Alert Count"), lowStockProducts.length],
+      [t("Out of Stock Count"), outOfStockProducts.length],
+      [t("Quote Requests"), filteredQuotes.length],
+      [t("Distributor Applications"), filteredDistributors.length],
+      [t("Contact Messages"), filteredMessages.length],
+      [t("Newsletter Subscribers"), filteredSubscribers.length],
     ];
 
     const csvContent =
@@ -381,9 +383,9 @@ export default function AnalyticsTab({
               <Activity className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Real-Time Traffic & User Analytics</h2>
+              <h2 className="text-xl font-bold tracking-tight">{t("Real-Time Traffic & User Analytics")}</h2>
               <p className="text-sm text-muted-foreground">
-                Active website visitors, referring traffic links, country locales, device types, and sales revenue.
+                {t("Active website visitors, referring traffic links, country locales, device types, and sales revenue.")}
               </p>
             </div>
           </div>
@@ -410,14 +412,14 @@ export default function AnalyticsTab({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tf.label}
+                {t(tf.label)}
               </button>
             ))}
           </div>
 
           <Button onClick={handleExportCSV} variant="outline" size="sm" className="gap-2 rounded-xl border-slate-300">
             <Download className="h-4 w-4 text-primary" />
-            Export Report
+            {t("Export Report")}
           </Button>
         </div>
       </div>
@@ -432,14 +434,14 @@ export default function AnalyticsTab({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
-              Active Users Now
+              {t("Active Users Now")}
             </span>
             <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
               <UserCheck className="h-4 w-4" />
             </div>
           </div>
           <div className="text-3xl font-black text-emerald-900 tracking-tight">{activeUsers5m}</div>
-          <p className="text-xs text-emerald-700 mt-1">Live visitors active in last 5 minutes</p>
+          <p className="text-xs text-emerald-700 mt-1">{t("Live visitors active in last 5 minutes")}</p>
         </div>
 
         {/* Active (15 min) */}
@@ -447,14 +449,14 @@ export default function AnalyticsTab({
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              15-Min Active Visitors
+              {t("15-Min Active Visitors")}
             </span>
             <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
               <Eye className="h-4 w-4" />
             </div>
           </div>
           <div className="text-3xl font-black text-blue-900 tracking-tight">{activeUsers15m}</div>
-          <p className="text-xs text-blue-700 mt-1">Unique session visitors in last 15 mins</p>
+          <p className="text-xs text-blue-700 mt-1">{t("Unique session visitors in last 15 mins")}</p>
         </div>
 
         {/* Active 24 Hours */}
@@ -462,14 +464,14 @@ export default function AnalyticsTab({
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-violet-700 uppercase tracking-wider flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
-              24-Hour Active Users
+              {t("24-Hour Active Users")}
             </span>
             <div className="p-2 bg-violet-100 text-violet-700 rounded-xl">
               <Monitor className="h-4 w-4" />
             </div>
           </div>
           <div className="text-3xl font-black text-violet-900 tracking-tight">{activeUsers24h}</div>
-          <p className="text-xs text-violet-700 mt-1">Unique user sessions recorded today</p>
+          <p className="text-xs text-violet-700 mt-1">{t("Unique user sessions recorded today")}</p>
         </div>
       </div>
 
@@ -481,21 +483,21 @@ export default function AnalyticsTab({
             <div>
               <h3 className="font-bold text-base flex items-center gap-2">
                 <LinkIcon className="h-5 w-5 text-primary" />
-                Traffic Sources & Referring Links
+                {t("Traffic Sources & Referring Links")}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Origins and acquisition links of website traffic
+                {t("Origins and acquisition links of website traffic")}
               </p>
             </div>
             <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
-              {filteredPageViews.length} Pageviews
+              {t("{count} Pageviews", { count: filteredPageViews.length })}
             </span>
           </div>
 
           <div className="space-y-3 pt-2">
             {trafficSources.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground border border-dashed rounded-xl text-xs">
-                No referral traffic recorded in this timeframe yet.
+                {t("No referral traffic recorded in this timeframe yet.")}
               </div>
             ) : (
               trafficSources.slice(0, 6).map((item) => {
@@ -504,10 +506,10 @@ export default function AnalyticsTab({
                   <div key={item.source} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-foreground truncate max-w-[240px]">
-                        {item.source}
+                        {t(item.source)}
                       </span>
                       <span className="font-mono text-muted-foreground font-medium">
-                        {item.count} views ({pct}%)
+                        {t("{count} views ({percent}%)", { count: item.count, percent: pct })}
                       </span>
                     </div>
                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
@@ -529,10 +531,10 @@ export default function AnalyticsTab({
             <div>
               <h3 className="font-bold text-base flex items-center gap-2">
                 <Globe className="h-5 w-5 text-primary" />
-                Geographical Country Traffic
+                {t("Geographical Country Traffic")}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Global visitor locations & B2B distributor regions
+                {t("Global visitor locations & B2B distributor regions")}
               </p>
             </div>
           </div>
@@ -540,7 +542,7 @@ export default function AnalyticsTab({
           <div className="space-y-3 pt-2">
             {countryDistribution.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground border border-dashed rounded-xl text-xs">
-                No location traffic data recorded in this timeframe yet.
+                {t("No location traffic data recorded in this timeframe yet.")}
               </div>
             ) : (
               countryDistribution.slice(0, 6).map((item) => {
@@ -550,10 +552,10 @@ export default function AnalyticsTab({
                       <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                         {item.country.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="font-bold text-xs text-foreground">{item.country}</span>
+                      <span className="font-bold text-xs text-foreground">{t(item.country)}</span>
                     </div>
                     <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                      {item.count} interactions
+                      {t("{count} interactions", { count: item.count })}
                     </span>
                   </div>
                 );
@@ -570,10 +572,10 @@ export default function AnalyticsTab({
           <div>
             <h3 className="font-bold text-base flex items-center gap-2">
               <Laptop className="h-5 w-5 text-primary" />
-              Device Types & Browsers
+              {t("Device Types & Browsers")}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Desktop vs Mobile vs Tablet ratio
+              {t("Desktop vs Mobile vs Tablet ratio")}
             </p>
           </div>
 
@@ -581,7 +583,7 @@ export default function AnalyticsTab({
             {deviceBreakdown.length === 0 ? (
               <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground text-xs space-y-1 border border-dashed rounded-xl bg-muted/20">
                 <Smartphone className="h-8 w-8 text-muted-foreground/40" />
-                <p className="font-semibold text-foreground">No device data</p>
+                <p className="font-semibold text-foreground">{t("No device data")}</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -618,7 +620,7 @@ export default function AnalyticsTab({
               <div key={dev.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: DEVICE_COLORS[idx % DEVICE_COLORS.length] }} />
-                  <span className="font-medium text-muted-foreground">{dev.name}</span>
+                  <span className="font-medium text-muted-foreground">{t(dev.name)}</span>
                 </div>
                 <span className="font-bold">{dev.value}</span>
               </div>
@@ -632,10 +634,10 @@ export default function AnalyticsTab({
             <div>
               <h3 className="font-bold text-base flex items-center gap-2">
                 <Compass className="h-5 w-5 text-primary" />
-                Top Visited Pages & Content Traffic
+                {t("Top Visited Pages & Content Traffic")}
               </h3>
               <p className="text-xs text-muted-foreground">
-                Page URL paths with highest visitor traffic
+                {t("Page URL paths with highest visitor traffic")}
               </p>
             </div>
           </div>
@@ -644,22 +646,22 @@ export default function AnalyticsTab({
             <table className="w-full text-left text-xs">
               <thead className="bg-muted/50 border-b font-semibold text-muted-foreground">
                 <tr>
-                  <th className="p-3">Page URL Path</th>
-                  <th className="p-3 text-right">Page Views</th>
+                  <th className="p-3">{t("Page URL Path")}</th>
+                  <th className="p-3 text-right">{t("Page Views")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {topVisitedPages.length === 0 ? (
                   <tr>
                     <td colSpan={2} className="p-8 text-center text-muted-foreground">
-                      No page views recorded in this timeframe yet.
+                      {t("No page views recorded in this timeframe yet.")}
                     </td>
                   </tr>
                 ) : (
                   topVisitedPages.slice(0, 7).map((item) => (
                     <tr key={item.path} className="hover:bg-muted/30 transition-colors">
                       <td className="p-3 font-mono font-medium text-foreground">{item.path}</td>
-                      <td className="p-3 text-right font-bold text-primary">{item.count} views</td>
+                      <td className="p-3 text-right font-bold text-primary">{t("{count} views", { count: item.count })}</td>
                     </tr>
                   ))
                 )}
@@ -675,17 +677,17 @@ export default function AnalyticsTab({
         <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Sales Revenue
+              {t("Total Sales Revenue")}
             </span>
             <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
               <DollarSign className="h-5 w-5" />
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${totalRevenue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Based on {validOrders.length} paid orders
+            {t("Based on {count} paid orders", { count: validOrders.length })}
           </p>
         </div>
 
@@ -693,17 +695,17 @@ export default function AnalyticsTab({
         <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Average Order Value
+              {t("Average Order Value")}
             </span>
             <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
               <ShoppingBag className="h-5 w-5" />
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            ${avgOrderValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${avgOrderValue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Per transaction average
+            {t("Per transaction average")}
           </p>
         </div>
 
@@ -711,17 +713,17 @@ export default function AnalyticsTab({
         <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Quote & Partner Leads
+              {t("Quote & Partner Leads")}
             </span>
             <div className="p-2.5 bg-violet-50 text-violet-600 rounded-xl">
               <FileText className="h-5 w-5" />
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            {(filteredQuotes.length + filteredDistributors.length)} Inquiries
+            {t("{count} Inquiries", { count: filteredQuotes.length + filteredDistributors.length })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            {filteredQuotes.length} Quotes & {filteredDistributors.length} Distributor Apps
+            {t("{quotes} Quotes & {distributors} Distributor Apps", { quotes: filteredQuotes.length, distributors: filteredDistributors.length })}
           </p>
         </div>
 
@@ -729,17 +731,17 @@ export default function AnalyticsTab({
         <div className="bg-card border p-5 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Catalog Products
+              {t("Catalog Products")}
             </span>
             <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
               <Package className="h-5 w-5" />
             </div>
           </div>
           <div className="text-2xl font-black tracking-tight">
-            {products.length} Items
+            {t("{count} Items", { count: products.length })}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Catalog Value: ${totalCatalogValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            {t("Catalog Value: {value}", { value: `$${totalCatalogValue.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { maximumFractionDigits: 0 })}` })}
           </p>
         </div>
       </div>
@@ -750,16 +752,16 @@ export default function AnalyticsTab({
           <div>
             <h3 className="font-bold text-base flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" />
-              Product Inventory & Stock Status
+              {t("Product Inventory & Stock Status")}
             </h3>
             <p className="text-xs text-muted-foreground">
-              Real-time inventory levels from the products database table
+              {t("Real-time inventory levels from the products database table")}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-              <Filter className="h-3.5 w-3.5" /> Category:
+              <Filter className="h-3.5 w-3.5" /> {t("Category:")}
             </span>
             <select
               value={selectedCategory}
@@ -768,7 +770,7 @@ export default function AnalyticsTab({
             >
               {categoryList.map((cat) => (
                 <option key={cat} value={cat}>
-                  {cat}
+                  {t(cat)}
                 </option>
               ))}
             </select>
@@ -779,19 +781,19 @@ export default function AnalyticsTab({
           <table className="w-full text-left text-xs">
             <thead className="bg-muted/50 border-b font-semibold text-muted-foreground">
               <tr>
-                <th className="p-4">Product Name</th>
-                <th className="p-4">Category</th>
-                <th className="p-4">Unit Price</th>
-                <th className="p-4">Stock Quantity</th>
-                <th className="p-4">Catalog Valuation</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t("Product Name")}</th>
+                <th className="p-4">{t("Category")}</th>
+                <th className="p-4">{t("Unit Price")}</th>
+                <th className="p-4">{t("Stock Quantity")}</th>
+                <th className="p-4">{t("Catalog Valuation")}</th>
+                <th className="p-4">{t("Status")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filteredProductsList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No products found in database for the selected category.
+                    {t("No products found in database for the selected category.")}
                   </td>
                 </tr>
               ) : (
@@ -802,20 +804,20 @@ export default function AnalyticsTab({
 
                   let statusBadge = (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <CheckCircle2 className="h-3 w-3" /> In Stock
+                      <CheckCircle2 className="h-3 w-3" /> {t("In Stock")}
                     </span>
                   );
 
                   if (qty <= 0) {
                     statusBadge = (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
-                        <AlertTriangle className="h-3 w-3" /> Out of Stock
+                        <AlertTriangle className="h-3 w-3" /> {t("Out of Stock")}
                       </span>
                     );
                   } else if (qty < 5) {
                     statusBadge = (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                        <Clock className="h-3 w-3" /> Low Stock ({qty})
+                        <Clock className="h-3 w-3" /> {t("Low Stock ({count})", { count: qty })}
                       </span>
                     );
                   }
@@ -823,10 +825,10 @@ export default function AnalyticsTab({
                   return (
                     <tr key={prod.id} className="hover:bg-muted/30 transition-colors">
                       <td className="p-4 font-semibold text-foreground">{prod.name}</td>
-                      <td className="p-4 text-muted-foreground">{prod.category || "General"}</td>
+                      <td className="p-4 text-muted-foreground">{t(prod.category || "General")}</td>
                       <td className="p-4 font-medium">${price.toFixed(2)}</td>
-                      <td className="p-4 font-medium">{qty} units</td>
-                      <td className="p-4 font-bold text-foreground">${val.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                      <td className="p-4 font-medium">{t("{count} units", { count: qty })}</td>
+                      <td className="p-4 font-bold text-foreground">${val.toLocaleString(language === "zh" ? "zh-CN" : "en-US", { minimumFractionDigits: 2 })}</td>
                       <td className="p-4">{statusBadge}</td>
                     </tr>
                   );
@@ -837,7 +839,7 @@ export default function AnalyticsTab({
         </div>
         {filteredProductsList.length > 10 && (
           <div className="p-3 text-center bg-muted/20 border-t text-xs text-muted-foreground">
-            Showing top 10 of {filteredProductsList.length} products. Filter by category to view others.
+            {t("Showing top 10 of {count} products. Filter by category to view others.", { count: filteredProductsList.length })}
           </div>
         )}
       </div>

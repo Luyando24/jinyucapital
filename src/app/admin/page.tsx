@@ -62,6 +62,7 @@ import { type HomepageContent, type HomepageStat, type ShowcaseProduct, useStore
 import { DEFAULT_HERO_IMAGES, DEFAULT_SHOWCASE } from "@/lib/default-images";
 import CRMTab from "@/components/admin/CRMTab";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
+import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
 
 type AdminTab = "overview" | "analytics" | "crm" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
 
@@ -102,10 +103,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function SaveBanner({ saving, saved }: { saving: boolean; saved: boolean }) {
+  const { t } = useAdminLanguage();
   return (
     <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-xl border text-sm font-medium transition-all duration-300 ${saving || saved ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"} ${saved ? "bg-green-50 border-green-200 text-green-700" : "bg-background border text-foreground"}`}>
       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-      {saving ? "Saving…" : "Saved!"}
+      {saving ? t("Saving...") : t("Saved!")}
     </div>
   );
 }
@@ -113,6 +115,7 @@ function SaveBanner({ saving, saved }: { saving: boolean; saved: boolean }) {
 // ── Documentation Tab ─────────────────────────────────────────────────────────
 
 function DocsTab() {
+  const { t } = useAdminLanguage();
   const docs = [
     {
       category: "Getting Started",
@@ -329,32 +332,32 @@ function DocsTab() {
   return (
     <div className="space-y-8">
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 border rounded-2xl p-8">
-        <h2 className="text-2xl font-bold mb-3">Admin User Guide</h2>
+        <h2 className="text-2xl font-bold mb-3">{t("Admin User Guide")}</h2>
         <p className="text-muted-foreground max-w-2xl">
-          Step-by-step instructions for managing your Jinyu Capital website through the admin panel.
+          {t("Step-by-step instructions for managing your Jinyu Capital website through the admin panel.")}
         </p>
       </div>
 
       {docs.map((section, sectionIndex) => (
         <div key={sectionIndex} className="space-y-6">
-          <h3 className="text-xl font-bold border-b pb-3">{section.category}</h3>
+          <h3 className="text-xl font-bold border-b pb-3">{t(section.category)}</h3>
           <div className="grid gap-6">
             {section.items.map((item, itemIndex) => (
               <div key={itemIndex} className="bg-card border rounded-xl p-6 shadow-sm">
                 <h4 className="font-bold text-lg mb-2 flex items-center gap-2">
                   <BookOpen className="h-5 w-5 text-primary" />
-                  {item.title}
+                  {t(item.title)}
                 </h4>
-                <p className="text-muted-foreground mb-4">{item.description}</p>
+                <p className="text-muted-foreground mb-4">{t(item.description)}</p>
                 <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm font-medium mb-3 text-foreground">Steps:</p>
+                  <p className="text-sm font-medium mb-3 text-foreground">{t("Steps:")}</p>
                   <ol className="space-y-2">
                     {item.steps.map((step, stepIndex) => (
                       <li key={stepIndex} className="text-sm text-muted-foreground flex items-start gap-3">
                         <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
                           {stepIndex + 1}
                         </span>
-                        {step}
+                        {t(step)}
                       </li>
                     ))}
                   </ol>
@@ -368,14 +371,14 @@ function DocsTab() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
         <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
           <HelpCircle className="h-5 w-5" />
-          Need Additional Help?
+          {t("Need Additional Help?")}
         </h4>
         <p className="text-blue-800 text-sm mb-3">
           If you encounter issues not covered in this guide or need technical assistance, please contact support.
         </p>
         <Button variant="outline" size="sm" className="border-blue-300 text-blue-900 hover:bg-blue-100">
           <ExternalLink className="h-4 w-4 mr-2" />
-          Contact Support
+          {t("Contact Support")}
         </Button>
       </div>
     </div>
@@ -388,6 +391,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, signOut, loading: authLoading, isAdmin } = useAuth();
   const { refreshSettings } = useStoreSettings();
+  const { language, t } = useAdminLanguage();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -551,7 +555,7 @@ export default function AdminDashboardPage() {
       }
     } catch (err: any) {
       console.error("Dashboard fetch failed:", err);
-      setError(err.message || "Failed to load dashboard data.");
+      setError(err.message || t("Failed to load dashboard data."));
     } finally {
       setLoading(false);
     }
@@ -623,14 +627,14 @@ export default function AdminDashboardPage() {
     const val = stockEditValues[productId];
     if (val === undefined || val < 0) return;
     const { error } = await supabase.from("products").update({ stock_quantity: val }).eq("id", productId);
-    if (error) { alert("Stock update failed: " + error.message); return; }
+    if (error) { alert(t("Stock update failed: {message}", { message: error.message })); return; }
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock_quantity: val } : p));
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm(t("Delete this product?"))) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) { alert("Delete failed: " + error.message); return; }
+    if (error) { alert(t("Delete failed: {message}", { message: error.message })); return; }
     setProducts(prev => prev.filter(p => p.id !== id));
   };
 
@@ -638,14 +642,14 @@ export default function AdminDashboardPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     const { error } = await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
-    if (error) { alert("Update failed: " + error.message); return; }
+    if (error) { alert(t("Update failed: {message}", { message: error.message })); return; }
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
   const handleDeleteOrder = async (id: string) => {
-    if (!confirm("Delete this order?")) return;
+    if (!confirm(t("Delete this order?"))) return;
     const { error } = await supabase.from("orders").delete().eq("id", id);
-    if (error) { alert("Delete failed: " + error.message); return; }
+    if (error) { alert(t("Delete failed: {message}", { message: error.message })); return; }
     setOrders(prev => prev.filter(o => o.id !== id));
   };
 
@@ -654,7 +658,7 @@ export default function AdminDashboardPage() {
   const handleDeleteSubscriber = async (id: string) => {
     if (!confirm("Remove subscriber?")) return;
     const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
-    if (error) { alert("Failed: " + error.message); return; }
+    if (error) { alert(t("Failed: {message}", { message: error.message })); return; }
     setSubscribers(prev => prev.filter(s => s.id !== id));
   };
 
@@ -675,11 +679,11 @@ export default function AdminDashboardPage() {
 
   const handleAddSubscriber = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubscriberEmail.includes("@")) { alert("Enter a valid email."); return; }
+    if (!newSubscriberEmail.includes("@")) { alert(t("Enter a valid email.")); return; }
     setAddingSubscriber(true);
     const { error } = await supabase.from("newsletter_subscribers").insert({ email: newSubscriberEmail, is_active: true });
     setAddingSubscriber(false);
-    if (error) { alert("Failed: " + error.message); return; }
+    if (error) { alert(t("Failed: {message}", { message: error.message })); return; }
     setNewSubscriberEmail("");
     loadAdminDataset();
   };
@@ -688,12 +692,12 @@ export default function AdminDashboardPage() {
 
   const handleUpdateQuoteStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("quote_requests").update({ status }).eq("id", id);
-    if (error) { alert("Failed."); return; }
+    if (error) { alert(t("Failed.")); return; }
     setQuoteRequests(prev => prev.map(q => q.id === id ? { ...q, status } : q));
   };
 
   const handleDeleteQuote = async (id: string) => {
-    if (!confirm("Delete quote?")) return;
+    if (!confirm(t("Delete quote?"))) return;
     await supabase.from("quote_requests").delete().eq("id", id);
     setQuoteRequests(prev => prev.filter(q => q.id !== id));
   };
@@ -701,7 +705,7 @@ export default function AdminDashboardPage() {
   const handleSaveQuoteEdit = async () => {
     if (!editingQuote || !quoteEditData) return;
     const { error } = await supabase.from("quote_requests").update({ status: quoteEditData.status, message: quoteEditData.message, quantity: quoteEditData.quantity, product_interest: quoteEditData.product_interest }).eq("id", editingQuote);
-    if (error) { alert("Failed: " + error.message); return; }
+    if (error) { alert(t("Failed: {message}", { message: error.message })); return; }
     setQuoteRequests(prev => prev.map(q => q.id === editingQuote ? { ...q, ...quoteEditData } : q));
     setEditingQuote(null);
     setQuoteEditData(null);
@@ -711,12 +715,12 @@ export default function AdminDashboardPage() {
 
   const handleUpdateDistributorStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("distributor_applications").update({ status }).eq("id", id);
-    if (error) { alert("Failed."); return; }
+    if (error) { alert(t("Failed.")); return; }
     setDistributorApplications(prev => prev.map(d => d.id === id ? { ...d, status } : d));
   };
 
   const handleDeleteDistributor = async (id: string) => {
-    if (!confirm("Delete distributor application?")) return;
+    if (!confirm(t("Delete distributor application?"))) return;
     await supabase.from("distributor_applications").delete().eq("id", id);
     setDistributorApplications(prev => prev.filter(d => d.id !== id));
   };
@@ -725,12 +729,12 @@ export default function AdminDashboardPage() {
 
   const handleUpdateContactStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("contact_messages").update({ status }).eq("id", id);
-    if (error) { alert("Failed."); return; }
+    if (error) { alert(t("Failed.")); return; }
     setContactMessages(prev => prev.map(c => c.id === id ? { ...c, status } : c));
   };
 
   const handleDeleteContact = async (id: string) => {
-    if (!confirm("Delete message?")) return;
+    if (!confirm(t("Delete message?"))) return;
     await supabase.from("contact_messages").delete().eq("id", id);
     setContactMessages(prev => prev.filter(c => c.id !== id));
   };
@@ -836,7 +840,7 @@ export default function AdminDashboardPage() {
     setAdminUserMessage("");
 
     if (adminPassword !== adminPasswordConfirmation) {
-      setAdminUserMessage("Passwords do not match.");
+      setAdminUserMessage(t("Passwords do not match."));
       return;
     }
 
@@ -912,7 +916,7 @@ export default function AdminDashboardPage() {
   const handleSaveBlogPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!blogTitle.trim() || !blogSlug.trim() || !blogExcerpt.trim() || !blogContent.trim()) {
-      setBlogMessage("Please fill in all required fields.");
+      setBlogMessage(t("Please fill in all required fields."));
       return;
     }
 
@@ -942,7 +946,7 @@ export default function AdminDashboardPage() {
           .update(postPayload)
           .eq("id", currentBlogId);
         if (error) throw error;
-        setBlogMessage("Blog post updated successfully!");
+        setBlogMessage(t("Blog post updated successfully!"));
       } else {
         const { error } = await supabase
           .from("blog_posts")
@@ -951,7 +955,7 @@ export default function AdminDashboardPage() {
             created_at: new Date().toISOString()
           });
         if (error) throw error;
-        setBlogMessage("Blog post created successfully!");
+        setBlogMessage(t("Blog post created successfully!"));
       }
 
       await loadAdminDataset();
@@ -960,14 +964,14 @@ export default function AdminDashboardPage() {
       }, 1000);
     } catch (err: any) {
       console.error("Save blog post failed:", err);
-      setBlogMessage(err.message || "Failed to save blog post.");
+      setBlogMessage(err.message || t("Failed to save blog post."));
     } finally {
       setSavingBlog(false);
     }
   };
 
   const handleDeleteBlogPost = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this blog post?")) return;
+    if (!confirm(t("Are you sure you want to delete this blog post?"))) return;
     try {
       const { error } = await supabase
         .from("blog_posts")
@@ -976,7 +980,7 @@ export default function AdminDashboardPage() {
       if (error) throw error;
       setBlogPosts(prev => prev.filter(p => p.id !== id));
     } catch (err: any) {
-      alert("Delete failed: " + err.message);
+      alert(t("Delete failed: {message}", { message: err.message }));
     }
   };
 
@@ -992,10 +996,10 @@ export default function AdminDashboardPage() {
         <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
           <Lock className="text-primary h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-bold">Admin Portal</h2>
-        <p className="text-muted-foreground">Please sign in to access the management dashboard.</p>
+        <h2 className="text-2xl font-bold">{t("Admin Portal")}</h2>
+        <p className="text-muted-foreground">{t("Please sign in to access the management dashboard.")}</p>
         <Button asChild className="w-full">
-          <Link href="/login?redirect=/admin">Sign In</Link>
+          <Link href="/login?redirect=/admin">{t("Sign In")}</Link>
         </Button>
       </div>
     </div>
@@ -1073,7 +1077,7 @@ export default function AdminDashboardPage() {
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center gap-3 border-b">
             <Logo className="w-8 h-8" />
-            <span className="font-bold text-xl tracking-tight">ADMIN</span>
+            <span className="font-bold text-xl tracking-tight">{t("ADMIN")}</span>
             <button className="ml-auto md:hidden p-1 hover:bg-muted rounded" onClick={() => setIsMobileMenuOpen(false)}>
               <X className="h-4 w-4" />
             </button>
@@ -1094,7 +1098,7 @@ export default function AdminDashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   <item.icon className="h-4 w-4" />
-                  {item.label}
+                  {t(item.label)}
                 </div>
                 {(item as any).badge ? (
                   <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === item.id ? "bg-white text-primary" : "bg-primary text-white"}`}>
@@ -1117,7 +1121,7 @@ export default function AdminDashboardPage() {
             </div>
             <Button variant="outline" size="sm" className="w-full justify-start gap-2" onClick={() => { signOut(); router.push("/"); }}>
               <LogOut className="h-4 w-4" />
-              Sign Out
+              {t("Sign Out")}
             </Button>
           </div>
         </div>
@@ -1130,16 +1134,16 @@ export default function AdminDashboardPage() {
             <button className="md:hidden p-2 -ml-2 hover:bg-muted rounded-lg" onClick={() => setIsMobileMenuOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-bold capitalize">{activeTab === "website" ? "Website Content" : activeTab === "analytics" ? "Analytics & Reports" : activeTab === "docs" ? "Documentation" : activeTab === "crm" ? "CRM" : activeTab}</h1>
+            <h1 className="text-lg font-bold capitalize">{t(activeTab === "website" ? "Website Content" : activeTab === "analytics" ? "Analytics & Reports" : activeTab === "docs" ? "Documentation" : activeTab === "crm" ? "CRM" : menuItems.find(item => item.id === activeTab)?.label ?? activeTab)}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={loadAdminDataset} title="Refresh">
+            <Button variant="ghost" size="icon" onClick={loadAdminDataset} title={t("Refresh")}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
             <Button asChild variant="outline" size="sm" className="hidden sm:flex gap-2">
               <Link href="/" target="_blank">
                 <Globe className="h-4 w-4" />
-                View Site
+                {t("View Site")}
               </Link>
             </Button>
           </div>
@@ -1149,7 +1153,7 @@ export default function AdminDashboardPage() {
           {loading && products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
-              <p className="text-muted-foreground text-sm">Loading data…</p>
+              <p className="text-muted-foreground text-sm">{t("Loading data...")}</p>
             </div>
           ) : (
             <div className="max-w-7xl mx-auto space-y-8">
@@ -1161,30 +1165,30 @@ export default function AdminDashboardPage() {
                     <StatCard
                       icon={<TrendingUp className="h-5 w-5 text-primary" />}
                       iconBg="bg-primary/10"
-                      label="Total Revenue"
+                      label={t("Total Revenue")}
                       value={`$${totalRevenue.toLocaleString()}`}
-                      sub={`from ${orders.filter(o => o.status !== "Cancelled").length} orders`}
+                      sub={t("from {count} orders", { count: orders.filter(o => o.status !== "Cancelled").length })}
                     />
                     <StatCard
                       icon={<ShoppingBag className="h-5 w-5 text-amber-600" />}
                       iconBg="bg-amber-500/10"
-                      label="Total Orders"
+                      label={t("Total Orders")}
                       value={orders.length}
-                      sub={`${orders.filter(o => o.status === "Pending").length} pending`}
+                      sub={t("{count} pending", { count: orders.filter(o => o.status === "Pending").length })}
                     />
                     <StatCard
                       icon={<Package className="h-5 w-5 text-blue-600" />}
                       iconBg="bg-blue-500/10"
-                      label="Products"
+                      label={t("Products")}
                       value={products.length}
-                      sub={`${products.filter(p => (p.stock_quantity ?? 0) > 0).length} in stock`}
+                      sub={t("{count} in stock", { count: products.filter(p => (p.stock_quantity ?? 0) > 0).length })}
                     />
                     <StatCard
                       icon={<AlertTriangle className="h-5 w-5 text-red-600" />}
                       iconBg="bg-red-500/10"
-                      label="Low Stock"
+                      label={t("Low Stock")}
                       value={lowStockCount}
-                      sub="items below 5 units"
+                      sub={t("items below 5 units")}
                     />
                   </div>
 
@@ -1197,7 +1201,7 @@ export default function AdminDashboardPage() {
                       { label: "Subscribers", value: subscribers.filter(s => s.is_active).length, color: "text-green-600" },
                     ].map(item => (
                       <div key={item.label} className="bg-card border rounded-xl p-4">
-                        <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t(item.label)}</p>
                         <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
                       </div>
                     ))}
@@ -1206,17 +1210,17 @@ export default function AdminDashboardPage() {
                   {/* Recent orders */}
                   <div className="bg-card border rounded-2xl overflow-hidden shadow-sm">
                     <div className="p-6 border-b flex items-center justify-between">
-                      <h3 className="font-bold">Recent Orders</h3>
-                      <Button variant="ghost" size="sm" onClick={() => setActiveTab("orders")}>View All</Button>
+                      <h3 className="font-bold">{t("Recent Orders")}</h3>
+                      <Button variant="ghost" size="sm" onClick={() => setActiveTab("orders")}>{t("View All")}</Button>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
                           <tr>
-                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">Customer</th>
-                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">Date</th>
-                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">Amount</th>
-                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">Status</th>
+                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">{t("Customer")}</th>
+                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">{t("Date")}</th>
+                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">{t("Amount")}</th>
+                            <th className="px-6 py-3 text-left font-medium text-muted-foreground">{t("Status")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -1226,13 +1230,13 @@ export default function AdminDashboardPage() {
                                 <p className="font-bold">{o.first_name} {o.last_name}</p>
                                 <p className="text-xs text-muted-foreground">{o.email}</p>
                               </td>
-                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(o.created_at).toLocaleDateString()}</td>
+                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</td>
                               <td className="px-6 py-4 font-bold">${Number(o.total_amount).toLocaleString()}</td>
-                              <td className="px-6 py-4"><span className={statusBadge(o.status)}>{o.status}</span></td>
+                              <td className="px-6 py-4"><span className={statusBadge(o.status)}>{t(o.status)}</span></td>
                             </tr>
                           ))}
                           {orders.length === 0 && (
-                            <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground text-sm">No orders yet</td></tr>
+                            <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground text-sm">{t("No orders yet")}</td></tr>
                           )}
                         </tbody>
                       </table>
@@ -1264,10 +1268,10 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full sm:max-w-md">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search products…" className="pl-10" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
+                      <Input placeholder={t("Search products...")} className="pl-10" value={productSearch} onChange={e => setProductSearch(e.target.value)} />
                     </div>
                     <Button asChild>
-                      <Link href="/admin/products/new"><Plus className="h-4 w-4 mr-2" />Add Product</Link>
+                      <Link href="/admin/products/new"><Plus className="h-4 w-4 mr-2" />{t("Add Product")}</Link>
                     </Button>
                   </div>
 
@@ -1275,10 +1279,10 @@ export default function AdminDashboardPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Product</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Category</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Stock</th>
-                          <th className="px-6 py-4 text-center font-medium text-muted-foreground">Actions</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Product")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Category")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Stock")}</th>
+                          <th className="px-6 py-4 text-center font-medium text-muted-foreground">{t("Actions")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -1291,11 +1295,11 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div>
                                   <p className="font-bold">{p.name}</p>
-                                  {p.is_wholesale && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Wholesale</span>}
+                                  {p.is_wholesale && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">{t("Wholesale")}</span>}
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-muted-foreground">{p.category}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{t(p.category)}</td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <input
@@ -1322,7 +1326,7 @@ export default function AdminDashboardPage() {
                           </tr>
                         ))}
                         {filteredProducts.length === 0 && (
-                          <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground text-sm">No products found</td></tr>
+                          <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground text-sm">{t("No products found")}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -1336,11 +1340,11 @@ export default function AdminDashboardPage() {
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full sm:max-w-md">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="Search orders…" className="pl-10" value={orderSearch} onChange={e => setOrderSearch(e.target.value)} />
+                      <Input placeholder={t("Search orders...")} className="pl-10" value={orderSearch} onChange={e => setOrderSearch(e.target.value)} />
                     </div>
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {["All", "Pending", "Processing", "Shipped", "Cancelled"].map(s => (
-                        <Button key={s} variant={orderStatusFilter === s ? "default" : "outline"} size="sm" onClick={() => setOrderStatusFilter(s)}>{s}</Button>
+                        <Button key={s} variant={orderStatusFilter === s ? "default" : "outline"} size="sm" onClick={() => setOrderStatusFilter(s)}>{t(s)}</Button>
                       ))}
                     </div>
                   </div>
@@ -1350,12 +1354,12 @@ export default function AdminDashboardPage() {
                       <thead className="bg-muted/50">
                         <tr>
                           <th className="w-10 px-4" />
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">ID</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Customer</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Amount</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Date</th>
-                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">Status</th>
-                          <th className="px-6 py-4 text-center font-medium text-muted-foreground">Delete</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("ID")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Customer")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Amount")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Date")}</th>
+                          <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Status")}</th>
+                          <th className="px-6 py-4 text-center font-medium text-muted-foreground">{t("Delete")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -1373,10 +1377,10 @@ export default function AdminDashboardPage() {
                                 <p className="text-xs text-muted-foreground">{o.email}</p>
                               </td>
                               <td className="px-6 py-4 font-bold">${Number(o.total_amount).toLocaleString()}</td>
-                              <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</td>
+                              <td className="px-6 py-4 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</td>
                               <td className="px-6 py-4">
                                 <select value={o.status} onChange={e => handleUpdateStatus(o.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold outline-none">
-                                  {["Pending","Processing","Shipped","Cancelled"].map(s => <option key={s} value={s}>{s}</option>)}
+                                  {["Pending","Processing","Shipped","Cancelled"].map(s => <option key={s} value={s}>{t(s)}</option>)}
                                 </select>
                               </td>
                               <td className="px-6 py-4 text-center">
@@ -1390,7 +1394,7 @@ export default function AdminDashboardPage() {
                                 <td colSpan={7} className="p-6">
                                   <div className="grid md:grid-cols-2 gap-8">
                                     <div className="space-y-3">
-                                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Shipping Details</h4>
+                                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Shipping Details")}</h4>
                                       <div className="space-y-1 text-sm">
                                         <p className="font-medium">{o.first_name} {o.last_name}</p>
                                         <p className="text-muted-foreground">{o.address}</p>
@@ -1399,11 +1403,11 @@ export default function AdminDashboardPage() {
                                       </div>
                                     </div>
                                     <div className="space-y-3">
-                                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Items Ordered</h4>
+                                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Items Ordered")}</h4>
                                       <div className="space-y-2">
                                         {o.order_items?.map((item: any) => (
                                           <div key={item.id} className="flex justify-between items-center text-sm bg-background p-2 rounded-lg">
-                                            <span>{item.products?.name || "Unknown"} × {item.quantity}</span>
+                                            <span>{item.products?.name || t("Unknown")} × {item.quantity}</span>
                                             <span className="font-bold">${(item.price * item.quantity).toFixed(2)}</span>
                                           </div>
                                         ))}
@@ -1416,7 +1420,7 @@ export default function AdminDashboardPage() {
                           </React.Fragment>
                         ))}
                         {filteredOrders.length === 0 && (
-                          <tr><td colSpan={7} className="px-6 py-12 text-center text-muted-foreground text-sm">No orders found</td></tr>
+                          <tr><td colSpan={7} className="px-6 py-12 text-center text-muted-foreground text-sm">{t("No orders found")}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -1438,14 +1442,14 @@ export default function AdminDashboardPage() {
                               <p className="text-muted-foreground text-sm">{q.company_name}</p>
                             </div>
                             <p className="text-xs text-muted-foreground">{q.email} {q.phone && `· ${q.phone}`}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">{new Date(q.created_at).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">{new Date(q.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</p>
                           </div>
                           <div className="flex gap-2 items-center">
-                            <span className={statusBadge(q.status)}>{q.status}</span>
+                            <span className={statusBadge(q.status)}>{t(q.status === "new" ? "New" : q.status === "quoted" ? "Quoted" : q.status === "closed" ? "Closed" : q.status)}</span>
                             {editingQuote === q.id ? (
                               <>
-                                <Button variant="outline" size="sm" onClick={() => { setEditingQuote(null); setQuoteEditData(null); }}>Cancel</Button>
-                                <Button size="sm" onClick={handleSaveQuoteEdit}>Save</Button>
+                                <Button variant="outline" size="sm" onClick={() => { setEditingQuote(null); setQuoteEditData(null); }}>{t("Cancel")}</Button>
+                                <Button size="sm" onClick={handleSaveQuoteEdit}>{t("Save")}</Button>
                               </>
                             ) : (
                               <>
@@ -1460,24 +1464,24 @@ export default function AdminDashboardPage() {
                           <div className="space-y-4 p-4 bg-muted/30 rounded-xl">
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <div>
-                                <SectionLabel>Status</SectionLabel>
+                                <SectionLabel>{t("Status")}</SectionLabel>
                                 <select value={quoteEditData.status} onChange={e => setQuoteEditData({ ...quoteEditData, status: e.target.value })} className="w-full bg-background border rounded px-3 py-2 text-xs font-bold">
-                                  <option value="new">New</option>
-                                  <option value="quoted">Quoted</option>
-                                  <option value="closed">Closed</option>
+                                  <option value="new">{t("New")}</option>
+                                  <option value="quoted">{t("Quoted")}</option>
+                                  <option value="closed">{t("Closed")}</option>
                                 </select>
                               </div>
                               <div>
-                                <SectionLabel>Quantity</SectionLabel>
+                                <SectionLabel>{t("Quantity")}</SectionLabel>
                                 <input type="number" value={quoteEditData.quantity} onChange={e => setQuoteEditData({ ...quoteEditData, quantity: parseInt(e.target.value) })} className="w-full bg-background border rounded px-3 py-2 text-xs font-bold" />
                               </div>
                               <div>
-                                <SectionLabel>Product Interest</SectionLabel>
+                                <SectionLabel>{t("Product Interest")}</SectionLabel>
                                 <input type="text" value={quoteEditData.product_interest || ""} onChange={e => setQuoteEditData({ ...quoteEditData, product_interest: e.target.value })} className="w-full bg-background border rounded px-3 py-2 text-xs font-bold" />
                               </div>
                             </div>
                             <div>
-                              <SectionLabel>Message</SectionLabel>
+                              <SectionLabel>{t("Message")}</SectionLabel>
                               <textarea rows={3} value={quoteEditData.message || ""} onChange={e => setQuoteEditData({ ...quoteEditData, message: e.target.value })} className="w-full bg-background border rounded px-3 py-2 text-xs resize-none" />
                             </div>
                           </div>
@@ -1485,20 +1489,20 @@ export default function AdminDashboardPage() {
                           <>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                               {[
-                                { label: "Product", value: q.product_interest || "N/A" },
-                                { label: "Quantity", value: q.quantity || "N/A" },
-                                { label: "Project Type", value: q.project_type || "N/A" },
-                                { label: "Phone", value: q.phone || "N/A" },
+                                { label: "Product", value: q.product_interest || t("N/A") },
+                                { label: "Quantity", value: q.quantity || t("N/A") },
+                                { label: "Project Type", value: q.project_type || t("N/A") },
+                                { label: "Phone", value: q.phone || t("N/A") },
                               ].map(item => (
                                 <div key={item.label} className="bg-muted/50 p-3 rounded-xl">
-                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{item.label}</p>
+                                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{t(item.label)}</p>
                                   <p className="font-medium">{item.value}</p>
                                 </div>
                               ))}
                             </div>
                             {q.message && (
                               <div className="p-4 bg-primary/5 border-l-4 border-primary text-sm rounded-r-xl">
-                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Message</p>
+                                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{t("Message")}</p>
                                 <p>{q.message}</p>
                               </div>
                             )}
@@ -1510,7 +1514,7 @@ export default function AdminDashboardPage() {
                   {quoteRequests.length === 0 && (
                     <div className="text-center py-16 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                      <p className="text-sm font-medium">No quote requests yet</p>
+                      <p className="text-sm font-medium">{t("No quote requests yet")}</p>
                     </div>
                   )}
                 </div>
@@ -1525,13 +1529,13 @@ export default function AdminDashboardPage() {
                         <div>
                           <p className="font-bold">{d.contact_name} · <span className="text-muted-foreground font-normal">{d.company_name}</span></p>
                           <p className="text-xs text-muted-foreground mt-1">{d.email} · {d.country} · {d.business_type}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(d.created_at).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(d.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</p>
                         </div>
                         <div className="flex gap-2 items-center">
                           <select value={d.status} onChange={e => handleUpdateDistributorStatus(d.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold">
-                            <option value="new">New</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="new">{t("New")}</option>
+                            <option value="approved">{t("Approved")}</option>
+                            <option value="rejected">{t("Rejected")}</option>
                           </select>
                           <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteDistributor(d.id)}>
                             <Trash2 className="h-4 w-4" />
@@ -1540,12 +1544,12 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                         {[
-                          { label: "Phone", value: d.phone || "N/A" },
-                          { label: "Experience", value: d.experience || "N/A" },
-                          { label: "Products Interest", value: d.products || "N/A" },
+                          { label: "Phone", value: d.phone || t("N/A") },
+                          { label: "Experience", value: d.experience || t("N/A") },
+                          { label: "Products Interest", value: d.products || t("N/A") },
                         ].map(item => (
                           <div key={item.label} className="bg-muted/50 p-3 rounded-xl">
-                            <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{item.label}</p>
+                            <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{t(item.label)}</p>
                             <p className="font-medium">{item.value}</p>
                           </div>
                         ))}
@@ -1556,7 +1560,7 @@ export default function AdminDashboardPage() {
                   {distributorApplications.length === 0 && (
                     <div className="text-center py-16 text-muted-foreground">
                       <Building2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                      <p className="text-sm font-medium">No distributor applications yet</p>
+                      <p className="text-sm font-medium">{t("No distributor applications yet")}</p>
                     </div>
                   )}
                 </div>
@@ -1571,15 +1575,15 @@ export default function AdminDashboardPage() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <p className="font-bold">{c.name}</p>
-                            {c.status === "unread" && <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">NEW</span>}
+                            {c.status === "unread" && <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">{t("NEW")}</span>}
                           </div>
                           <p className="text-xs text-muted-foreground">{c.email}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(c.created_at).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(c.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</p>
                         </div>
                         <div className="flex gap-2 items-center">
                           <select value={c.status} onChange={e => handleUpdateContactStatus(c.id, e.target.value)} className="bg-background border rounded px-2 py-1 text-xs font-bold">
-                            <option value="unread">Unread</option>
-                            <option value="read">Read</option>
+                            <option value="unread">{t("Unread")}</option>
+                            <option value="read">{t("Read")}</option>
                           </select>
                           <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteContact(c.id)}>
                             <Trash2 className="h-4 w-4" />
@@ -1592,7 +1596,7 @@ export default function AdminDashboardPage() {
                   {contactMessages.length === 0 && (
                     <div className="text-center py-16 text-muted-foreground">
                       <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                      <p className="text-sm font-medium">No messages yet</p>
+                      <p className="text-sm font-medium">{t("No messages yet")}</p>
                     </div>
                   )}
                 </div>
@@ -1604,15 +1608,15 @@ export default function AdminDashboardPage() {
                   <div className="lg:col-span-3 space-y-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-bold">Subscribers</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">{subscribers.filter(s => s.is_active).length} active</p>
+                        <h3 className="font-bold">{t("Subscribers")}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("{count} active", { count: subscribers.filter(s => s.is_active).length })}</p>
                       </div>
                       <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
-                        <Download className="h-4 w-4" />Export CSV
+                        <Download className="h-4 w-4" />{t("Export CSV")}
                       </Button>
                     </div>
                     <form onSubmit={handleAddSubscriber} className="flex gap-2">
-                      <Input placeholder="Add subscriber email…" value={newSubscriberEmail} onChange={e => setNewSubscriberEmail(e.target.value)} className="flex-1" />
+                      <Input placeholder={t("Add subscriber email...")} value={newSubscriberEmail} onChange={e => setNewSubscriberEmail(e.target.value)} className="flex-1" />
                       <Button type="submit" disabled={addingSubscriber}>
                         {addingSubscriber ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                       </Button>
@@ -1621,20 +1625,20 @@ export default function AdminDashboardPage() {
                       <table className="w-full text-sm">
                         <thead className="bg-muted/50">
                           <tr>
-                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">Email</th>
-                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">Subscribed</th>
-                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">Status</th>
-                            <th className="px-6 py-4 text-center text-muted-foreground">Remove</th>
+                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Email")}</th>
+                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Subscribed")}</th>
+                            <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Status")}</th>
+                            <th className="px-6 py-4 text-center text-muted-foreground">{t("Remove")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y">
                           {subscribers.map(s => (
                             <tr key={s.id} className="hover:bg-muted/30">
                               <td className="px-6 py-4">{s.email}</td>
-                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.subscribed_at).toLocaleDateString()}</td>
+                              <td className="px-6 py-4 text-muted-foreground text-xs">{new Date(s.subscribed_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}</td>
                               <td className="px-6 py-4">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.is_active ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-500 border-gray-200"}`}>
-                                  {s.is_active ? "Active" : "Inactive"}
+                                  {t(s.is_active ? "Active" : "Inactive")}
                                 </span>
                               </td>
                               <td className="px-6 py-4 text-center">
@@ -1645,27 +1649,27 @@ export default function AdminDashboardPage() {
                             </tr>
                           ))}
                           {subscribers.length === 0 && (
-                            <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground text-sm">No subscribers yet</td></tr>
+                            <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground text-sm">{t("No subscribers yet")}</td></tr>
                           )}
                         </tbody>
                       </table>
                     </div>
                   </div>
                   <div className="lg:col-span-2 space-y-4">
-                    <h3 className="font-bold">Broadcast Email</h3>
+                    <h3 className="font-bold">{t("Broadcast Email")}</h3>
                     <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-4">
                       <div className="space-y-2">
-                        <SectionLabel>Subject</SectionLabel>
-                        <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Newsletter Subject" />
+                        <SectionLabel>{t("Subject")}</SectionLabel>
+                        <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder={t("Newsletter Subject")} />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>Message Body</SectionLabel>
-                        <textarea rows={10} value={emailBody} onChange={e => setEmailBody(e.target.value)} className="w-full bg-background border rounded-xl p-3 text-sm resize-none" placeholder="Email body content…" />
+                        <SectionLabel>{t("Message Body")}</SectionLabel>
+                        <textarea rows={10} value={emailBody} onChange={e => setEmailBody(e.target.value)} className="w-full bg-background border rounded-xl p-3 text-sm resize-none" placeholder={t("Email body content...")} />
                       </div>
                       <Button className="w-full gap-2" onClick={handleSendNewsletter}>
-                        <Send className="h-4 w-4" />Send via Email Client
+                        <Send className="h-4 w-4" />{t("Send via Email Client")}
                       </Button>
-                      <p className="text-xs text-muted-foreground text-center">Opens your default email client with BCC to all active subscribers.</p>
+                      <p className="text-xs text-muted-foreground text-center">{t("Opens your default email client with BCC to all active subscribers.")}</p>
                     </div>
                   </div>
                 </div>
@@ -1676,12 +1680,12 @@ export default function AdminDashboardPage() {
                 <form onSubmit={handleSaveWebsiteContent} className="space-y-8">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-bold text-lg">Website Content</h2>
-                      <p className="text-sm text-muted-foreground mt-0.5">Edit what visitors see on the homepage.</p>
+                      <h2 className="font-bold text-lg">{t("Website Content")}</h2>
+                      <p className="text-sm text-muted-foreground mt-0.5">{t("Edit what visitors see on the homepage.")}</p>
                     </div>
                     <Button type="submit" disabled={savingWebsite} className="gap-2">
                       {savingWebsite ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save All Changes
+                      {t("Save All Changes")}
                     </Button>
                   </div>
 
@@ -1689,16 +1693,16 @@ export default function AdminDashboardPage() {
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
                     <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <h3 className="font-bold flex items-center gap-2"><Star className="h-4 w-4 text-primary" />Hero Slider</h3>
-                        <p className="mt-1 text-xs text-muted-foreground">Slides rotate automatically every six seconds. Visitors can pause or navigate manually.</p>
+                        <h3 className="font-bold flex items-center gap-2"><Star className="h-4 w-4 text-primary" />{t("Hero Slider")}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">{t("Slides rotate automatically every six seconds. Visitors can pause or navigate manually.")}</p>
                       </div>
                       <Button type="button" variant="outline" size="sm" onClick={addHeroSlide} disabled={heroSlideUrls.length >= 8}>
-                        <Plus className="mr-2 h-4 w-4" />Add slide
+                        <Plus className="mr-2 h-4 w-4" />{t("Add slide")}
                       </Button>
                     </div>
                     <div className="grid lg:grid-cols-2 gap-5">
                       <div className="space-y-2">
-                        <SectionLabel>Hero Headline</SectionLabel>
+                        <SectionLabel>{t("Hero Headline")}</SectionLabel>
                         <textarea
                           rows={3}
                           value={homepageContent.hero_headline || ""}
@@ -1707,7 +1711,7 @@ export default function AdminDashboardPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>Hero Sub-headline</SectionLabel>
+                        <SectionLabel>{t("Hero Sub-headline")}</SectionLabel>
                         <textarea
                           rows={3}
                           value={homepageContent.hero_subheadline || ""}
@@ -1721,7 +1725,7 @@ export default function AdminDashboardPage() {
                         <div key={index} className="overflow-hidden rounded-2xl border bg-background">
                           <div className="relative aspect-video bg-muted">
                             {heroSlidePreviews[index] ? (
-                              <img src={heroSlidePreviews[index]} alt={`Hero slide ${index + 1} preview`} className="h-full w-full object-cover" />
+                              <img src={heroSlidePreviews[index]} alt={t("Hero slide {count} preview", { count: index + 1 })} className="h-full w-full object-cover" />
                             ) : (
                               <div className="flex h-full items-center justify-center text-muted-foreground">
                                 <ImageIcon className="h-8 w-8 opacity-40" />
@@ -1729,30 +1733,30 @@ export default function AdminDashboardPage() {
                             )}
                             <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/75 via-black/15 to-transparent p-4">
                               <div className="min-w-0">
-                                <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-white/70">Slide {index + 1}</span>
+                                <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-white/70">{t("Slide {count}", { count: index + 1 })}</span>
                                 <p className="line-clamp-2 text-xs font-bold text-white">{homepageContent.hero_headline}</p>
                               </div>
                             </div>
                             <div className="absolute right-2 top-2 flex gap-1">
-                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, -1)} disabled={index === 0} aria-label={`Move slide ${index + 1} left`}>
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, -1)} disabled={index === 0} aria-label={t("Move slide {count} left", { count: index + 1 })}>
                                 <ChevronLeft className="h-3.5 w-3.5" />
                               </Button>
-                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, 1)} disabled={index === heroSlideUrls.length - 1} aria-label={`Move slide ${index + 1} right`}>
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90" onClick={() => moveHeroSlide(index, 1)} disabled={index === heroSlideUrls.length - 1} aria-label={t("Move slide {count} right", { count: index + 1 })}>
                                 <ChevronRight className="h-3.5 w-3.5" />
                               </Button>
-                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90 text-destructive" onClick={() => removeHeroSlide(index)} aria-label={`Remove slide ${index + 1}`}>
+                              <Button type="button" variant="secondary" size="icon" className="h-7 w-7 bg-background/90 text-destructive" onClick={() => removeHeroSlide(index)} aria-label={t("Remove slide {count}", { count: index + 1 })}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </div>
                           <div className="space-y-3 p-4">
                             <div>
-                              <SectionLabel>Image URL</SectionLabel>
+                              <SectionLabel>{t("Image URL")}</SectionLabel>
                               <Input value={url} onChange={e => updateHeroSlideUrl(index, e.target.value)} placeholder="https://..." className="text-xs" />
                             </div>
                             <label className="flex cursor-pointer items-center gap-2 rounded-xl border p-3 transition-colors hover:bg-muted/50">
                               <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
-                              <span className="truncate text-xs text-muted-foreground">{heroSlideFiles[index]?.name || "Upload replacement image"}</span>
+                              <span className="truncate text-xs text-muted-foreground">{heroSlideFiles[index]?.name || t("Upload replacement image")}</span>
                               <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) updateHeroSlideFile(index, e.target.files[0]); }} />
                             </label>
                           </div>
@@ -1763,12 +1767,12 @@ export default function AdminDashboardPage() {
 
                   {/* Stats Section */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" />Stats Bar</h3>
+                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" />{t("Stats Bar")}</h3>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       {(homepageContent.stats || DEFAULT_HOMEPAGE_CONTENT.stats!).map((stat, i) => (
                         <div key={i} className="bg-muted/50 p-4 rounded-xl space-y-3">
                           <div className="space-y-1">
-                            <SectionLabel>Value</SectionLabel>
+                            <SectionLabel>{t("Value")}</SectionLabel>
                             <Input
                               value={stat.value}
                               onChange={e => {
@@ -1780,7 +1784,7 @@ export default function AdminDashboardPage() {
                             />
                           </div>
                           <div className="space-y-1">
-                            <SectionLabel>Label</SectionLabel>
+                            <SectionLabel>{t("Label")}</SectionLabel>
                             <Input
                               value={stat.label}
                               onChange={e => {
@@ -1798,18 +1802,18 @@ export default function AdminDashboardPage() {
 
                   {/* Manufacturing Section */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><Settings className="h-4 w-4 text-primary" />Manufacturing Section</h3>
+                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><Settings className="h-4 w-4 text-primary" />{t("Manufacturing Section")}</h3>
                     <div className="grid lg:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <SectionLabel>Section Headline</SectionLabel>
+                          <SectionLabel>{t("Section Headline")}</SectionLabel>
                           <Input
                             value={homepageContent.manufacturing_headline || ""}
                             onChange={e => setHomepageContent({ ...homepageContent, manufacturing_headline: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <SectionLabel>Section Body Text</SectionLabel>
+                          <SectionLabel>{t("Section Body Text")}</SectionLabel>
                           <textarea
                             rows={5}
                             value={homepageContent.manufacturing_body || ""}
@@ -1818,7 +1822,7 @@ export default function AdminDashboardPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <SectionLabel>Manufacturing Image URL</SectionLabel>
+                          <SectionLabel>{t("Manufacturing Image URL")}</SectionLabel>
                           <Input
                             value={mfgImageUrl}
                             onChange={e => { setMfgImageUrl(e.target.value); setMfgPreview(e.target.value); }}
@@ -1826,19 +1830,19 @@ export default function AdminDashboardPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <SectionLabel>Or Upload Manufacturing Image</SectionLabel>
+                          <SectionLabel>{t("Or Upload Manufacturing Image")}</SectionLabel>
                           <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 hover:bg-muted/50 transition-colors">
                             <Upload className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">{mfgFile ? mfgFile.name : "Click to upload image…"}</span>
+                            <span className="text-sm text-muted-foreground">{mfgFile ? mfgFile.name : t("Click to upload image...")}</span>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) { setMfgFile(e.target.files[0]); setMfgPreview(URL.createObjectURL(e.target.files[0])); } }} />
                           </label>
                         </div>
                       </div>
                       <div>
-                        <SectionLabel>Preview</SectionLabel>
+                        <SectionLabel>{t("Preview")}</SectionLabel>
                         <div className="aspect-[4/3] rounded-xl overflow-hidden border bg-muted">
                           {mfgPreview ? (
-                            <img src={mfgPreview} alt="Manufacturing preview" className="w-full h-full object-cover" />
+                            <img src={mfgPreview} alt={t("Manufacturing preview")} className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full text-muted-foreground">
                               <ImageIcon className="h-8 w-8 opacity-40" />
@@ -1851,14 +1855,14 @@ export default function AdminDashboardPage() {
 
                   {/* Showcase Products */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><Package className="h-4 w-4 text-primary" />Featured Product Lines</h3>
+                    <h3 className="font-bold border-b pb-4 flex items-center gap-2"><Package className="h-4 w-4 text-primary" />{t("Featured Product Lines")}</h3>
                     <div className="space-y-6">
                       {(homepageContent.showcase_products || DEFAULT_HOMEPAGE_CONTENT.showcase_products!).map((product, i) => (
                         <div key={i} className="grid lg:grid-cols-3 gap-6 p-4 bg-muted/30 rounded-xl">
                           <div className="lg:col-span-2 space-y-4">
-                            <p className="text-xs font-bold uppercase text-muted-foreground">Product {i + 1}</p>
+                            <p className="text-xs font-bold uppercase text-muted-foreground">{t("Product {count}", { count: i + 1 })}</p>
                             <div className="space-y-2">
-                              <SectionLabel>Title</SectionLabel>
+                              <SectionLabel>{t("Title")}</SectionLabel>
                               <Input
                                 value={product.title}
                                 onChange={e => {
@@ -1869,7 +1873,7 @@ export default function AdminDashboardPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <SectionLabel>Description</SectionLabel>
+                              <SectionLabel>{t("Description")}</SectionLabel>
                               <textarea
                                 rows={4}
                                 value={product.description}
@@ -1882,7 +1886,7 @@ export default function AdminDashboardPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <SectionLabel>Image URL</SectionLabel>
+                              <SectionLabel>{t("Image URL")}</SectionLabel>
                               <Input
                                 value={product.image}
                                 onChange={e => {
@@ -1894,10 +1898,10 @@ export default function AdminDashboardPage() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <SectionLabel>Or Upload New Image</SectionLabel>
+                              <SectionLabel>{t("Or Upload New Image")}</SectionLabel>
                               <label className="flex items-center gap-2 cursor-pointer border rounded-xl p-3 hover:bg-muted/50 transition-colors">
                                 <Upload className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{showcaseFiles[i] ? showcaseFiles[i].name : "Click to upload image…"}</span>
+                                <span className="text-sm text-muted-foreground">{showcaseFiles[i] ? showcaseFiles[i].name : t("Click to upload image...")}</span>
                                 <input type="file" accept="image/*" className="hidden" onChange={e => {
                                   if (e.target.files?.[0]) {
                                     const newFiles = [...showcaseFiles];
@@ -1912,7 +1916,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
                           <div>
-                            <SectionLabel>Preview</SectionLabel>
+                            <SectionLabel>{t("Preview")}</SectionLabel>
                             <div className="aspect-[4/3] rounded-xl overflow-hidden border bg-muted">
                               {showcasePreviews[i] || product.image ? (
                                 <img src={showcasePreviews[i] || product.image} alt={product.title} className="w-full h-full object-cover" />
@@ -1931,7 +1935,7 @@ export default function AdminDashboardPage() {
                   <div className="flex justify-end">
                     <Button type="submit" size="lg" disabled={savingWebsite} className="gap-2 px-8">
                       {savingWebsite ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save Website Content
+                      {t("Save Website Content")}
                     </Button>
                   </div>
 
@@ -1944,21 +1948,21 @@ export default function AdminDashboardPage() {
                 <form onSubmit={handleSaveSettings} className="space-y-8 max-w-3xl">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="font-bold text-lg">Store Settings</h2>
-                      <p className="text-sm text-muted-foreground mt-0.5">Manage contact info, branding, and integrations.</p>
+                      <h2 className="font-bold text-lg">{t("Store Settings")}</h2>
+                      <p className="text-sm text-muted-foreground mt-0.5">{t("Manage contact info, branding, and integrations.")}</p>
                     </div>
                     <Button type="submit" disabled={savingSettings} className="gap-2">
                       {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save Settings
+                      {t("Save Settings")}
                     </Button>
                   </div>
 
                   {/* Branding */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4">Branding</h3>
+                    <h3 className="font-bold border-b pb-4">{t("Branding")}</h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <SectionLabel>Store Name</SectionLabel>
+                        <SectionLabel>{t("Store Name")}</SectionLabel>
                         <Input
                           value={storeSettings.store_name || ""}
                           onChange={e => setStoreSettings({ ...storeSettings, store_name: e.target.value })}
@@ -1966,7 +1970,7 @@ export default function AdminDashboardPage() {
                         />
                       </div>
                       <div className="space-y-4">
-                        <SectionLabel>Store Logo</SectionLabel>
+                        <SectionLabel>{t("Store Logo")}</SectionLabel>
                         <div className="flex items-center gap-4">
                           <div className="w-20 h-20 rounded-xl bg-muted border flex items-center justify-center overflow-hidden relative group flex-shrink-0">
                             {logoPreview ? (
@@ -1979,12 +1983,12 @@ export default function AdminDashboardPage() {
                             ) : (
                               <div className="text-center">
                                 <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                                <span className="text-[10px]">Upload</span>
+                                <span className="text-[10px]">{t("Upload")}</span>
                               </div>
                             )}
                             <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => { if (e.target.files?.[0]) { setLogoFile(e.target.files[0]); setLogoPreview(URL.createObjectURL(e.target.files[0])); } }} />
                           </div>
-                          <p className="text-xs text-muted-foreground">Upload your company logo. Recommended: PNG with transparent background, min 200×200px.</p>
+                          <p className="text-xs text-muted-foreground">{t("Upload your company logo. Recommended: PNG with transparent background, min 200×200px.")}</p>
                         </div>
                       </div>
                     </div>
@@ -1992,32 +1996,32 @@ export default function AdminDashboardPage() {
 
                   {/* Contact Info */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4">Contact Information</h3>
+                    <h3 className="font-bold border-b pb-4">{t("Contact Information")}</h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <SectionLabel>Support Email</SectionLabel>
+                        <SectionLabel>{t("Support Email")}</SectionLabel>
                         <Input type="email" value={storeSettings.email || ""} onChange={e => setStoreSettings({ ...storeSettings, email: e.target.value })} placeholder="sales@example.com" />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>Support Phone</SectionLabel>
+                        <SectionLabel>{t("Support Phone")}</SectionLabel>
                         <Input type="tel" value={storeSettings.phone || ""} onChange={e => setStoreSettings({ ...storeSettings, phone: e.target.value })} placeholder="+1 000 000 0000" />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <SectionLabel>Office Address</SectionLabel>
+                      <SectionLabel>{t("Office Address")}</SectionLabel>
                       <textarea
                         rows={2}
                         value={storeSettings.address || ""}
                         onChange={e => setStoreSettings({ ...storeSettings, address: e.target.value })}
                         className="w-full bg-background border rounded-xl p-3 text-sm resize-none"
-                        placeholder="Full mailing address…"
+                        placeholder={t("Full mailing address...")}
                       />
                     </div>
                   </div>
 
                   {/* Social Media */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4">Social Media Links</h3>
+                    <h3 className="font-bold border-b pb-4">{t("Social Media Links")}</h3>
                     <div className="space-y-4">
                       {[
                         { key: "facebook", label: "Facebook URL", placeholder: "https://facebook.com/yourpage" },
@@ -2025,7 +2029,7 @@ export default function AdminDashboardPage() {
                         { key: "tiktok", label: "TikTok URL", placeholder: "https://tiktok.com/@yourhandle" },
                       ].map(({ key, label, placeholder }) => (
                         <div key={key} className="space-y-2">
-                          <SectionLabel>{label}</SectionLabel>
+                          <SectionLabel>{t(label)}</SectionLabel>
                           <Input
                             type="url"
                             value={(storeSettings as any)[key] || ""}
@@ -2039,10 +2043,10 @@ export default function AdminDashboardPage() {
 
                   {/* Currency & Pricing */}
                   <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-                    <h3 className="font-bold border-b pb-4">Currency & Pricing</h3>
+                    <h3 className="font-bold border-b pb-4">{t("Currency & Pricing")}</h3>
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <SectionLabel>AUD Exchange Rate (1 USD =)</SectionLabel>
+                        <SectionLabel>{t("AUD Exchange Rate (1 USD =)")}</SectionLabel>
                         <Input
                           type="number"
                           step="0.0001"
@@ -2052,7 +2056,7 @@ export default function AdminDashboardPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>NGN Exchange Rate (1 USD =)</SectionLabel>
+                        <SectionLabel>{t("NGN Exchange Rate (1 USD =)")}</SectionLabel>
                         <Input
                           type="number"
                           step="0.01"
@@ -2062,7 +2066,7 @@ export default function AdminDashboardPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>Global Wholesale MOQ</SectionLabel>
+                        <SectionLabel>{t("Global Wholesale MOQ")}</SectionLabel>
                         <Input
                           type="number"
                           value={storeSettings.global_wholesale_moq || ""}
@@ -2076,7 +2080,7 @@ export default function AdminDashboardPage() {
                   <div className="flex justify-end">
                     <Button type="submit" size="lg" disabled={savingSettings} className="gap-2 px-8">
                       {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save Settings
+                      {t("Save Settings")}
                     </Button>
                   </div>
 
@@ -2092,31 +2096,31 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center justify-between border-b pb-4">
                         <div>
                           <h2 className="text-xl font-bold">
-                            {currentBlogId ? "Edit Blog Post" : "Create Blog Post"}
+                            {t(currentBlogId ? "Edit Blog Post" : "Create Blog Post")}
                           </h2>
                           <p className="text-sm text-muted-foreground">
-                            Compose and publish articles to your website.
+                            {t("Compose and publish articles to your website.")}
                           </p>
                         </div>
                         <Button type="button" variant="outline" size="sm" onClick={() => setIsEditingBlog(false)}>
-                          Cancel
+                          {t("Cancel")}
                         </Button>
                       </div>
 
                       <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-sm">
                         <div className="space-y-2">
-                          <SectionLabel>Title *</SectionLabel>
+                          <SectionLabel>{t("Title *")}</SectionLabel>
                           <Input 
                             value={blogTitle} 
                             onChange={e => handleTitleChange(e.target.value)} 
-                            placeholder="Enter article title" 
+                            placeholder={t("Enter article title")}
                             required 
                           />
                         </div>
 
                         <div className="grid gap-6 sm:grid-cols-2">
                           <div className="space-y-2">
-                            <SectionLabel>Slug (URL) *</SectionLabel>
+                            <SectionLabel>{t("Slug (URL) *")}</SectionLabel>
                             <Input 
                               value={blogSlug} 
                               onChange={e => setBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]+/g, "-"))} 
@@ -2126,37 +2130,37 @@ export default function AdminDashboardPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <SectionLabel>Category *</SectionLabel>
+                            <SectionLabel>{t("Category *")}</SectionLabel>
                             <select 
                               value={blogCategory} 
                               onChange={e => setBlogCategory(e.target.value)} 
                               className="w-full text-sm rounded-lg border bg-background p-2.5 outline-none focus:ring-1 focus:ring-primary"
                             >
-                              <option value="Explosion-Proof Lighting">Explosion-Proof Lighting</option>
-                              <option value="Industrial Equipment">Industrial Equipment</option>
-                              <option value="Industry News & Insights">Industry News & Insights</option>
-                              <option value="OEM/ODM Solutions">OEM/ODM Solutions</option>
-                              <option value="Product Updates">Product Updates</option>
+                              <option value="Explosion-Proof Lighting">{t("Explosion-Proof Lighting")}</option>
+                              <option value="Industrial Equipment">{t("Industrial Equipment")}</option>
+                              <option value="Industry News & Insights">{t("Industry News & Insights")}</option>
+                              <option value="OEM/ODM Solutions">{t("OEM/ODM Solutions")}</option>
+                              <option value="Product Updates">{t("Product Updates")}</option>
                             </select>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <SectionLabel>Excerpt *</SectionLabel>
+                          <SectionLabel>{t("Excerpt *")}</SectionLabel>
                           <Input 
                             value={blogExcerpt} 
                             onChange={e => setBlogExcerpt(e.target.value)} 
-                            placeholder="Brief summary of the article for listings (1-2 sentences)" 
+                            placeholder={t("Brief summary of the article for listings (1-2 sentences)")}
                             required 
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <SectionLabel>Featured Image</SectionLabel>
+                          <SectionLabel>{t("Featured Image")}</SectionLabel>
                           <div className="flex flex-col sm:flex-row gap-4 items-center">
                             <div className="w-28 h-20 rounded-lg border overflow-hidden bg-muted flex items-center justify-center flex-shrink-0">
                               {blogImagePreview ? (
-                                <img src={blogImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={blogImagePreview} alt={t("Preview")} className="w-full h-full object-cover" />
                               ) : (
                                 <FileText className="h-8 w-8 text-muted-foreground" />
                               )}
@@ -2173,17 +2177,17 @@ export default function AdminDashboardPage() {
                                   }
                                 }} 
                               />
-                              <p className="text-[10px] text-muted-foreground">Upload a PNG, JPG, or WEBP image. Will be uploaded to Supabase Storage.</p>
+                              <p className="text-[10px] text-muted-foreground">{t("Upload a PNG, JPG, or WEBP image. Will be uploaded to Supabase Storage.")}</p>
                             </div>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <SectionLabel>Content (Supports Markdown) *</SectionLabel>
+                          <SectionLabel>{t("Content (Supports Markdown) *")}</SectionLabel>
                           <Textarea 
                             value={blogContent} 
                             onChange={e => setBlogContent(e.target.value)} 
-                            placeholder="Write your article content here..." 
+                            placeholder={t("Write your article content here...")}
                             rows={15} 
                             required 
                           />
@@ -2197,11 +2201,11 @@ export default function AdminDashboardPage() {
 
                         <div className="flex justify-end gap-3 pt-4 border-t">
                           <Button type="button" variant="outline" onClick={() => setIsEditingBlog(false)}>
-                            Cancel
+                            {t("Cancel")}
                           </Button>
                           <Button type="submit" disabled={savingBlog} className="gap-2">
                             {savingBlog ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            {currentBlogId ? "Update Post" : "Publish Post"}
+                            {t(currentBlogId ? "Update Post" : "Publish Post")}
                           </Button>
                         </div>
                       </div>
@@ -2212,14 +2216,14 @@ export default function AdminDashboardPage() {
                         <div className="relative w-full sm:max-w-md">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input 
-                            placeholder="Search articles…" 
+                            placeholder={t("Search articles...")}
                             className="pl-10" 
                             value={blogSearch} 
                             onChange={e => setBlogSearch(e.target.value)} 
                           />
                         </div>
                         <Button onClick={handleOpenNewBlogForm}>
-                          <Plus className="h-4 w-4 mr-2" />New Post
+                          <Plus className="h-4 w-4 mr-2" />{t("New Post")}
                         </Button>
                       </div>
 
@@ -2227,17 +2231,17 @@ export default function AdminDashboardPage() {
                         <table className="w-full text-sm">
                           <thead className="bg-muted/50">
                             <tr>
-                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Article</th>
-                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Category</th>
-                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">Published</th>
-                              <th className="px-6 py-4 text-center font-medium text-muted-foreground">Actions</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Article")}</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Category")}</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Published")}</th>
+                              <th className="px-6 py-4 text-center font-medium text-muted-foreground">{t("Actions")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y">
                             {filteredBlogPosts.length === 0 ? (
                               <tr>
                                 <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
-                                  No articles found. Click "New Post" to create your first article!
+                                  {t("No articles found. Click \"New Post\" to create your first article!")}
                                 </td>
                               </tr>
                             ) : (
@@ -2258,17 +2262,17 @@ export default function AdminDashboardPage() {
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-6 py-4 text-muted-foreground">{post.category}</td>
+                                  <td className="px-6 py-4 text-muted-foreground">{t(post.category)}</td>
                                   <td className="px-6 py-4 text-muted-foreground text-xs">
-                                    {new Date(post.created_at).toLocaleDateString()}
+                                    {new Date(post.created_at).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}
                                   </td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center justify-center gap-2">
                                       <Button variant="outline" size="sm" onClick={() => handleOpenEditBlogForm(post)}>
-                                        <Pencil className="h-3 w-3 mr-1.5" />Edit
+                                        <Pencil className="h-3 w-3 mr-1.5" />{t("Edit")}
                                       </Button>
                                       <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200" onClick={() => handleDeleteBlogPost(post.id)}>
-                                        <Trash2 className="h-3 w-3 mr-1.5" />Delete
+                                        <Trash2 className="h-3 w-3 mr-1.5" />{t("Delete")}
                                       </Button>
                                     </div>
                                   </td>
@@ -2287,35 +2291,35 @@ export default function AdminDashboardPage() {
               {activeTab === "admins" && (
                 <form onSubmit={handleCreateAdmin} className="max-w-2xl space-y-6">
                   <div>
-                    <h2 className="text-lg font-bold">Add an administrator</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">New administrators can sign in and manage the website immediately.</p>
+                    <h2 className="text-lg font-bold">{t("Add an administrator")}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{t("New administrators can sign in and manage the website immediately.")}</p>
                   </div>
 
                   <div className="space-y-5 rounded-2xl border bg-card p-6 shadow-sm">
                     <div className="space-y-2">
-                      <SectionLabel>Name</SectionLabel>
-                      <Input value={adminName} onChange={e => setAdminName(e.target.value)} placeholder="Administrator name" autoComplete="name" />
+                      <SectionLabel>{t("Name")}</SectionLabel>
+                      <Input value={adminName} onChange={e => setAdminName(e.target.value)} placeholder={t("Administrator name")} autoComplete="name" />
                     </div>
                     <div className="space-y-2">
-                      <SectionLabel>Email address</SectionLabel>
+                      <SectionLabel>{t("Email address")}</SectionLabel>
                       <Input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="admin@example.com" autoComplete="email" required />
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <SectionLabel>Temporary password</SectionLabel>
+                        <SectionLabel>{t("Temporary password")}</SectionLabel>
                         <Input type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} minLength={12} autoComplete="new-password" required />
                       </div>
                       <div className="space-y-2">
-                        <SectionLabel>Confirm password</SectionLabel>
+                        <SectionLabel>{t("Confirm password")}</SectionLabel>
                         <Input type="password" value={adminPasswordConfirmation} onChange={e => setAdminPasswordConfirmation(e.target.value)} minLength={12} autoComplete="new-password" required />
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">Use at least 12 characters. Share the temporary password securely.</p>
+                    <p className="text-xs text-muted-foreground">{t("Use at least 12 characters. Share the temporary password securely.")}</p>
                     {adminUserMessage && <p className="rounded-lg bg-muted px-3 py-2 text-sm" role="status">{adminUserMessage}</p>}
                     <div className="flex justify-end">
                       <Button type="submit" disabled={creatingAdmin} className="gap-2">
                         {creatingAdmin ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-                        Create administrator
+                        {t("Create administrator")}
                       </Button>
                     </div>
                   </div>

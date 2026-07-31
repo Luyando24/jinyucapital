@@ -21,12 +21,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
 
 export default function AdminEditProductPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
   const { user, loading: authLoading, isAdmin } = useAuth();
+  const { t } = useAdminLanguage();
 
   // Load States
   const [fetching, setFetching] = useState(true);
@@ -69,7 +71,7 @@ export default function AdminEditProductPage() {
           .single();
 
         if (dbError) throw dbError;
-        if (!data) throw new Error("Product details could not be found.");
+        if (!data) throw new Error(t("Product details could not be found."));
 
         setName(data.name || "");
         setCategory(data.category || "Street Lamps");
@@ -80,7 +82,7 @@ export default function AdminEditProductPage() {
         setExistingSecondaryImages(data.images || []);
       } catch (err: any) {
         console.error("Failed to load product details:", err);
-        setError(err.message || "Failed to load product details.");
+        setError(err.message || t("Failed to load product details."));
       } finally {
         setFetching(false);
       }
@@ -147,7 +149,7 @@ export default function AdminEditProductPage() {
       setSaving(true);
       const stockVal = parseInt(stock);
 
-      if (isNaN(stockVal) || stockVal < 0) throw new Error("Please enter a valid stock level.");
+      if (isNaN(stockVal) || stockVal < 0) throw new Error(t("Please enter a valid stock level."));
 
       // 1. Re-upload main image if replaced
       let finalMainImageUrl = imageUrl;
@@ -183,11 +185,11 @@ export default function AdminEditProductPage() {
 
       if (updateError) throw updateError;
 
-      alert("Product updated successfully!");
+      alert(t("Product updated successfully!"));
       router.push("/admin");
     } catch (err: any) {
       console.error("Failed to save changes:", err);
-      alert(err.message || "Failed to update product details.");
+      alert(err.message || t("Failed to update product details."));
     } finally {
       setSaving(false);
     }
@@ -205,10 +207,10 @@ export default function AdminEditProductPage() {
         <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
           <Lock className="text-primary h-8 w-8" />
         </div>
-        <h2 className="text-2xl font-bold">Admin Portal</h2>
-        <p className="text-muted-foreground">Please sign in to access the management dashboard.</p>
+        <h2 className="text-2xl font-bold">{t("Admin Portal")}</h2>
+        <p className="text-muted-foreground">{t("Please sign in to access the management dashboard.")}</p>
         <Button asChild className="w-full">
-          <Link href={`/login?redirect=/admin/products/edit/${id}`}>Sign In</Link>
+          <Link href={`/login?redirect=/admin/products/edit/${id}`}>{t("Sign In")}</Link>
         </Button>
       </div>
     </div>
@@ -217,7 +219,7 @@ export default function AdminEditProductPage() {
   if (fetching) return (
     <div className="flex flex-col items-center justify-center py-40 gap-3">
       <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      <p className="text-muted-foreground text-sm">Loading product details...</p>
+      <p className="text-muted-foreground text-sm">{t("Loading product details...")}</p>
     </div>
   );
 
@@ -228,15 +230,15 @@ export default function AdminEditProductPage() {
           <Button asChild variant="ghost" size="icon">
             <Link href="/admin"><ArrowLeft className="h-4 w-4" /></Link>
           </Button>
-          <h1 className="text-lg font-bold">Edit Product Listing</h1>
+          <h1 className="text-lg font-bold">{t("Edit Product Listing")}</h1>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" asChild>
-            <Link href="/admin">Discard</Link>
+            <Link href="/admin">{t("Discard")}</Link>
           </Button>
           <Button size="sm" onClick={handleSubmit} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Update Product
+            {t("Update Product")}
           </Button>
         </div>
       </header>
@@ -247,47 +249,47 @@ export default function AdminEditProductPage() {
           {/* Left Column: Form */}
           <div className="lg:col-span-3 space-y-8">
             <section className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-              <h3 className="font-bold border-b pb-4">Product Details</h3>
+              <h3 className="font-bold border-b pb-4">{t("Product Details")}</h3>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Skyline Boulevard Street Lamp" />
+                  <Label htmlFor="name">{t("Product Name *")}</Label>
+                  <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder={t("e.g. Skyline Boulevard Street Lamp")} />
                 </div>
 
                 <div className="space-y-2">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
+                    <Label htmlFor="category">{t("Category *")}</Label>
                     <select
                       id="category"
                       value={category}
                       onChange={e => setCategory(e.target.value)}
                       className="w-full bg-background border rounded-md h-9 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
                     >
-                      <option value="Street Lamps">Street Lamps</option>
-                      <option value="Landscape Lamps">Landscape Lamps</option>
-                      <option value="Ceiling Lights">Ceiling Lights</option>
-                      <option value="Wall Sconces">Wall Sconces</option>
-                      <option value="Pendant Lamps">Pendant Lamps</option>
-                      <option value="Industrial Lighting">Industrial Lighting</option>
+                      <option value="Street Lamps">{t("Street Lamps")}</option>
+                      <option value="Landscape Lamps">{t("Landscape Lamps")}</option>
+                      <option value="Ceiling Lights">{t("Ceiling Lights")}</option>
+                      <option value="Wall Sconces">{t("Wall Sconces")}</option>
+                      <option value="Pendant Lamps">{t("Pendant Lamps")}</option>
+                      <option value="Industrial Lighting">{t("Industrial Lighting")}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="stock">Current Stock *</Label>
+                    <Label htmlFor="stock">{t("Current Stock *")}</Label>
                     <Input id="stock" type="number" value={stock} onChange={e => setStock(e.target.value)} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="imageUrl">External Image URL (Optional)</Label>
+                    <Label htmlFor="imageUrl">{t("External Image URL (Optional)")}</Label>
                     <Input id="imageUrl" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder="Detailed product specifications and features..." />
+                  <Label htmlFor="description">{t("Description")}</Label>
+                  <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={t("Detailed product specifications and features...")} />
                 </div>
               </div>
             </section>
@@ -297,15 +299,15 @@ export default function AdminEditProductPage() {
           {/* Right Column: Media */}
           <div className="lg:col-span-2 space-y-8">
             <section className="bg-card border rounded-2xl p-6 shadow-sm space-y-6">
-              <h3 className="font-bold border-b pb-4">Media Management</h3>
+              <h3 className="font-bold border-b pb-4">{t("Media Management")}</h3>
               
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label>Main Image</Label>
+                  <Label>{t("Main Image")}</Label>
                   <div className="relative aspect-square rounded-2xl bg-muted border border-dashed flex flex-col items-center justify-center overflow-hidden group">
                     {mainImagePreview ? (
                       <>
-                        <img src={mainImagePreview} alt="Main Preview" className="w-full h-full object-cover" />
+                        <img src={mainImagePreview} alt={t("Main Preview")} className="w-full h-full object-cover" />
                         <button className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white" onClick={() => {setMainImageFile(null); setMainImagePreview("");}}>
                           <Trash2 className="h-6 w-6" />
                         </button>
@@ -313,7 +315,7 @@ export default function AdminEditProductPage() {
                     ) : (
                       <div className="text-center p-4">
                         <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-xs text-muted-foreground">Click or drag to upload primary image</p>
+                        <p className="text-xs text-muted-foreground">{t("Click or drag to upload primary image")}</p>
                       </div>
                     )}
                     <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleMainImageChange} />
@@ -321,7 +323,7 @@ export default function AdminEditProductPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Gallery Images</Label>
+                  <Label>{t("Gallery Images")}</Label>
                   <div className="grid grid-cols-2 gap-3">
                     {/* Existing Gallery Images */}
                     {existingSecondaryImages.map((src, idx) => (
@@ -339,7 +341,7 @@ export default function AdminEditProductPage() {
                         <button className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all" onClick={() => removeNewSecondaryImage(idx)}>
                           <X className="h-3 w-3" />
                         </button>
-                        <div className="absolute bottom-1 right-1 bg-primary text-white text-[8px] px-1 rounded uppercase font-bold">New</div>
+                        <div className="absolute bottom-1 right-1 bg-primary text-white text-[8px] px-1 rounded uppercase font-bold">{t("New")}</div>
                       </div>
                     ))}
                     <div className="relative aspect-square rounded-xl bg-muted border border-dashed flex flex-col items-center justify-center hover:bg-muted/50 transition-colors">

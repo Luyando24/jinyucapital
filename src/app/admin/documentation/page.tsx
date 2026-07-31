@@ -2,6 +2,7 @@
 
 import { BookOpen, Download, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
 
 const sections = [
   {
@@ -63,6 +64,8 @@ const sections = [
 ] as const;
 
 export default function DocumentationPage() {
+  const { t } = useAdminLanguage();
+
   return (
     <div className="min-h-screen bg-muted/30">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12 print:max-w-none print:px-0 print:py-0">
@@ -72,24 +75,24 @@ export default function DocumentationPage() {
               <BookOpen className="h-5 w-5" />
               <span className="text-sm font-semibold">Jinyu Capital</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Admin User Guide</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Step-by-step guidance for managing the website. This guide is publicly available and does not require an administrator login.</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("Admin User Guide")}</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground">{t("Step-by-step guidance for managing the website. This guide is publicly available and does not require an administrator login.")}</p>
           </div>
           <Button onClick={() => window.print()} className="gap-2 print:hidden">
             <Download className="h-4 w-4" />
-            Save as PDF
+            {t("Save as PDF")}
           </Button>
         </div>
 
         <div className="space-y-8">
           {sections.map((section) => (
             <section key={section.title} className="break-inside-avoid">
-              <h2 className="mb-4 border-b pb-3 text-xl font-bold">{section.title}</h2>
+              <h2 className="mb-4 border-b pb-3 text-xl font-bold">{t(section.title)}</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {section.guides.map(([title, description]) => (
                   <article key={title} className="break-inside-avoid rounded-xl border bg-background p-5 shadow-sm print:shadow-none">
-                    <h3 className="flex items-center gap-2 font-bold"><BookOpen className="h-4 w-4 text-primary" />{title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+                    <h3 className="flex items-center gap-2 font-bold"><BookOpen className="h-4 w-4 text-primary" />{t(title)}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{t(description)}</p>
                   </article>
                 ))}
               </div>
@@ -98,8 +101,8 @@ export default function DocumentationPage() {
         </div>
 
         <section className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-6 text-blue-900 print:break-inside-avoid">
-          <h2 className="flex items-center gap-2 font-bold"><HelpCircle className="h-5 w-5" />Need additional help?</h2>
-          <p className="mt-2 text-sm text-blue-800">Contact your site support team for help with anything not covered in this guide.</p>
+          <h2 className="flex items-center gap-2 font-bold"><HelpCircle className="h-5 w-5" />{t("Need additional help?")}</h2>
+          <p className="mt-2 text-sm text-blue-800">{t("Contact your site support team for help with anything not covered in this guide.")}</p>
         </section>
       </main>
       <style jsx global>{`

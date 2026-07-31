@@ -37,6 +37,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
 
 type CRMView = "dashboard" | "contacts" | "companies" | "pipeline" | "activities";
 type ModalType = "contact" | "company" | "deal" | "activity" | null;
@@ -229,11 +230,11 @@ function formatMoney(value: number, currency = "USD") {
   }).format(Number(value) || 0);
 }
 
-function formatDate(value?: string | null, withTime = false) {
-  if (!value) return "Not set";
+function formatDate(value?: string | null, withTime = false, locale = "en-US", emptyLabel = "Not set") {
+  if (!value) return emptyLabel;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not set";
-  return new Intl.DateTimeFormat("en", {
+  if (Number.isNaN(date.getTime())) return emptyLabel;
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -290,6 +291,7 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 function StageBadge({ stage }: { stage: string }) {
+  const { t } = useAdminLanguage();
   const colors: Record<string, string> = {
     lead: "border-slate-200 bg-slate-50 text-slate-700",
     prospect: "border-cyan-200 bg-cyan-50 text-cyan-700",
@@ -313,7 +315,7 @@ function StageBadge({ stage }: { stage: string }) {
   };
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${colors[stage] || colors.inactive}`}>
-      {conversionStageConfig(stage as DealStage)?.label || titleCase(stage)}
+      {t(conversionStageConfig(stage as DealStage)?.label || titleCase(stage))}
     </span>
   );
 }
@@ -352,9 +354,10 @@ function CRMModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useAdminLanguage();
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <button className="absolute inset-0 bg-black/50" onClick={onClose} aria-label="Close dialog" />
+      <button className="absolute inset-0 bg-black/50" onClick={onClose} aria-label={t("Close dialog")} />
       <section
         role="dialog"
         aria-modal="true"
@@ -366,7 +369,7 @@ function CRMModal({
             <h2 className="text-xl font-bold">{title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{description}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("Close")}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -377,6 +380,8 @@ function CRMModal({
 }
 
 export default function CRMTab() {
+  const { language, t } = useAdminLanguage();
+  const dateLocale = language === "zh" ? "zh-CN" : "en-US";
   const [view, setView] = useState<CRMView>("dashboard");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -413,7 +418,7 @@ export default function CRMTab() {
     if (crmError) {
       const missingTable = crmError.code === "42P01" || crmError.code === "PGRST205" || crmError.message.toLowerCase().includes("crm_contacts");
       setSetupRequired(missingTable);
-      setError(missingTable ? "The CRM database migration has not been applied yet." : crmError.message);
+      setError(missingTable ? t("The CRM database migration has not been applied yet.") : crmError.message);
       setLoading(false);
       return;
     }
@@ -598,8 +603,8 @@ export default function CRMTab() {
 
   const saveContact = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!contactForm.first_name.trim()) return toast.error("First name is required.");
-    if (contactForm.email && !contactForm.email.includes("@")) return toast.error("Enter a valid email address.");
+    if (!contactForm.first_name.trim()) return toast.error(t("First name is required."));
+    if (contactForm.email && !contactForm.email.includes("@")) return toast.error(t("Enter a valid email address."));
     setSaving(true);
     const payload = {
       first_name: contactForm.first_name.trim(),
@@ -623,14 +628,14 @@ export default function CRMTab() {
       : await supabase.from("crm_contacts").insert(payload);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
-    toast.success(editingId ? "Contact updated." : "Contact added.");
+    toast.success(t(editingId ? "Contact updated." : "Contact added."));
     closeModal();
     await loadCRM();
   };
 
   const saveCompany = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!companyForm.name.trim()) return toast.error("Company name is required.");
+    if (!companyForm.name.trim()) return toast.error(t("Company name is required."));
     setSaving(true);
     const payload = {
       name: companyForm.name.trim(),
@@ -649,14 +654,14 @@ export default function CRMTab() {
       : await supabase.from("crm_companies").insert(payload);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
-    toast.success(editingId ? "Company updated." : "Company added.");
+    toast.success(t(editingId ? "Company updated." : "Company added."));
     closeModal();
     await loadCRM();
   };
 
   const saveDeal = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!dealForm.title.trim()) return toast.error("Deal title is required.");
+    if (!dealForm.title.trim()) return toast.error(t("Deal title is required."));
     setSaving(true);
     const stageConfig = conversionStageConfig(dealForm.stage)!;
     const isClosed = ["full_payment_settled", "lost"].includes(dealForm.stage);
@@ -680,14 +685,14 @@ export default function CRMTab() {
       : await supabase.from("crm_deals").insert(payload);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
-    toast.success(editingId ? "Deal updated." : "Deal added to the pipeline.");
+    toast.success(t(editingId ? "Deal updated." : "Deal added to the pipeline."));
     closeModal();
     await loadCRM();
   };
 
   const saveActivity = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!activityForm.subject.trim()) return toast.error("Subject is required.");
+    if (!activityForm.subject.trim()) return toast.error(t("Subject is required."));
     setSaving(true);
     const status = activityForm.type === "note" && !editingId ? "completed" : activityForm.status;
     const payload = {
@@ -707,7 +712,7 @@ export default function CRMTab() {
       : await supabase.from("crm_activities").insert(payload);
     setSaving(false);
     if (result.error) return toast.error(result.error.message);
-    toast.success(editingId ? "Activity updated." : "Activity recorded.");
+    toast.success(t(editingId ? "Activity updated." : "Activity recorded."));
     closeModal();
     await loadCRM();
   };
@@ -728,7 +733,7 @@ export default function CRMTab() {
         ? { ...item, stage, probability: stageConfig.probability, closed_at: ["full_payment_settled", "lost"].includes(stage) ? new Date().toISOString() : null }
         : item
     )));
-    toast.success(`Moved to ${stageConfig.label}.`);
+    toast.success(t("Moved to {stage}.", { stage: t(stageConfig.label) }));
     await loadCRM();
   };
 
@@ -747,7 +752,7 @@ export default function CRMTab() {
   };
 
   const deleteRecord = async (table: "crm_contacts" | "crm_companies" | "crm_deals" | "crm_activities", id: string, label: string) => {
-    if (!window.confirm(`Delete this ${label}? This action cannot be undone.`)) return false;
+    if (!window.confirm(t("Delete this {label}? This action cannot be undone.", { label: t(label) }))) return false;
     const result = await supabase.from(table).delete().eq("id", id);
     if (result.error) {
       toast.error(result.error.message);
@@ -760,13 +765,13 @@ export default function CRMTab() {
     if (table === "crm_companies") setCompanies((current) => current.filter((item) => item.id !== id));
     if (table === "crm_deals") setDeals((current) => current.filter((item) => item.id !== id));
     if (table === "crm_activities") setActivities((current) => current.filter((item) => item.id !== id));
-    toast.success(`${titleCase(label)} deleted.`);
+    toast.success(t("{label} deleted.", { label: t(label) }));
     return true;
   };
 
   const exportContacts = () => {
     const rows = [
-      ["First name", "Last name", "Email", "Phone", "Company", "Lifecycle", "Lead status", "Lead score", "Conversion stage", "Conversion probability", "Source", "Tags"],
+      ["First name", "Last name", "Email", "Phone", "Company", "Lifecycle", "Lead status", "Lead score", "Conversion stage", "Conversion probability", "Source", "Tags"].map((label) => t(label)),
       ...filteredContacts.map((contact) => [
         contact.first_name,
         contact.last_name,
@@ -776,7 +781,7 @@ export default function CRMTab() {
         contact.lifecycle_stage,
         contact.lead_status,
         contact.lead_score,
-        conversionStageConfig(contact.conversion_stage || "new_inquiry")?.label,
+        t(conversionStageConfig(contact.conversion_stage || "new_inquiry")?.label || "New inquiry"),
         contact.conversion_probability || 10,
         contact.source,
         contact.tags.join("; "),
@@ -794,7 +799,7 @@ export default function CRMTab() {
     return (
       <div className="flex min-h-[28rem] flex-col items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading your customer workspace…</p>
+        <p className="text-sm text-muted-foreground">{t("Loading your customer workspace...")}</p>
       </div>
     );
   }
@@ -803,9 +808,9 @@ export default function CRMTab() {
     return (
       <EmptyState
         icon={Sparkles}
-        title="CRM is ready to be activated"
-        description="Apply the included CRM database migration, then refresh this page. Existing orders, quotes, distributor applications, and messages will be organized automatically."
-        action={<Button onClick={loadCRM}><RefreshCw className="mr-2 h-4 w-4" />Check again</Button>}
+        title={t("CRM is ready to be activated")}
+        description={t("Apply the included CRM database migration, then refresh this page. Existing orders, quotes, distributor applications, and messages will be organized automatically.")}
+        action={<Button onClick={loadCRM}><RefreshCw className="mr-2 h-4 w-4" />{t("Check again")}</Button>}
       />
     );
   }
@@ -814,9 +819,9 @@ export default function CRMTab() {
     return (
       <EmptyState
         icon={MessageSquareText}
-        title="CRM data could not be loaded"
+        title={t("CRM data could not be loaded")}
         description={error}
-        action={<Button onClick={loadCRM}><RefreshCw className="mr-2 h-4 w-4" />Try again</Button>}
+        action={<Button onClick={loadCRM}><RefreshCw className="mr-2 h-4 w-4" />{t("Try again")}</Button>}
       />
     );
   }
@@ -835,25 +840,25 @@ export default function CRMTab() {
         <div className="flex flex-col gap-5 p-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">Customer 360</span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">{t("Customer 360")}</span>
               {overdueTasks.length > 0 && (
                 <button onClick={() => { setActivityFilter("overdue"); setView("activities"); }} className="text-xs font-medium text-rose-600 hover:underline">
-                  {overdueTasks.length} overdue
+                  {t("{count} overdue", { count: overdueTasks.length })}
                 </button>
               )}
             </div>
-            <h2 className="text-2xl font-bold tracking-tight">Customer relationships</h2>
-            <p className="mt-1 text-sm text-muted-foreground">One workspace for every relationship, deal, and follow-up.</p>
+            <h2 className="text-2xl font-bold tracking-tight">{t("Customer relationships")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("One workspace for every relationship, deal, and follow-up.")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => openNewActivity()}>
-              <CalendarClock className="mr-2 h-4 w-4" />Add activity
+              <CalendarClock className="mr-2 h-4 w-4" />{t("Add activity")}
             </Button>
             <Button variant="outline" onClick={() => openNewDeal()}>
-              <CircleDollarSign className="mr-2 h-4 w-4" />New deal
+              <CircleDollarSign className="mr-2 h-4 w-4" />{t("New deal")}
             </Button>
             <Button onClick={openNewContact}>
-              <Plus className="mr-2 h-4 w-4" />New contact
+              <Plus className="mr-2 h-4 w-4" />{t("New contact")}
             </Button>
           </div>
         </div>
@@ -867,11 +872,11 @@ export default function CRMTab() {
               }`}
             >
               <item.icon className="h-4 w-4" />
-              {item.label}
+              {t(item.label)}
               {item.count !== undefined && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">{item.count}</span>}
             </button>
           ))}
-          <Button variant="ghost" size="icon" className="ml-auto shrink-0" onClick={loadCRM} title="Refresh CRM">
+          <Button variant="ghost" size="icon" className="ml-auto shrink-0" onClick={loadCRM} title={t("Refresh CRM")}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
@@ -881,17 +886,17 @@ export default function CRMTab() {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {[
-              { label: "Open pipeline", value: formatMoney(openPipelineValue), detail: `${openPipeline.length} active deals`, icon: CircleDollarSign, iconClass: "bg-blue-500/10 text-blue-600" },
-              { label: "Weighted forecast", value: formatMoney(weightedPipelineValue), detail: "Probability adjusted", icon: TrendingUp, iconClass: "bg-violet-500/10 text-violet-600" },
-              { label: "Average conversion", value: `${averageConversionProbability}%`, detail: `${contacts.length} customer records`, icon: Target, iconClass: "bg-sky-500/10 text-sky-600" },
-              { label: "Settled revenue", value: formatMoney(settledRevenue), detail: `${settledDeals.length} fully settled deals`, icon: CheckCircle2, iconClass: "bg-emerald-500/10 text-emerald-600" },
-              { label: "Settlement rate", value: `${conversionRate}%`, detail: `${closedDeals.length} closed deals`, icon: CheckCircle2, iconClass: "bg-amber-500/10 text-amber-600" },
+              { label: "Open pipeline", value: formatMoney(openPipelineValue), detail: t("{count} active deals", { count: openPipeline.length }), icon: CircleDollarSign, iconClass: "bg-blue-500/10 text-blue-600" },
+              { label: "Weighted forecast", value: formatMoney(weightedPipelineValue), detail: t("Probability adjusted"), icon: TrendingUp, iconClass: "bg-violet-500/10 text-violet-600" },
+              { label: "Average conversion", value: `${averageConversionProbability}%`, detail: t("{count} customer records", { count: contacts.length }), icon: Target, iconClass: "bg-sky-500/10 text-sky-600" },
+              { label: "Settled revenue", value: formatMoney(settledRevenue), detail: t("{count} fully settled deals", { count: settledDeals.length }), icon: CheckCircle2, iconClass: "bg-emerald-500/10 text-emerald-600" },
+              { label: "Settlement rate", value: `${conversionRate}%`, detail: t("{count} closed deals", { count: closedDeals.length }), icon: CheckCircle2, iconClass: "bg-amber-500/10 text-amber-600" },
             ].map((metric) => (
               <div key={metric.label} className="rounded-2xl border bg-card p-5 shadow-sm">
                 <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${metric.iconClass}`}>
                   <metric.icon className="h-5 w-5" />
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">{metric.label}</p>
+                <p className="text-xs font-medium text-muted-foreground">{t(metric.label)}</p>
                 <p className="mt-1 text-2xl font-bold">{metric.value}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{metric.detail}</p>
               </div>
@@ -902,10 +907,10 @@ export default function CRMTab() {
             <section className="rounded-2xl border bg-card shadow-sm">
               <div className="flex items-center justify-between border-b p-5">
                 <div>
-                  <h3 className="font-bold">Pipeline health</h3>
-                  <p className="text-xs text-muted-foreground">Value, volume, and probability by conversion stage</p>
+                  <h3 className="font-bold">{t("Pipeline health")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("Value, volume, and probability by conversion stage")}</p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setView("pipeline")}>View pipeline<ArrowRight className="ml-2 h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => setView("pipeline")}>{t("View pipeline")}<ArrowRight className="ml-2 h-4 w-4" /></Button>
               </div>
               <div className="space-y-5 p-5">
                 {CONVERSION_STAGES.filter((stage) => stage.id !== "full_payment_settled").map((stage) => {
@@ -915,8 +920,8 @@ export default function CRMTab() {
                   return (
                     <div key={stage.id}>
                       <div className="mb-2 flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 font-medium"><span className={`h-2 w-2 rounded-full ${stage.color}`} />{stage.label}<span className="text-xs text-muted-foreground">{stage.probability}%</span></span>
-                        <span><strong>{formatMoney(stageValue)}</strong><span className="ml-2 text-xs text-muted-foreground">{stageDeals.length} deals</span></span>
+                        <span className="flex items-center gap-2 font-medium"><span className={`h-2 w-2 rounded-full ${stage.color}`} />{t(stage.label)}<span className="text-xs text-muted-foreground">{stage.probability}%</span></span>
+                        <span><strong>{formatMoney(stageValue)}</strong><span className="ml-2 text-xs text-muted-foreground">{t("{count} deals", { count: stageDeals.length })}</span></span>
                       </div>
                       <div className="h-2 overflow-hidden rounded-full bg-muted">
                         <div className={`h-full rounded-full ${stage.color}`} style={{ width: `${width}%` }} />
@@ -924,15 +929,15 @@ export default function CRMTab() {
                     </div>
                   );
                 })}
-                {openPipeline.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Add a deal to start forecasting your pipeline.</p>}
+                {openPipeline.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">{t("Add a deal to start forecasting your pipeline.")}</p>}
               </div>
             </section>
 
             <section className="rounded-2xl border bg-card shadow-sm">
               <div className="flex items-center justify-between border-b p-5">
                 <div>
-                  <h3 className="font-bold">Next actions</h3>
-                  <p className="text-xs text-muted-foreground">Tasks and meetings that need attention</p>
+                  <h3 className="font-bold">{t("Next actions")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("Tasks and meetings that need attention")}</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => openNewActivity()}><Plus className="h-4 w-4" /></Button>
               </div>
@@ -944,21 +949,21 @@ export default function CRMTab() {
                       <button
                         onClick={() => completeActivity(item)}
                         className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-transparent hover:border-primary hover:text-primary"
-                        aria-label={`Complete ${item.subject}`}
+                        aria-label={t("Complete {subject}", { subject: item.subject })}
                       >
                         <Check className="h-3 w-3" />
                       </button>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{item.subject}</p>
                         <p className={`mt-1 text-xs ${isOverdue ? "font-medium text-rose-600" : "text-muted-foreground"}`}>
-                          {item.due_at ? formatDate(item.due_at, true) : "No due date"}
+                          {item.due_at ? formatDate(item.due_at, true, dateLocale, t("Not set")) : t("No due date")}
                           {item.contact_id && ` · ${displayName(contactById.get(item.contact_id))}`}
                         </p>
                       </div>
                     </div>
                   );
                 })}
-                {openTasks.length === 0 && <p className="p-10 text-center text-sm text-muted-foreground">You are all caught up.</p>}
+                {openTasks.length === 0 && <p className="p-10 text-center text-sm text-muted-foreground">{t("You are all caught up.")}</p>}
               </div>
             </section>
           </div>
@@ -966,24 +971,24 @@ export default function CRMTab() {
           <section className="rounded-2xl border bg-card shadow-sm">
             <div className="flex items-center justify-between border-b p-5">
               <div>
-                <h3 className="font-bold">Recent relationship activity</h3>
-                <p className="text-xs text-muted-foreground">Latest notes, calls, emails, meetings, and tasks</p>
+                <h3 className="font-bold">{t("Recent relationship activity")}</h3>
+                <p className="text-xs text-muted-foreground">{t("Latest notes, calls, emails, meetings, and tasks")}</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setView("activities")}>View all<ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" onClick={() => setView("activities")}>{t("View all")}<ArrowRight className="ml-2 h-4 w-4" /></Button>
             </div>
             <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
               {activities.slice(0, 4).map((item) => (
                 <div key={item.id} className="p-5">
                   <div className="mb-3 flex items-center justify-between">
                     <ActivityTypeIcon type={item.type} />
-                    <span className="text-[10px] text-muted-foreground">{formatDate(item.created_at)}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatDate(item.created_at, false, dateLocale, t("Not set"))}</span>
                   </div>
                   <p className="line-clamp-1 text-sm font-bold">{item.subject}</p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.body || item.outcome || "No additional details"}</p>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.body || item.outcome || t("No additional details")}</p>
                   {item.contact_id && <button onClick={() => setSelectedContactId(item.contact_id)} className="mt-3 text-xs font-medium text-primary hover:underline">{displayName(contactById.get(item.contact_id))}</button>}
                 </div>
               ))}
-              {activities.length === 0 && <p className="col-span-full p-10 text-center text-sm text-muted-foreground">No activity has been recorded yet.</p>}
+              {activities.length === 0 && <p className="col-span-full p-10 text-center text-sm text-muted-foreground">{t("No activity has been recorded yet.")}</p>}
             </div>
           </section>
         </div>
@@ -994,19 +999,19 @@ export default function CRMTab() {
           <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, email, company, phone, or tag…" className="pl-10" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Search name, email, company, phone, or tag...")} className="pl-10" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <CRMSelect value={lifecycleFilter} onChange={(event) => setLifecycleFilter(event.target.value)} ariaLabel="Filter by lifecycle stage">
-                <option value="all">All lifecycle stages</option>
-                {LIFECYCLE_STAGES.map((stage) => <option key={stage} value={stage}>{titleCase(stage)}</option>)}
+              <CRMSelect value={lifecycleFilter} onChange={(event) => setLifecycleFilter(event.target.value)} ariaLabel={t("Filter by lifecycle stage")}>
+                <option value="all">{t("All lifecycle stages")}</option>
+                {LIFECYCLE_STAGES.map((stage) => <option key={stage} value={stage}>{t(titleCase(stage))}</option>)}
               </CRMSelect>
-              <CRMSelect value={conversionFilter} onChange={(event) => setConversionFilter(event.target.value)} ariaLabel="Filter by conversion stage">
-                <option value="all">All conversion stages</option>
-                {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
+              <CRMSelect value={conversionFilter} onChange={(event) => setConversionFilter(event.target.value)} ariaLabel={t("Filter by conversion stage")}>
+                <option value="all">{t("All conversion stages")}</option>
+                {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{t(stage.label)} ({stage.probability}%)</option>)}
               </CRMSelect>
-              <Button variant="outline" size="icon" onClick={exportContacts} title="Export filtered contacts"><Download className="h-4 w-4" /></Button>
-              <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />Add contact</Button>
+              <Button variant="outline" size="icon" onClick={exportContacts} title={t("Export filtered contacts")}><Download className="h-4 w-4" /></Button>
+              <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />{t("Add contact")}</Button>
             </div>
           </div>
 
@@ -1015,13 +1020,13 @@ export default function CRMTab() {
               <table className="w-full min-w-[1060px] text-sm">
                 <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
                   <tr>
-                    <th className="px-5 py-3 font-medium">Contact</th>
-                    <th className="px-5 py-3 font-medium">Company</th>
-                    <th className="px-5 py-3 font-medium">Lifecycle</th>
-                    <th className="px-5 py-3 font-medium">Lead status</th>
-                    <th className="px-5 py-3 font-medium">Conversion</th>
-                    <th className="px-5 py-3 font-medium">Next follow-up</th>
-                    <th className="px-5 py-3 text-right font-medium">Actions</th>
+                    <th className="px-5 py-3 font-medium">{t("Contact")}</th>
+                    <th className="px-5 py-3 font-medium">{t("Company")}</th>
+                    <th className="px-5 py-3 font-medium">{t("Lifecycle")}</th>
+                    <th className="px-5 py-3 font-medium">{t("Lead status")}</th>
+                    <th className="px-5 py-3 font-medium">{t("Conversion")}</th>
+                    <th className="px-5 py-3 font-medium">{t("Next follow-up")}</th>
+                    <th className="px-5 py-3 text-right font-medium">{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -1034,16 +1039,16 @@ export default function CRMTab() {
                           </div>
                           <div>
                             <p className="font-bold">{displayName(contact)}</p>
-                            <p className="text-xs text-muted-foreground">{contact.email || contact.phone || "No contact details"}</p>
+                            <p className="text-xs text-muted-foreground">{contact.email || contact.phone || t("No contact details")}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="font-medium">{contact.company_id ? companyById.get(contact.company_id)?.name || "Unknown" : "—"}</p>
-                        <p className="text-xs text-muted-foreground">{contact.job_title || "No title"}</p>
+                        <p className="font-medium">{contact.company_id ? companyById.get(contact.company_id)?.name || t("Unknown") : "—"}</p>
+                        <p className="text-xs text-muted-foreground">{contact.job_title || t("No title")}</p>
                       </td>
                       <td className="px-5 py-4"><StageBadge stage={contact.lifecycle_stage} /></td>
-                      <td className="px-5 py-4 text-xs font-medium">{titleCase(contact.lead_status)}</td>
+                      <td className="px-5 py-4 text-xs font-medium">{t(titleCase(contact.lead_status))}</td>
                       <td className="px-5 py-4">
                         <div className="space-y-2">
                           <StageBadge stage={contact.conversion_stage || "new_inquiry"} />
@@ -1054,7 +1059,7 @@ export default function CRMTab() {
                         </div>
                       </td>
                       <td className={`px-5 py-4 text-xs ${contact.next_follow_up_at && new Date(contact.next_follow_up_at) < new Date() ? "font-medium text-rose-600" : "text-muted-foreground"}`}>
-                        {formatDate(contact.next_follow_up_at)}
+                        {formatDate(contact.next_follow_up_at, false, dateLocale, t("Not set"))}
                       </td>
                       <td className="px-5 py-4 text-right" onClick={(event) => event.stopPropagation()}>
                         <Button variant="ghost" size="icon" onClick={() => openEditContact(contact)}><Edit3 className="h-4 w-4" /></Button>
@@ -1068,9 +1073,9 @@ export default function CRMTab() {
           ) : (
             <EmptyState
               icon={UserRound}
-              title={contacts.length ? "No contacts match your filters" : "Build your customer database"}
-              description={contacts.length ? "Try a different search term, lifecycle stage, or conversion stage." : "Add the people your team sells to, supports, and partners with."}
-              action={!contacts.length ? <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />Add first contact</Button> : undefined}
+              title={t(contacts.length ? "No contacts match your filters" : "Build your customer database")}
+              description={t(contacts.length ? "Try a different search term, lifecycle stage, or conversion stage." : "Add the people your team sells to, supports, and partners with.")}
+              action={!contacts.length ? <Button onClick={openNewContact}><Plus className="mr-2 h-4 w-4" />{t("Add first contact")}</Button> : undefined}
             />
           )}
         </div>
@@ -1081,9 +1086,9 @@ export default function CRMTab() {
           <div className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm md:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search companies, industries, or locations…" className="pl-10" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("Search companies, industries, or locations...")} className="pl-10" />
             </div>
-            <Button onClick={openNewCompany}><Plus className="mr-2 h-4 w-4" />Add company</Button>
+            <Button onClick={openNewCompany}><Plus className="mr-2 h-4 w-4" />{t("Add company")}</Button>
           </div>
           {filteredCompanies.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1101,21 +1106,21 @@ export default function CRMTab() {
                       </div>
                     </div>
                     <h3 className="mt-4 text-lg font-bold">{company.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{company.industry || "Industry not set"}{company.country ? ` · ${company.country}` : ""}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{company.industry || t("Industry not set")}{company.country ? ` · ${company.country}` : ""}</p>
                     <div className="mt-4"><StageBadge stage={company.status} /></div>
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-muted/40 p-3">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Contacts</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("Contacts")}</p>
                         <p className="mt-1 text-lg font-bold">{companyContacts.length}</p>
                       </div>
                       <div className="rounded-xl bg-muted/40 p-3">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Open pipeline</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("Open pipeline")}</p>
                         <p className="mt-1 text-lg font-bold">{formatMoney(activeValue)}</p>
                       </div>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3 text-xs text-muted-foreground">
                       {company.phone && <a href={`tel:${company.phone}`} className="flex items-center gap-1 hover:text-foreground"><Phone className="h-3.5 w-3.5" />{company.phone}</a>}
-                      {company.website && <a href={company.website.startsWith("http") ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground"><ExternalLink className="h-3.5 w-3.5" />Website</a>}
+                      {company.website && <a href={company.website.startsWith("http") ? company.website : `https://${company.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground"><ExternalLink className="h-3.5 w-3.5" />{t("Website")}</a>}
                     </div>
                   </article>
                 );
@@ -1124,9 +1129,9 @@ export default function CRMTab() {
           ) : (
             <EmptyState
               icon={Building2}
-              title={companies.length ? "No companies match your search" : "Organize contacts by company"}
-              description={companies.length ? "Try a broader company, industry, or location search." : "Track accounts, partners, and prospects with their related contacts and opportunities."}
-              action={!companies.length ? <Button onClick={openNewCompany}><Plus className="mr-2 h-4 w-4" />Add first company</Button> : undefined}
+              title={t(companies.length ? "No companies match your search" : "Organize contacts by company")}
+              description={t(companies.length ? "Try a broader company, industry, or location search." : "Track accounts, partners, and prospects with their related contacts and opportunities.")}
+              action={!companies.length ? <Button onClick={openNewCompany}><Plus className="mr-2 h-4 w-4" />{t("Add first company")}</Button> : undefined}
             />
           )}
         </div>
@@ -1136,10 +1141,10 @@ export default function CRMTab() {
         <div className="space-y-4">
           <div className="flex flex-col gap-4 rounded-2xl border bg-card p-5 shadow-sm md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="font-bold">Sales pipeline</h3>
-              <p className="text-sm text-muted-foreground">{formatMoney(openPipelineValue)} open · {formatMoney(weightedPipelineValue)} weighted forecast</p>
+              <h3 className="font-bold">{t("Sales pipeline")}</h3>
+              <p className="text-sm text-muted-foreground">{t("{open} open · {weighted} weighted forecast", { open: formatMoney(openPipelineValue), weighted: formatMoney(weightedPipelineValue) })}</p>
             </div>
-            <Button onClick={() => openNewDeal()}><Plus className="mr-2 h-4 w-4" />Add deal</Button>
+            <Button onClick={() => openNewDeal()}><Plus className="mr-2 h-4 w-4" />{t("Add deal")}</Button>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-4">
             {DEAL_STAGES.map((stage) => {
@@ -1149,10 +1154,10 @@ export default function CRMTab() {
                 <section key={stage.id} className="w-[19rem] shrink-0 rounded-2xl border bg-muted/20">
                   <div className="border-b p-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="flex items-center gap-2 text-sm font-bold"><span className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />{stage.label}</h4>
+                      <h4 className="flex items-center gap-2 text-sm font-bold"><span className={`h-2.5 w-2.5 rounded-full ${stage.color}`} />{t(stage.label)}</h4>
                       <span className="rounded-full bg-background px-2 py-0.5 text-xs">{stageDeals.length}</span>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{stage.probability}% probability · {formatMoney(stageValue)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{t("{probability}% probability · {value}", { probability: stage.probability, value: formatMoney(stageValue) })}</p>
                   </div>
                   <div className="min-h-48 space-y-3 p-3">
                     {stageDeals.map((deal) => (
@@ -1161,29 +1166,29 @@ export default function CRMTab() {
                           <button className="text-left" onClick={() => openEditDeal(deal)}>
                             <p className="line-clamp-2 text-sm font-bold hover:text-primary">{deal.title}</p>
                           </button>
-                          {deal.priority === "high" && <span title="High priority" className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
+                          {deal.priority === "high" && <span title={t("High priority")} className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
                         </div>
                         <p className="mt-2 text-lg font-bold">{formatMoney(deal.amount, deal.currency)}</p>
                         <p className="mt-1 text-xs font-medium text-primary">
-                          {deal.probability}% · {formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency)} weighted
+                          {t("{probability}% · {value} weighted", { probability: deal.probability, value: formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency) })}
                         </p>
                         <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                           {deal.contact_id && <p className="truncate"><UserRound className="mr-1 inline h-3.5 w-3.5" />{displayName(contactById.get(deal.contact_id))}</p>}
-                          <p><CalendarClock className="mr-1 inline h-3.5 w-3.5" />{formatDate(deal.expected_close_date)}</p>
+                          <p><CalendarClock className="mr-1 inline h-3.5 w-3.5" />{formatDate(deal.expected_close_date, false, dateLocale, t("Not set"))}</p>
                         </div>
                         <div className="mt-3 border-t pt-3">
                           <CRMSelect
                             value={deal.stage}
                             onChange={(event) => updateDealStage(deal, event.target.value as Deal["stage"])}
                             className="w-full text-xs"
-                            ariaLabel={`Move ${deal.title} to another stage`}
+                            ariaLabel={t("Move {title} to another stage", { title: deal.title })}
                           >
-                            {DEAL_STAGES.map((option) => <option key={option.id} value={option.id}>{option.label} ({option.probability}%)</option>)}
+                            {DEAL_STAGES.map((option) => <option key={option.id} value={option.id}>{t(option.label)} ({option.probability}%)</option>)}
                           </CRMSelect>
                         </div>
                       </article>
                     ))}
-                    {stageDeals.length === 0 && <p className="py-10 text-center text-xs text-muted-foreground">No deals</p>}
+                    {stageDeals.length === 0 && <p className="py-10 text-center text-xs text-muted-foreground">{t("No deals")}</p>}
                   </div>
                 </section>
               );
@@ -1203,11 +1208,11 @@ export default function CRMTab() {
                 { id: "all", label: "All activity" },
               ].map((filter) => (
                 <Button key={filter.id} variant={activityFilter === filter.id ? "default" : "outline"} size="sm" onClick={() => setActivityFilter(filter.id)}>
-                  {filter.label}{filter.count !== undefined ? ` (${filter.count})` : ""}
+                  {t(filter.label)}{filter.count !== undefined ? ` (${filter.count})` : ""}
                 </Button>
               ))}
             </div>
-            <Button onClick={() => openNewActivity()}><Plus className="mr-2 h-4 w-4" />Add activity</Button>
+            <Button onClick={() => openNewActivity()}><Plus className="mr-2 h-4 w-4" />{t("Add activity")}</Button>
           </div>
 
           {filteredActivities.length ? (
@@ -1223,7 +1228,7 @@ export default function CRMTab() {
                         <button
                           onClick={() => completeActivity(item)}
                           className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${item.status === "completed" ? "border-emerald-500 bg-emerald-500 text-white" : "text-transparent hover:border-primary hover:text-primary"}`}
-                          aria-label={item.status === "completed" ? "Reopen activity" : "Complete activity"}
+                          aria-label={t(item.status === "completed" ? "Reopen activity" : "Complete activity")}
                         >
                           <Check className="h-3.5 w-3.5" />
                         </button>
@@ -1233,25 +1238,25 @@ export default function CRMTab() {
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <h4 className={`font-bold ${item.status === "completed" && item.type === "task" ? "text-muted-foreground line-through" : ""}`}>{item.subject}</h4>
-                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">{titleCase(item.type)}</span>
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">{t(titleCase(item.type))}</span>
                             </div>
                             <p className="mt-1 text-xs text-muted-foreground">
                               {contact && <button className="font-medium text-primary hover:underline" onClick={() => setSelectedContactId(contact.id)}>{displayName(contact)}</button>}
                               {contact && deal ? " · " : ""}
                               {deal?.title}
-                              {!contact && !deal ? "General CRM activity" : ""}
+                              {!contact && !deal ? t("General CRM activity") : ""}
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className={`mr-2 text-xs ${isOverdue ? "font-bold text-rose-600" : "text-muted-foreground"}`}>
-                              {item.due_at ? formatDate(item.due_at, true) : formatDate(item.created_at, true)}
+                              {item.due_at ? formatDate(item.due_at, true, dateLocale, t("Not set")) : formatDate(item.created_at, true, dateLocale, t("Not set"))}
                             </span>
                             <Button variant="ghost" size="icon" onClick={() => openEditActivity(item)}><Edit3 className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteRecord("crm_activities", item.id, "activity")}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         </div>
                         {item.body && <p className="mt-3 max-w-4xl whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.body}</p>}
-                        {item.outcome && <p className="mt-2 text-sm"><span className="font-medium">Outcome:</span> {item.outcome}</p>}
+                        {item.outcome && <p className="mt-2 text-sm"><span className="font-medium">{t("Outcome:")}</span> {item.outcome}</p>}
                       </div>
                     </article>
                   );
@@ -1261,9 +1266,9 @@ export default function CRMTab() {
           ) : (
             <EmptyState
               icon={ClipboardList}
-              title="Nothing in this activity view"
-              description="Record a note, call, email, meeting, or task to keep the relationship history complete."
-              action={<Button onClick={() => openNewActivity()}><Plus className="mr-2 h-4 w-4" />Add activity</Button>}
+              title={t("Nothing in this activity view")}
+              description={t("Record a note, call, email, meeting, or task to keep the relationship history complete.")}
+              action={<Button onClick={() => openNewActivity()}><Plus className="mr-2 h-4 w-4" />{t("Add activity")}</Button>}
             />
           )}
         </div>
@@ -1283,236 +1288,236 @@ export default function CRMTab() {
       )}
 
       {modal === "contact" && (
-        <CRMModal title={editingId ? "Edit contact" : "Add contact"} description="Maintain a complete customer profile for sales and service." onClose={closeModal}>
+        <CRMModal title={t(editingId ? "Edit contact" : "Add contact")} description={t("Maintain a complete customer profile for sales and service.")} onClose={closeModal}>
           <form onSubmit={saveContact} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><FieldLabel>First name *</FieldLabel><Input value={contactForm.first_name} onChange={(event) => setContactForm({ ...contactForm, first_name: event.target.value })} autoFocus /></div>
-              <div><FieldLabel>Last name</FieldLabel><Input value={contactForm.last_name} onChange={(event) => setContactForm({ ...contactForm, last_name: event.target.value })} /></div>
-              <div><FieldLabel>Email</FieldLabel><Input type="email" value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} /></div>
-              <div><FieldLabel>Phone</FieldLabel><Input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} /></div>
-              <div><FieldLabel>Job title</FieldLabel><Input value={contactForm.job_title} onChange={(event) => setContactForm({ ...contactForm, job_title: event.target.value })} /></div>
+              <div><FieldLabel>{t("First name *")}</FieldLabel><Input value={contactForm.first_name} onChange={(event) => setContactForm({ ...contactForm, first_name: event.target.value })} autoFocus /></div>
+              <div><FieldLabel>{t("Last name")}</FieldLabel><Input value={contactForm.last_name} onChange={(event) => setContactForm({ ...contactForm, last_name: event.target.value })} /></div>
+              <div><FieldLabel>{t("Email")}</FieldLabel><Input type="email" value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} /></div>
+              <div><FieldLabel>{t("Phone")}</FieldLabel><Input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} /></div>
+              <div><FieldLabel>{t("Job title")}</FieldLabel><Input value={contactForm.job_title} onChange={(event) => setContactForm({ ...contactForm, job_title: event.target.value })} /></div>
               <div>
-                <FieldLabel>Company</FieldLabel>
+                <FieldLabel>{t("Company")}</FieldLabel>
                 <CRMSelect value={contactForm.company_id} onChange={(event) => setContactForm({ ...contactForm, company_id: event.target.value })} className="w-full">
-                  <option value="">No company</option>
+                  <option value="">{t("No company")}</option>
                   {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Lifecycle stage</FieldLabel>
+                <FieldLabel>{t("Lifecycle stage")}</FieldLabel>
                 <CRMSelect value={contactForm.lifecycle_stage} onChange={(event) => setContactForm({ ...contactForm, lifecycle_stage: event.target.value as Contact["lifecycle_stage"] })} className="w-full">
-                  {LIFECYCLE_STAGES.map((stage) => <option key={stage} value={stage}>{titleCase(stage)}</option>)}
+                  {LIFECYCLE_STAGES.map((stage) => <option key={stage} value={stage}>{t(titleCase(stage))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Lead status</FieldLabel>
+                <FieldLabel>{t("Lead status")}</FieldLabel>
                 <CRMSelect value={contactForm.lead_status} onChange={(event) => setContactForm({ ...contactForm, lead_status: event.target.value as Contact["lead_status"] })} className="w-full">
-                  {LEAD_STATUSES.map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}
+                  {LEAD_STATUSES.map((status) => <option key={status} value={status}>{t(titleCase(status))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Conversion stage</FieldLabel>
+                <FieldLabel>{t("Conversion stage")}</FieldLabel>
                 {editingId ? (
                   <CRMSelect value={contactForm.conversion_stage} onChange={(event) => {
                     const conversionStage = event.target.value as ConversionStage;
                     const probability = conversionStageConfig(conversionStage)?.probability || 10;
                     setContactForm({ ...contactForm, conversion_stage: conversionStage, conversion_probability: probability });
                   }} className="w-full">
-                    {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
+                    {CONVERSION_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{t(stage.label)} ({stage.probability}%)</option>)}
                   </CRMSelect>
                 ) : (
-                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">New inquiry (10%)</div>
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm font-medium">{t("New inquiry (10%)")}</div>
                 )}
               </div>
               <div>
-                <FieldLabel>Conversion probability</FieldLabel>
+                <FieldLabel>{t("Conversion probability")}</FieldLabel>
                 <div className="rounded-md border bg-muted/30 px-3 py-2">
                   <p className="text-sm font-bold">{contactForm.conversion_probability}%</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {editingId
-                      ? conversionStageConfig(contactForm.conversion_stage)?.description
-                      : "Applied automatically when the contact is created."}
+                      ? t(conversionStageConfig(contactForm.conversion_stage)?.description || "")
+                      : t("Applied automatically when the contact is created.")}
                   </p>
                 </div>
               </div>
               <div>
-                <FieldLabel>Source</FieldLabel>
+                <FieldLabel>{t("Source")}</FieldLabel>
                 <CRMSelect value={contactForm.source} onChange={(event) => setContactForm({ ...contactForm, source: event.target.value as Contact["source"] })} className="w-full">
-                  {SOURCES.map((source) => <option key={source} value={source}>{titleCase(source)}</option>)}
+                  {SOURCES.map((source) => <option key={source} value={source}>{t(titleCase(source))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Lead score / quality (0–100)</FieldLabel>
+                <FieldLabel>{t("Lead score / quality (0–100)")}</FieldLabel>
                 <Input type="number" min={0} max={100} value={contactForm.lead_score} onChange={(event) => setContactForm({ ...contactForm, lead_score: Number(event.target.value) })} />
               </div>
               <div>
-                <FieldLabel>Next follow-up</FieldLabel>
+                <FieldLabel>{t("Next follow-up")}</FieldLabel>
                 <Input type="datetime-local" value={contactForm.next_follow_up_at} onChange={(event) => setContactForm({ ...contactForm, next_follow_up_at: event.target.value })} />
               </div>
-              <div><FieldLabel>Tags (comma separated)</FieldLabel><Input value={contactForm.tags} onChange={(event) => setContactForm({ ...contactForm, tags: event.target.value })} placeholder="VIP, wholesale, APAC" /></div>
+              <div><FieldLabel>{t("Tags (comma separated)")}</FieldLabel><Input value={contactForm.tags} onChange={(event) => setContactForm({ ...contactForm, tags: event.target.value })} placeholder="VIP, wholesale, APAC" /></div>
             </div>
-            <div><FieldLabel>Internal notes</FieldLabel><Textarea rows={4} value={contactForm.notes} onChange={(event) => setContactForm({ ...contactForm, notes: event.target.value })} /></div>
+            <div><FieldLabel>{t("Internal notes")}</FieldLabel><Textarea rows={4} value={contactForm.notes} onChange={(event) => setContactForm({ ...contactForm, notes: event.target.value })} /></div>
             <label className="flex items-center gap-3 rounded-xl border bg-muted/20 p-3 text-sm">
               <input type="checkbox" checked={contactForm.marketing_opt_in} onChange={(event) => setContactForm({ ...contactForm, marketing_opt_in: event.target.checked })} className="h-4 w-4 accent-primary" />
-              Contact has opted in to marketing communications
+              {t("Contact has opted in to marketing communications")}
             </label>
-            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingId ? "Save changes" : "Add contact"}</Button></div>
+            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>{t("Cancel")}</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t(editingId ? "Save changes" : "Add contact")}</Button></div>
           </form>
         </CRMModal>
       )}
 
       {modal === "company" && (
-        <CRMModal title={editingId ? "Edit company" : "Add company"} description="Track an account, partner, or prospect organization." onClose={closeModal}>
+        <CRMModal title={t(editingId ? "Edit company" : "Add company")} description={t("Track an account, partner, or prospect organization.")} onClose={closeModal}>
           <form onSubmit={saveCompany} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2"><FieldLabel>Company name *</FieldLabel><Input value={companyForm.name} onChange={(event) => setCompanyForm({ ...companyForm, name: event.target.value })} autoFocus /></div>
-              <div><FieldLabel>Website</FieldLabel><Input value={companyForm.website} onChange={(event) => setCompanyForm({ ...companyForm, website: event.target.value })} placeholder="https://example.com" /></div>
-              <div><FieldLabel>Phone</FieldLabel><Input value={companyForm.phone} onChange={(event) => setCompanyForm({ ...companyForm, phone: event.target.value })} /></div>
-              <div><FieldLabel>Industry</FieldLabel><Input value={companyForm.industry} onChange={(event) => setCompanyForm({ ...companyForm, industry: event.target.value })} /></div>
+              <div className="sm:col-span-2"><FieldLabel>{t("Company name *")}</FieldLabel><Input value={companyForm.name} onChange={(event) => setCompanyForm({ ...companyForm, name: event.target.value })} autoFocus /></div>
+              <div><FieldLabel>{t("Website")}</FieldLabel><Input value={companyForm.website} onChange={(event) => setCompanyForm({ ...companyForm, website: event.target.value })} placeholder="https://example.com" /></div>
+              <div><FieldLabel>{t("Phone")}</FieldLabel><Input value={companyForm.phone} onChange={(event) => setCompanyForm({ ...companyForm, phone: event.target.value })} /></div>
+              <div><FieldLabel>{t("Industry")}</FieldLabel><Input value={companyForm.industry} onChange={(event) => setCompanyForm({ ...companyForm, industry: event.target.value })} /></div>
               <div>
-                <FieldLabel>Company size</FieldLabel>
+                <FieldLabel>{t("Company size")}</FieldLabel>
                 <CRMSelect value={companyForm.size || ""} onChange={(event) => setCompanyForm({ ...companyForm, size: event.target.value as Company["size"] | "" })} className="w-full">
-                  <option value="">Not specified</option>
-                  {["solo", "small", "medium", "large", "enterprise"].map((size) => <option key={size} value={size}>{titleCase(size)}</option>)}
+                  <option value="">{t("Not specified")}</option>
+                  {["solo", "small", "medium", "large", "enterprise"].map((size) => <option key={size} value={size}>{t(titleCase(size))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Relationship</FieldLabel>
+                <FieldLabel>{t("Relationship")}</FieldLabel>
                 <CRMSelect value={companyForm.status} onChange={(event) => setCompanyForm({ ...companyForm, status: event.target.value as Company["status"] })} className="w-full">
-                  {["prospect", "customer", "partner", "inactive"].map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}
+                  {["prospect", "customer", "partner", "inactive"].map((status) => <option key={status} value={status}>{t(titleCase(status))}</option>)}
                 </CRMSelect>
               </div>
-              <div><FieldLabel>Country</FieldLabel><Input value={companyForm.country} onChange={(event) => setCompanyForm({ ...companyForm, country: event.target.value })} /></div>
-              <div><FieldLabel>City</FieldLabel><Input value={companyForm.city} onChange={(event) => setCompanyForm({ ...companyForm, city: event.target.value })} /></div>
-              <div className="sm:col-span-2"><FieldLabel>Address</FieldLabel><Input value={companyForm.address} onChange={(event) => setCompanyForm({ ...companyForm, address: event.target.value })} /></div>
+              <div><FieldLabel>{t("Country")}</FieldLabel><Input value={companyForm.country} onChange={(event) => setCompanyForm({ ...companyForm, country: event.target.value })} /></div>
+              <div><FieldLabel>{t("City")}</FieldLabel><Input value={companyForm.city} onChange={(event) => setCompanyForm({ ...companyForm, city: event.target.value })} /></div>
+              <div className="sm:col-span-2"><FieldLabel>{t("Address")}</FieldLabel><Input value={companyForm.address} onChange={(event) => setCompanyForm({ ...companyForm, address: event.target.value })} /></div>
             </div>
-            <div><FieldLabel>Internal notes</FieldLabel><Textarea rows={4} value={companyForm.notes} onChange={(event) => setCompanyForm({ ...companyForm, notes: event.target.value })} /></div>
-            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingId ? "Save changes" : "Add company"}</Button></div>
+            <div><FieldLabel>{t("Internal notes")}</FieldLabel><Textarea rows={4} value={companyForm.notes} onChange={(event) => setCompanyForm({ ...companyForm, notes: event.target.value })} /></div>
+            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>{t("Cancel")}</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t(editingId ? "Save changes" : "Add company")}</Button></div>
           </form>
         </CRMModal>
       )}
 
       {modal === "deal" && (
-        <CRMModal title={editingId ? "Edit deal" : "Add deal"} description="Create and forecast a revenue opportunity." onClose={closeModal}>
+        <CRMModal title={t(editingId ? "Edit deal" : "Add deal")} description={t("Create and forecast a revenue opportunity.")} onClose={closeModal}>
           <form onSubmit={saveDeal} className="space-y-5">
-            <div><FieldLabel>Deal title *</FieldLabel><Input value={dealForm.title} onChange={(event) => setDealForm({ ...dealForm, title: event.target.value })} autoFocus /></div>
+            <div><FieldLabel>{t("Deal title *")}</FieldLabel><Input value={dealForm.title} onChange={(event) => setDealForm({ ...dealForm, title: event.target.value })} autoFocus /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <FieldLabel>Contact</FieldLabel>
+                <FieldLabel>{t("Contact")}</FieldLabel>
                 <CRMSelect value={dealForm.contact_id} onChange={(event) => {
                   const contact = contactById.get(event.target.value);
                   setDealForm({ ...dealForm, contact_id: event.target.value, company_id: contact?.company_id || dealForm.company_id });
                 }} className="w-full">
-                  <option value="">No contact</option>
+                  <option value="">{t("No contact")}</option>
                   {contacts.map((contact) => <option key={contact.id} value={contact.id}>{displayName(contact)}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Company</FieldLabel>
+                <FieldLabel>{t("Company")}</FieldLabel>
                 <CRMSelect value={dealForm.company_id} onChange={(event) => setDealForm({ ...dealForm, company_id: event.target.value })} className="w-full">
-                  <option value="">No company</option>
+                  <option value="">{t("No company")}</option>
                   {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Conversion stage</FieldLabel>
+                <FieldLabel>{t("Conversion stage")}</FieldLabel>
                 <CRMSelect value={dealForm.stage} onChange={(event) => {
                   const stage = event.target.value as Deal["stage"];
                   setDealForm({ ...dealForm, stage, probability: DEAL_STAGES.find((item) => item.id === stage)?.probability ?? dealForm.probability });
                 }} className="w-full">
-                  {DEAL_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{stage.label} ({stage.probability}%)</option>)}
+                  {DEAL_STAGES.map((stage) => <option key={stage.id} value={stage.id}>{t(stage.label)} ({stage.probability}%)</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Expected close</FieldLabel>
+                <FieldLabel>{t("Expected close")}</FieldLabel>
                 <Input type="date" value={dealForm.expected_close_date} onChange={(event) => setDealForm({ ...dealForm, expected_close_date: event.target.value })} />
               </div>
               <div>
-                <FieldLabel>Value</FieldLabel>
+                <FieldLabel>{t("Value")}</FieldLabel>
                 <div className="flex">
-                  <Input value={dealForm.currency} maxLength={3} onChange={(event) => setDealForm({ ...dealForm, currency: event.target.value.toUpperCase() })} className="w-20 rounded-r-none" aria-label="Currency" />
-                  <Input type="number" min={0} step="0.01" value={dealForm.amount} onChange={(event) => setDealForm({ ...dealForm, amount: event.target.value })} className="rounded-l-none border-l-0" aria-label="Deal value" />
+                  <Input value={dealForm.currency} maxLength={3} onChange={(event) => setDealForm({ ...dealForm, currency: event.target.value.toUpperCase() })} className="w-20 rounded-r-none" aria-label={t("Currency")} />
+                  <Input type="number" min={0} step="0.01" value={dealForm.amount} onChange={(event) => setDealForm({ ...dealForm, amount: event.target.value })} className="rounded-l-none border-l-0" aria-label={t("Deal value")} />
                 </div>
               </div>
               <div>
-                <FieldLabel>Conversion probability</FieldLabel>
+                <FieldLabel>{t("Conversion probability")}</FieldLabel>
                 <div className="rounded-md border bg-muted/30 px-3 py-2">
                   <p className="text-sm font-bold">{dealForm.probability}%</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{conversionStageConfig(dealForm.stage)?.description}. Used to weight this deal in the sales forecast.</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{t(conversionStageConfig(dealForm.stage)?.description || "")} {t("Used to weight this deal in the sales forecast.")}</p>
                 </div>
               </div>
               <div>
-                <FieldLabel>Priority</FieldLabel>
+                <FieldLabel>{t("Priority")}</FieldLabel>
                 <CRMSelect value={dealForm.priority} onChange={(event) => setDealForm({ ...dealForm, priority: event.target.value as Deal["priority"] })} className="w-full">
-                  {["low", "normal", "high"].map((priority) => <option key={priority} value={priority}>{titleCase(priority)}</option>)}
+                  {["low", "normal", "high"].map((priority) => <option key={priority} value={priority}>{t(titleCase(priority))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Source</FieldLabel>
+                <FieldLabel>{t("Source")}</FieldLabel>
                 <CRMSelect value={dealForm.source} onChange={(event) => setDealForm({ ...dealForm, source: event.target.value as Deal["source"] })} className="w-full">
-                  {SOURCES.map((source) => <option key={source} value={source}>{titleCase(source)}</option>)}
+                  {SOURCES.map((source) => <option key={source} value={source}>{t(titleCase(source))}</option>)}
                 </CRMSelect>
               </div>
             </div>
-            {dealForm.stage === "lost" && <div><FieldLabel>Loss reason</FieldLabel><Input value={dealForm.loss_reason} onChange={(event) => setDealForm({ ...dealForm, loss_reason: event.target.value })} /></div>}
-            <div><FieldLabel>Deal notes</FieldLabel><Textarea rows={4} value={dealForm.notes} onChange={(event) => setDealForm({ ...dealForm, notes: event.target.value })} /></div>
+            {dealForm.stage === "lost" && <div><FieldLabel>{t("Loss reason")}</FieldLabel><Input value={dealForm.loss_reason} onChange={(event) => setDealForm({ ...dealForm, loss_reason: event.target.value })} /></div>}
+            <div><FieldLabel>{t("Deal notes")}</FieldLabel><Textarea rows={4} value={dealForm.notes} onChange={(event) => setDealForm({ ...dealForm, notes: event.target.value })} /></div>
             <div className="flex items-center justify-between border-t pt-5">
-              <div>{editingId && <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { if (await deleteRecord("crm_deals", editingId, "deal")) closeModal(); }}><Trash2 className="mr-2 h-4 w-4" />Delete</Button>}</div>
-              <div className="flex gap-2"><Button type="button" variant="outline" onClick={closeModal}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingId ? "Save changes" : "Add deal"}</Button></div>
+              <div>{editingId && <Button type="button" variant="ghost" className="text-destructive" onClick={async () => { if (await deleteRecord("crm_deals", editingId, "deal")) closeModal(); }}><Trash2 className="mr-2 h-4 w-4" />{t("Delete")}</Button>}</div>
+              <div className="flex gap-2"><Button type="button" variant="outline" onClick={closeModal}>{t("Cancel")}</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t(editingId ? "Save changes" : "Add deal")}</Button></div>
             </div>
           </form>
         </CRMModal>
       )}
 
       {modal === "activity" && (
-        <CRMModal title={editingId ? "Edit activity" : "Add activity"} description="Keep the relationship timeline complete and actionable." onClose={closeModal}>
+        <CRMModal title={t(editingId ? "Edit activity" : "Add activity")} description={t("Keep the relationship timeline complete and actionable.")} onClose={closeModal}>
           <form onSubmit={saveActivity} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <FieldLabel>Activity type</FieldLabel>
+                <FieldLabel>{t("Activity type")}</FieldLabel>
                 <CRMSelect value={activityForm.type} onChange={(event) => {
                   const type = event.target.value as CRMActivity["type"];
                   setActivityForm({ ...activityForm, type, status: type === "note" ? "completed" : activityForm.status });
                 }} className="w-full">
-                  {ACTIVITY_TYPES.map((type) => <option key={type} value={type}>{titleCase(type)}</option>)}
+                  {ACTIVITY_TYPES.map((type) => <option key={type} value={type}>{t(titleCase(type))}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Status</FieldLabel>
+                <FieldLabel>{t("Status")}</FieldLabel>
                 <CRMSelect value={activityForm.status} onChange={(event) => setActivityForm({ ...activityForm, status: event.target.value as CRMActivity["status"] })} className="w-full">
-                  {["open", "completed", "cancelled"].map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}
+                  {["open", "completed", "cancelled"].map((status) => <option key={status} value={status}>{t(titleCase(status))}</option>)}
                 </CRMSelect>
               </div>
-              <div className="sm:col-span-2"><FieldLabel>Subject *</FieldLabel><Input value={activityForm.subject} onChange={(event) => setActivityForm({ ...activityForm, subject: event.target.value })} autoFocus /></div>
+              <div className="sm:col-span-2"><FieldLabel>{t("Subject *")}</FieldLabel><Input value={activityForm.subject} onChange={(event) => setActivityForm({ ...activityForm, subject: event.target.value })} autoFocus /></div>
               <div>
-                <FieldLabel>Contact</FieldLabel>
+                <FieldLabel>{t("Contact")}</FieldLabel>
                 <CRMSelect value={activityForm.contact_id} onChange={(event) => {
                   const contact = contactById.get(event.target.value);
                   setActivityForm({ ...activityForm, contact_id: event.target.value, company_id: contact?.company_id || activityForm.company_id });
                 }} className="w-full">
-                  <option value="">No contact</option>
+                  <option value="">{t("No contact")}</option>
                   {contacts.map((contact) => <option key={contact.id} value={contact.id}>{displayName(contact)}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Company</FieldLabel>
+                <FieldLabel>{t("Company")}</FieldLabel>
                 <CRMSelect value={activityForm.company_id} onChange={(event) => setActivityForm({ ...activityForm, company_id: event.target.value })} className="w-full">
-                  <option value="">No company</option>
+                  <option value="">{t("No company")}</option>
                   {companies.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
                 </CRMSelect>
               </div>
               <div>
-                <FieldLabel>Related deal</FieldLabel>
+                <FieldLabel>{t("Related deal")}</FieldLabel>
                 <CRMSelect value={activityForm.deal_id} onChange={(event) => setActivityForm({ ...activityForm, deal_id: event.target.value })} className="w-full">
-                  <option value="">No deal</option>
+                  <option value="">{t("No deal")}</option>
                   {deals.map((deal) => <option key={deal.id} value={deal.id}>{deal.title}</option>)}
                 </CRMSelect>
               </div>
-              <div><FieldLabel>Due date</FieldLabel><Input type="datetime-local" value={activityForm.due_at} onChange={(event) => setActivityForm({ ...activityForm, due_at: event.target.value })} /></div>
+              <div><FieldLabel>{t("Due date")}</FieldLabel><Input type="datetime-local" value={activityForm.due_at} onChange={(event) => setActivityForm({ ...activityForm, due_at: event.target.value })} /></div>
             </div>
-            <div><FieldLabel>Details</FieldLabel><Textarea rows={5} value={activityForm.body} onChange={(event) => setActivityForm({ ...activityForm, body: event.target.value })} placeholder="Discussion notes, agenda, or task instructions…" /></div>
-            <div><FieldLabel>Outcome</FieldLabel><Input value={activityForm.outcome} onChange={(event) => setActivityForm({ ...activityForm, outcome: event.target.value })} placeholder="Optional result or next step" /></div>
-            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>Cancel</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingId ? "Save changes" : "Record activity"}</Button></div>
+            <div><FieldLabel>{t("Details")}</FieldLabel><Textarea rows={5} value={activityForm.body} onChange={(event) => setActivityForm({ ...activityForm, body: event.target.value })} placeholder={t("Discussion notes, agenda, or task instructions...")} /></div>
+            <div><FieldLabel>{t("Outcome")}</FieldLabel><Input value={activityForm.outcome} onChange={(event) => setActivityForm({ ...activityForm, outcome: event.target.value })} placeholder={t("Optional result or next step")} /></div>
+            <div className="flex justify-end gap-2 border-t pt-5"><Button type="button" variant="outline" onClick={closeModal}>{t("Cancel")}</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t(editingId ? "Save changes" : "Record activity")}</Button></div>
           </form>
         </CRMModal>
       )}
@@ -1552,12 +1557,15 @@ function ContactDrawer({
   onAddDeal: () => void;
   onAddActivity: (type: CRMActivity["type"]) => void;
 }) {
+  const { language, t } = useAdminLanguage();
+  const dateLocale = language === "zh" ? "zh-CN" : "en-US";
+
   return (
     <div className="fixed inset-0 z-[70]">
-      <button className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="Close contact details" />
+      <button className="absolute inset-0 bg-black/40" onClick={onClose} aria-label={t("Close contact details")} />
       <aside className="absolute inset-y-0 right-0 w-full max-w-xl overflow-y-auto border-l bg-background shadow-2xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 p-5 backdrop-blur">
-          <p className="text-sm font-bold">Contact details</p>
+          <p className="text-sm font-bold">{t("Contact details")}</p>
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" onClick={onEdit}><Edit3 className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
@@ -1570,7 +1578,7 @@ function ContactDrawer({
             </div>
             <div className="min-w-0">
               <h2 className="text-2xl font-bold">{displayName(contact)}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{contact.job_title || "No title"}{company ? ` at ${company.name}` : ""}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{contact.job_title || t("No title")}{company ? ` · ${company.name}` : ""}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <StageBadge stage={contact.lifecycle_stage} />
                 <StageBadge stage={contact.lead_status} />
@@ -1586,57 +1594,57 @@ function ContactDrawer({
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" size="sm" onClick={() => onAddActivity("note")}><MessageSquareText className="mr-2 h-4 w-4" />Note</Button>
-            <Button variant="outline" size="sm" onClick={() => onAddActivity("call")}><Phone className="mr-2 h-4 w-4" />Call</Button>
-            <Button variant="outline" size="sm" onClick={() => onAddActivity("task")}><ClipboardList className="mr-2 h-4 w-4" />Task</Button>
+            <Button variant="outline" size="sm" onClick={() => onAddActivity("note")}><MessageSquareText className="mr-2 h-4 w-4" />{t("Note")}</Button>
+            <Button variant="outline" size="sm" onClick={() => onAddActivity("call")}><Phone className="mr-2 h-4 w-4" />{t("Call")}</Button>
+            <Button variant="outline" size="sm" onClick={() => onAddActivity("task")}><ClipboardList className="mr-2 h-4 w-4" />{t("Task")}</Button>
           </div>
 
           <section className="rounded-2xl border">
-            <div className="border-b p-4"><h3 className="text-sm font-bold">Profile</h3></div>
+            <div className="border-b p-4"><h3 className="text-sm font-bold">{t("Profile")}</h3></div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-5 p-4 text-sm">
-              <div><dt className="text-xs text-muted-foreground">Company</dt><dd className="mt-1 font-medium">{company?.name || "Not assigned"}</dd></div>
-              <div><dt className="text-xs text-muted-foreground">Source</dt><dd className="mt-1 font-medium">{titleCase(contact.source)}</dd></div>
-              <div><dt className="text-xs text-muted-foreground">Lead score</dt><dd className="mt-1 font-medium">{contact.lead_score}/100</dd></div>
-              <div><dt className="text-xs text-muted-foreground">Conversion probability</dt><dd className="mt-1 font-medium">{contact.conversion_probability || 10}%</dd></div>
-              <div><dt className="text-xs text-muted-foreground">Next follow-up</dt><dd className="mt-1 font-medium">{formatDate(contact.next_follow_up_at)}</dd></div>
-              <div className="col-span-2"><dt className="text-xs text-muted-foreground">Tags</dt><dd className="mt-2 flex flex-wrap gap-1">{contact.tags.length ? contact.tags.map((tag) => <span key={tag} className="rounded-full bg-muted px-2 py-1 text-xs">{tag}</span>) : <span className="text-muted-foreground">No tags</span>}</dd></div>
-              {contact.notes && <div className="col-span-2"><dt className="text-xs text-muted-foreground">Notes</dt><dd className="mt-1 whitespace-pre-wrap leading-6">{contact.notes}</dd></div>}
+              <div><dt className="text-xs text-muted-foreground">{t("Company")}</dt><dd className="mt-1 font-medium">{company?.name || t("Not assigned")}</dd></div>
+              <div><dt className="text-xs text-muted-foreground">{t("Source")}</dt><dd className="mt-1 font-medium">{t(titleCase(contact.source))}</dd></div>
+              <div><dt className="text-xs text-muted-foreground">{t("Lead score")}</dt><dd className="mt-1 font-medium">{contact.lead_score}/100</dd></div>
+              <div><dt className="text-xs text-muted-foreground">{t("Conversion probability")}</dt><dd className="mt-1 font-medium">{contact.conversion_probability || 10}%</dd></div>
+              <div><dt className="text-xs text-muted-foreground">{t("Next follow-up")}</dt><dd className="mt-1 font-medium">{formatDate(contact.next_follow_up_at, false, dateLocale, t("Not set"))}</dd></div>
+              <div className="col-span-2"><dt className="text-xs text-muted-foreground">{t("Tags")}</dt><dd className="mt-2 flex flex-wrap gap-1">{contact.tags.length ? contact.tags.map((tag) => <span key={tag} className="rounded-full bg-muted px-2 py-1 text-xs">{tag}</span>) : <span className="text-muted-foreground">{t("No tags")}</span>}</dd></div>
+              {contact.notes && <div className="col-span-2"><dt className="text-xs text-muted-foreground">{t("Notes")}</dt><dd className="mt-1 whitespace-pre-wrap leading-6">{contact.notes}</dd></div>}
             </dl>
           </section>
 
           <section className="rounded-2xl border">
             <div className="flex items-center justify-between border-b p-4">
-              <div><h3 className="text-sm font-bold">Deals</h3><p className="text-xs text-muted-foreground">{deals.length} opportunities</p></div>
-              <Button variant="ghost" size="sm" onClick={onAddDeal}><Plus className="mr-2 h-4 w-4" />Add</Button>
+              <div><h3 className="text-sm font-bold">{t("Deals")}</h3><p className="text-xs text-muted-foreground">{t("{count} opportunities", { count: deals.length })}</p></div>
+              <Button variant="ghost" size="sm" onClick={onAddDeal}><Plus className="mr-2 h-4 w-4" />{t("Add")}</Button>
             </div>
             <div className="divide-y">
               {deals.map((deal) => (
                 <div key={deal.id} className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0"><p className="truncate text-sm font-medium">{deal.title}</p><div className="mt-1 flex items-center gap-2"><StageBadge stage={deal.stage} /><span className="text-xs font-bold text-primary">{deal.probability}%</span></div></div>
-                  <div className="shrink-0 text-right"><p className="text-sm font-bold">{formatMoney(deal.amount, deal.currency)}</p><p className="text-[10px] text-muted-foreground">{formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency)} weighted</p></div>
+                  <div className="shrink-0 text-right"><p className="text-sm font-bold">{formatMoney(deal.amount, deal.currency)}</p><p className="text-[10px] text-muted-foreground">{formatMoney(Number(deal.amount) * (deal.probability / 100), deal.currency)} {t("weighted")}</p></div>
                 </div>
               ))}
-              {!deals.length && <p className="p-6 text-center text-sm text-muted-foreground">No deals linked to this contact.</p>}
+              {!deals.length && <p className="p-6 text-center text-sm text-muted-foreground">{t("No deals linked to this contact.")}</p>}
             </div>
           </section>
 
           <section>
             <div className="mb-4 flex items-center justify-between">
-              <div><h3 className="text-sm font-bold">Activity timeline</h3><p className="text-xs text-muted-foreground">{activities.length} recorded touchpoints</p></div>
-              <Button variant="outline" size="sm" onClick={() => onAddActivity("meeting")}><Plus className="mr-2 h-4 w-4" />Add activity</Button>
+              <div><h3 className="text-sm font-bold">{t("Activity timeline")}</h3><p className="text-xs text-muted-foreground">{t("{count} recorded touchpoints", { count: activities.length })}</p></div>
+              <Button variant="outline" size="sm" onClick={() => onAddActivity("meeting")}><Plus className="mr-2 h-4 w-4" />{t("Add activity")}</Button>
             </div>
             <div className="relative space-y-4 before:absolute before:bottom-4 before:left-4 before:top-4 before:w-px before:bg-border">
               {activities.map((item) => (
                 <div key={item.id} className="relative flex gap-4">
                   <ActivityTypeIcon type={item.type} />
                   <div className="min-w-0 flex-1 rounded-xl border bg-card p-4">
-                    <div className="flex items-start justify-between gap-3"><p className="text-sm font-bold">{item.subject}</p><span className="shrink-0 text-[10px] text-muted-foreground">{formatDate(item.created_at)}</span></div>
+                    <div className="flex items-start justify-between gap-3"><p className="text-sm font-bold">{item.subject}</p><span className="shrink-0 text-[10px] text-muted-foreground">{formatDate(item.created_at, false, dateLocale, t("Not set"))}</span></div>
                     {item.body && <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.body}</p>}
-                    {item.due_at && <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{formatDate(item.due_at, true)}</p>}
+                    {item.due_at && <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{formatDate(item.due_at, true, dateLocale, t("Not set"))}</p>}
                   </div>
                 </div>
               ))}
-              {!activities.length && <p className="pl-12 text-sm text-muted-foreground">No activity recorded for this contact yet.</p>}
+              {!activities.length && <p className="pl-12 text-sm text-muted-foreground">{t("No activity recorded for this contact yet.")}</p>}
             </div>
           </section>
         </div>
