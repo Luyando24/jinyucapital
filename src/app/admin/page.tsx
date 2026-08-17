@@ -63,8 +63,14 @@ import { DEFAULT_HERO_IMAGES, DEFAULT_SHOWCASE } from "@/lib/default-images";
 import CRMTab from "@/components/admin/CRMTab";
 import AnalyticsTab from "@/components/admin/AnalyticsTab";
 import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
+import {
+  sortProductCategories,
+  type ProductCategory,
+} from "@/lib/product-categories";
 
 type AdminTab = "overview" | "analytics" | "crm" | "products" | "orders" | "quotes" | "distributors" | "contacts" | "newsletter" | "website" | "settings" | "admins" | "docs" | "blog";
+type ProductSection = "products" | "categories";
+type CategoryDraft = Pick<ProductCategory, "name" | "sort_order" | "is_active">;
 
 const DEFAULT_HOMEPAGE_CONTENT: HomepageContent = {
   hero_headline: "Manufacturing Excellence From China To The World",
@@ -394,10 +400,12 @@ export default function AdminDashboardPage() {
   const { language, t } = useAdminLanguage();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [productSection, setProductSection] = useState<ProductSection>("products");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Data
   const [products, setProducts] = useState<any[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [quoteRequests, setQuoteRequests] = useState<any[]>([]);
@@ -439,8 +447,12 @@ export default function AdminDashboardPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState("All");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [stockEditValues, setStockEditValues] = useState<Record<string, number>>({});
-  const [categoryEditValues, setCategoryEditValues] = useState<Record<string, string>>({});
-  const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null);
+  const [productCategoryEditValues, setProductCategoryEditValues] = useState<Record<string, string>>({});
+  const [categoryDrafts, setCategoryDrafts] = useState<Record<string, CategoryDraft>>({});
+  const [savingProductCategoryId, setSavingProductCategoryId] = useState<string | null>(null);
+  const [savingCategoryConfigId, setSavingCategoryConfigId] = useState<string | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
 
   // Newsletter
   const [emailSubject, setEmailSubject] = useState("");
@@ -485,6 +497,7 @@ export default function AdminDashboardPage() {
 
       const [
         { data: prodData, error: prodErr },
+        { data: categoryData, error: categoryErr },
         { data: ordData, error: ordErr },
         { data: settingsData },
         { data: subData },
@@ -494,6 +507,11 @@ export default function AdminDashboardPage() {
         { data: blogData },
       ] = await Promise.all([
         supabase.from("products").select("*").order("name"),
+        supabase
+          .from("product_categories")
+          .select("id, name, sort_order, is_active")
+          .order("sort_order")
+          .order("name"),
         supabase.from("orders").select("*, order_items(*, products(*))").order("created_at", { ascending: false }),
         supabase.from("store_settings").select("*").eq("id", 1).single(),
         supabase.from("newsletter_subscribers").select("*").order("subscribed_at", { ascending: false }),
@@ -504,15 +522,25 @@ export default function AdminDashboardPage() {
       ]);
 
       if (prodErr) throw prodErr;
+      if (categoryErr) throw categoryErr;
       if (ordErr) throw ordErr;
 
       setProducts(prodData || []);
       const buf: Record<string, number> = {};
       (prodData || []).forEach((p: any) => { buf[p.id] = p.stock_quantity ?? 0; });
       setStockEditValues(buf);
-      const categoryBuf: Record<string, string> = {};
-      (prodData || []).forEach((p: any) => { categoryBuf[p.id] = p.category ?? ""; });
-      setCategoryEditValues(categoryBuf);
+      const productCategoryBuf: Record<string, string> = {};
+      (prodData || []).forEach((p: any) => { productCategoryBuf[p.id] = p.category_id ?? ""; });
+      setProductCategoryEditValues(productCategoryBuf);
+
+      const sortedCategories = sortProductCategories(categoryData ?? []);
+      setProductCategories(sortedCategories);
+      setCategoryDrafts(Object.fromEntries(
+        sortedCategories.map(category => [
+          category.id,
+          { name: category.name, sort_order: category.sort_order, is_active: category.is_active },
+        ]),
+      ));
 
       setOrders(ordData || []);
       setSubscribers(subData || []);
@@ -636,29 +664,121 @@ export default function AdminDashboardPage() {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock_quantity: val } : p));
   };
 
-  const handleSaveCategory = async (productId: string) => {
-    const category = categoryEditValues[productId]?.trim();
-    if (!category) {
+  const handleSaveProductCategory = async (productId: string) => {
+    const categoryId = productCategoryEditValues[productId];
+    if (!categoryId) {
       alert(t("Category is required."));
       return;
     }
 
-    setSavingCategoryId(productId);
+    setSavingProductCategoryId(productId);
     const { data, error } = await supabase
       .from("products")
-      .update({ category })
+      .update({ category_id: categoryId })
       .eq("id", productId)
-      .select("id, category")
+      .select("id, category_id, category")
       .single();
-    setSavingCategoryId(null);
+    setSavingProductCategoryId(null);
 
     if (error) {
       alert(t("Category update failed: {message}", { message: error.message }));
       return;
     }
 
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, category: data.category } : p));
-    setCategoryEditValues(prev => ({ ...prev, [productId]: data.category }));
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, category_id: data.category_id, category: data.category } : p));
+    setProductCategoryEditValues(prev => ({ ...prev, [productId]: data.category_id }));
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      alert(t("Category name is required."));
+      return;
+    }
+
+    setAddingCategory(true);
+    const nextSortOrder = productCategories.reduce(
+      (highest, category) => Math.max(highest, category.sort_order),
+      -1,
+    ) + 1;
+    const { data, error } = await supabase
+      .from("product_categories")
+      .insert({ name, sort_order: nextSortOrder, is_active: true })
+      .select("id, name, sort_order, is_active")
+      .single();
+    setAddingCategory(false);
+
+    if (error) {
+      alert(t("Category creation failed: {message}", { message: error.message }));
+      return;
+    }
+
+    setProductCategories(prev => sortProductCategories([...prev, data]));
+    setCategoryDrafts(prev => ({
+      ...prev,
+      [data.id]: { name: data.name, sort_order: data.sort_order, is_active: data.is_active },
+    }));
+    setNewCategoryName("");
+  };
+
+  const handleSaveCategoryConfig = async (categoryId: string) => {
+    const draft = categoryDrafts[categoryId];
+    const name = draft?.name.trim();
+    if (!draft || !name) {
+      alert(t("Category name is required."));
+      return;
+    }
+
+    setSavingCategoryConfigId(categoryId);
+    const { data, error } = await supabase
+      .from("product_categories")
+      .update({
+        name,
+        sort_order: Math.max(0, Number(draft.sort_order) || 0),
+        is_active: draft.is_active,
+      })
+      .eq("id", categoryId)
+      .select("id, name, sort_order, is_active")
+      .single();
+    setSavingCategoryConfigId(null);
+
+    if (error) {
+      alert(t("Category update failed: {message}", { message: error.message }));
+      return;
+    }
+
+    setProductCategories(prev => sortProductCategories(
+      prev.map(category => category.id === categoryId ? data : category),
+    ));
+    setCategoryDrafts(prev => ({
+      ...prev,
+      [categoryId]: { name: data.name, sort_order: data.sort_order, is_active: data.is_active },
+    }));
+    setProducts(prev => prev.map(product =>
+      product.category_id === categoryId ? { ...product, category: data.name } : product,
+    ));
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    const category = productCategories.find(item => item.id === categoryId);
+    if (!category || !confirm(t("Delete category {name}?", { name: category.name }))) return;
+
+    const { error } = await supabase
+      .from("product_categories")
+      .delete()
+      .eq("id", categoryId);
+
+    if (error) {
+      alert(t("Category deletion failed. Reassign its products first. {message}", { message: error.message }));
+      return;
+    }
+
+    setProductCategories(prev => prev.filter(item => item.id !== categoryId));
+    setCategoryDrafts(prev => {
+      const next = { ...prev };
+      delete next[categoryId];
+      return next;
+    });
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -1045,10 +1165,6 @@ export default function AdminDashboardPage() {
     p.category.toLowerCase().includes(productSearch.toLowerCase())
   );
 
-  const productCategoryOptions = Array.from(
-    new Set(products.map(product => product.category?.trim()).filter(Boolean)),
-  ).sort((a, b) => a.localeCompare(b));
-
   const filteredBlogPosts = blogPosts.filter(p =>
     p.title?.toLowerCase().includes(blogSearch.toLowerCase()) ||
     p.category?.toLowerCase().includes(blogSearch.toLowerCase())
@@ -1299,6 +1415,100 @@ export default function AdminDashboardPage() {
               {/* ── PRODUCTS ── */}
               {activeTab === "products" && (
                 <div className="space-y-6">
+                  <div className="flex items-center gap-2 border-b pb-4">
+                    <Button
+                      variant={productSection === "products" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setProductSection("products")}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      {t("Products")}
+                    </Button>
+                    <Button
+                      variant={productSection === "categories" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setProductSection("categories")}
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      {t("Categories")}
+                    </Button>
+                  </div>
+
+                  {productSection === "categories" ? (
+                    <div className="space-y-6">
+                      <div className="bg-card border rounded-2xl p-6 shadow-sm">
+                        <h3 className="font-bold text-lg">{t("Category Configuration")}</h3>
+                        <p className="text-sm text-muted-foreground mt-1 mb-5">
+                          {t("Create and organize the categories available for products and storefront filtering.")}
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <Input
+                            value={newCategoryName}
+                            onChange={event => setNewCategoryName(event.target.value)}
+                            onKeyDown={event => {
+                              if (event.key === "Enter") handleCreateCategory();
+                            }}
+                            placeholder={t("New category name")}
+                          />
+                          <Button onClick={handleCreateCategory} disabled={addingCategory || !newCategoryName.trim()}>
+                            {addingCategory ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                            {t("Add Category")}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="bg-card border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Category Name")}</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Products")}</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Display Order")}</th>
+                              <th className="px-6 py-4 text-left font-medium text-muted-foreground">{t("Visibility")}</th>
+                              <th className="px-6 py-4 text-center font-medium text-muted-foreground">{t("Actions")}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {productCategories.map(category => {
+                              const draft = categoryDrafts[category.id] ?? category;
+                              const productCount = products.filter(product => product.category_id === category.id).length;
+                              return (
+                                <tr key={category.id} className="hover:bg-muted/30">
+                                  <td className="px-6 py-4 min-w-64">
+                                    <Input value={draft.name} onChange={event => setCategoryDrafts(prev => ({ ...prev, [category.id]: { ...draft, name: event.target.value } }))} />
+                                  </td>
+                                  <td className="px-6 py-4 text-muted-foreground">{productCount}</td>
+                                  <td className="px-6 py-4">
+                                    <Input className="w-24" type="number" min={0} value={draft.sort_order} onChange={event => setCategoryDrafts(prev => ({ ...prev, [category.id]: { ...draft, sort_order: Number(event.target.value) } }))} />
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                                      <input type="checkbox" checked={draft.is_active} onChange={event => setCategoryDrafts(prev => ({ ...prev, [category.id]: { ...draft, is_active: event.target.checked } }))} />
+                                      <span>{t(draft.is_active ? "Active" : "Inactive")}</span>
+                                    </label>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex justify-center gap-2">
+                                      <Button variant="outline" size="sm" onClick={() => handleSaveCategoryConfig(category.id)} disabled={savingCategoryConfigId === category.id}>
+                                        {savingCategoryConfigId === category.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteCategory(category.id)} disabled={productCount > 0}>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {productCategories.length === 0 && (
+                              <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">{t("No categories configured")}</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                     <div className="relative w-full sm:max-w-md">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1310,9 +1520,6 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="bg-card border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
-                    <datalist id="admin-product-category-options">
-                      {productCategoryOptions.map(category => <option key={category} value={category} />)}
-                    </datalist>
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
@@ -1338,25 +1545,27 @@ export default function AdminDashboardPage() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex min-w-52 items-center gap-2">
-                                <Input
-                                  value={categoryEditValues[p.id] ?? p.category ?? ""}
-                                  onChange={e => setCategoryEditValues(prev => ({ ...prev, [p.id]: e.target.value }))}
-                                  onKeyDown={e => {
-                                    if (e.key === "Enter") handleSaveCategory(p.id);
-                                  }}
-                                  list="admin-product-category-options"
-                                  className="h-8 min-w-40 text-xs"
+                                <select
+                                  value={productCategoryEditValues[p.id] ?? p.category_id ?? ""}
+                                  onChange={event => setProductCategoryEditValues(prev => ({ ...prev, [p.id]: event.target.value }))}
+                                  className="h-8 min-w-44 rounded border bg-background px-2 text-xs"
                                   aria-label={t("Category for {name}", { name: p.name })}
-                                />
+                                >
+                                  {productCategories.map(category => (
+                                    <option key={category.id} value={category.id}>
+                                      {t(category.name)}{category.is_active ? "" : " (" + t("Inactive") + ")"}
+                                    </option>
+                                  ))}
+                                </select>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 shrink-0"
-                                  onClick={() => handleSaveCategory(p.id)}
-                                  disabled={savingCategoryId === p.id || !(categoryEditValues[p.id] ?? "").trim() || (categoryEditValues[p.id] ?? "").trim() === p.category}
+                                  onClick={() => handleSaveProductCategory(p.id)}
+                                  disabled={savingProductCategoryId === p.id || !productCategoryEditValues[p.id] || productCategoryEditValues[p.id] === p.category_id}
                                   title={t("Save category")}
                                 >
-                                  {savingCategoryId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                  {savingProductCategoryId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
                                 </Button>
                               </div>
                             </td>
@@ -1391,6 +1600,8 @@ export default function AdminDashboardPage() {
                       </tbody>
                     </table>
                   </div>
+                    </>
+                  )}
                 </div>
               )}
 

@@ -6,8 +6,19 @@ import { PackageSearch } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import ProductCard from './ProductCard';
-import { Product } from '@/data/products';
+import type { Product } from '@/data/products';
 import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
+
+type ProductRow = {
+  id: string;
+  name: string;
+  price: number;
+  image: string | null;
+  description: string | null;
+  category: string | null;
+  rating: number | null;
+  reviews: number | null;
+};
 
 interface ProductsListProps {
   selectedCategory: string;
@@ -27,7 +38,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
         .order("name");
 
       if (selectedCategory !== 'all') {
-        query = query.eq("category", selectedCategory);
+        query = query.eq("category_id", selectedCategory);
       }
 
       const { data, error } = await query;
@@ -37,7 +48,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
         setProducts([]);
       } else {
         setProducts(
-          (data || []).map((p: any) => ({
+          (data || []).map((p: ProductRow) => ({
             id: p.id,
             name: p.name,
             price: p.price,

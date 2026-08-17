@@ -6,13 +6,11 @@ import CategorySidebar from '@/components/CategorySidebar';
 import ProductsList from '@/components/ProductsList';
 import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 import { supabase } from '@/lib/supabase';
-import { DEFAULT_PRODUCT_CATEGORIES, getProductCategoryOptions } from '@/lib/product-categories';
+import type { ProductCategory } from '@/lib/product-categories';
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [categories, setCategories] = useState(
-    DEFAULT_PRODUCT_CATEGORIES.map((category) => ({ id: category, name: category })),
-  );
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const { t } = useWebsiteLanguage();
 
   useEffect(() => {
@@ -20,9 +18,11 @@ export default function ProductsPage() {
 
     const loadCategories = async () => {
       const { data, error } = await supabase
-        .from('products')
-        .select('category')
-        .order('category');
+        .from('product_categories')
+        .select('id, name, sort_order, is_active')
+        .eq('is_active', true)
+        .order('sort_order')
+        .order('name');
 
       if (cancelled) return;
       if (error) {
@@ -30,10 +30,7 @@ export default function ProductsPage() {
         return;
       }
 
-      setCategories(getProductCategoryOptions(data).map((category) => ({
-        id: category,
-        name: category,
-      })));
+      setCategories(data ?? []);
     };
 
     loadCategories();

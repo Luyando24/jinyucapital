@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
-import { DEFAULT_PRODUCT_CATEGORIES, getProductCategoryOptions } from "@/lib/product-categories";
+import type { ProductCategory } from "@/lib/product-categories";
 
 export default function AdminEditProductPage() {
   const router = useRouter();
@@ -37,12 +37,12 @@ export default function AdminEditProductPage() {
 
   // Form Input States
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Street Lamps");
+  const [categoryId, setCategoryId] = useState("");
   const [stock, setStock] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
-  const [categoryOptions, setCategoryOptions] = useState<string[]>(DEFAULT_PRODUCT_CATEGORIES);
+  const [categoryOptions, setCategoryOptions] = useState<ProductCategory[]>([]);
 
   // File Upload States
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
@@ -71,14 +71,18 @@ export default function AdminEditProductPage() {
           { data: categoryRows, error: categoryError },
         ] = await Promise.all([
           supabase.from("products").select("*").eq("id", id).single(),
-          supabase.from("products").select("category").order("category"),
+          supabase
+            .from("product_categories")
+            .select("id, name, sort_order, is_active")
+            .order("sort_order")
+            .order("name"),
         ]);
 
         if (dbError) throw dbError;
         if (!data) throw new Error(t("Product details could not be found."));
 
         setName(data.name || "");
-        setCategory(data.category || "Street Lamps");
+        setCategoryId(data.category_id || "");
         setStock(data.stock_quantity !== undefined ? String(data.stock_quantity) : "0");
         setImageUrl(data.image || "");
         setDescription(data.description || "");
@@ -87,7 +91,7 @@ export default function AdminEditProductPage() {
         if (categoryError) {
           console.error("Failed to load product categories:", categoryError);
         } else {
-          setCategoryOptions(getProductCategoryOptions(categoryRows));
+          setCategoryOptions(categoryRows ?? []);
         }
       } catch (err: any) {
         console.error("Failed to load product details:", err);
@@ -152,7 +156,7 @@ export default function AdminEditProductPage() {
   // Submit Changes
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !category.trim() || !stock) {
+    if (!name.trim() || !categoryId || !stock) {
       alert(t("Please fill in all required fields."));
       return;
     }
@@ -183,7 +187,7 @@ export default function AdminEditProductPage() {
 
       const updatePayload = {
         name: name.trim(),
-        category: category.trim(),
+        category_id: categoryId,
         stock_quantity: stockVal,
         image: finalMainImageUrl,
         images: combinedSecondaryUrls,
@@ -272,18 +276,20 @@ export default function AdminEditProductPage() {
                 <div className="space-y-2">
                   <div className="space-y-2">
                     <Label htmlFor="category">{t("Category *")}</Label>
-                    <Input
+                    <select
                       id="category"
-                      value={category}
-                      onChange={e => setCategory(e.target.value)}
-                      list="product-category-options"
-                      placeholder={t("Enter or select a category")}
-                    />
-                    <datalist id="product-category-options">
-                      {categoryOptions.map(option => <option key={option} value={option} />)}
-                    </datalist>
+                      value={categoryId}
+                      onChange={e => setCategoryId(e.target.value)}
+                      className="w-full bg-background border rounded-md h-9 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                      disabled={categoryOptions.length === 0}
+                    >
+                      {categoryOptions.length === 0 && <option value="">{t("No categories configured")}</option>}
+                      {categoryOptions.map(option => (
+                        <option key={option.id} value={option.id}>{t(option.name)}{option.is_active ? "" : " (" + t("Inactive") + ")"}</option>
+                      ))}
+                    </select>
                     <p className="text-xs text-muted-foreground">
-                      {t("Choose an existing category or type a new one.")}
+                      {t("Manage categories from the Products section of the admin dashboard.")}
                     </p>
                   </div>
                 </div>
