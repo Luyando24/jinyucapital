@@ -1,23 +1,46 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import CategorySidebar from '@/components/CategorySidebar';
 import ProductsList from '@/components/ProductsList';
 import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
-
-const streamlinedCategories = [
-  { id: 'Street Lamps', name: 'Street Lighting' },
-  { id: 'Landscape Lamps', name: 'Landscape Lighting' },
-  { id: 'Industrial Lighting', name: 'Industrial Lighting' },
-  { id: 'Ceiling Lights', name: 'Ceiling Lights' },
-  { id: 'Wall Sconces', name: 'Wall Sconces' },
-  { id: 'Pendant Lamps', name: 'Pendant Lamps' }
-];
+import { supabase } from '@/lib/supabase';
+import { DEFAULT_PRODUCT_CATEGORIES, getProductCategoryOptions } from '@/lib/product-categories';
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [categories, setCategories] = useState(
+    DEFAULT_PRODUCT_CATEGORIES.map((category) => ({ id: category, name: category })),
+  );
   const { t } = useWebsiteLanguage();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('category')
+        .order('category');
+
+      if (cancelled) return;
+      if (error) {
+        console.error('Failed to load product categories:', error);
+        return;
+      }
+
+      setCategories(getProductCategoryOptions(data).map((category) => ({
+        id: category,
+        name: category,
+      })));
+    };
+
+    loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -56,7 +79,7 @@ export default function ProductsPage() {
             
             {/* Sidebar */}
             <CategorySidebar 
-              categories={streamlinedCategories}
+              categories={categories}
               selectedCategory={selectedCategory}
               onCategorySelect={handleCategorySelect}
             />

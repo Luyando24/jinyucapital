@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminLanguage } from "@/components/admin/AdminLanguageContext";
+import { DEFAULT_PRODUCT_CATEGORIES, getProductCategoryOptions } from "@/lib/product-categories";
 
 export default function AdminNewProductPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function AdminNewProductPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(DEFAULT_PRODUCT_CATEGORIES);
 
   // File Upload States
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
@@ -46,8 +48,27 @@ export default function AdminNewProductPage() {
   useEffect(() => {
     if (user && !isAdmin) {
       router.push("/");
+      return;
     }
-  }, [user, isAdmin]);
+
+    if (!user || !isAdmin) return;
+
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("category")
+        .order("category");
+
+      if (error) {
+        console.error("Failed to load product categories:", error);
+        return;
+      }
+
+      setCategoryOptions(getProductCategoryOptions(data));
+    };
+
+    loadCategories();
+  }, [user, isAdmin, router]);
 
   // Main Image Change
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +117,10 @@ export default function AdminNewProductPage() {
   // Submit Product
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !stock) return;
+    if (!name.trim() || !category.trim() || !stock) {
+      alert(t("Please fill in all required fields."));
+      return;
+    }
 
     try {
       setSaving(true);
@@ -121,7 +145,7 @@ export default function AdminNewProductPage() {
 
       const productPayload = {
         name: name.trim(),
-        category,
+        category: category.trim(),
         stock_quantity: stockVal,
         image: finalMainImageUrl,
         images: secondaryUrls,
@@ -202,19 +226,19 @@ export default function AdminNewProductPage() {
                 <div className="space-y-2">
                   <div className="space-y-2">
                     <Label htmlFor="category">{t("Category *")}</Label>
-                    <select
+                    <Input
                       id="category"
                       value={category}
                       onChange={e => setCategory(e.target.value)}
-                      className="w-full bg-background border rounded-md h-9 px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
-                    >
-                      <option value="Street Lamps">{t("Street Lamps")}</option>
-                      <option value="Landscape Lamps">{t("Landscape Lamps")}</option>
-                      <option value="Ceiling Lights">{t("Ceiling Lights")}</option>
-                      <option value="Wall Sconces">{t("Wall Sconces")}</option>
-                      <option value="Pendant Lamps">{t("Pendant Lamps")}</option>
-                      <option value="Industrial Lighting">{t("Industrial Lighting")}</option>
-                    </select>
+                      list="product-category-options"
+                      placeholder={t("Enter or select a category")}
+                    />
+                    <datalist id="product-category-options">
+                      {categoryOptions.map(option => <option key={option} value={option} />)}
+                    </datalist>
+                    <p className="text-xs text-muted-foreground">
+                      {t("Choose an existing category or type a new one.")}
+                    </p>
                   </div>
                 </div>
 

@@ -439,6 +439,8 @@ export default function AdminDashboardPage() {
   const [orderStatusFilter, setOrderStatusFilter] = useState("All");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [stockEditValues, setStockEditValues] = useState<Record<string, number>>({});
+  const [categoryEditValues, setCategoryEditValues] = useState<Record<string, string>>({});
+  const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null);
 
   // Newsletter
   const [emailSubject, setEmailSubject] = useState("");
@@ -508,6 +510,9 @@ export default function AdminDashboardPage() {
       const buf: Record<string, number> = {};
       (prodData || []).forEach((p: any) => { buf[p.id] = p.stock_quantity ?? 0; });
       setStockEditValues(buf);
+      const categoryBuf: Record<string, string> = {};
+      (prodData || []).forEach((p: any) => { categoryBuf[p.id] = p.category ?? ""; });
+      setCategoryEditValues(categoryBuf);
 
       setOrders(ordData || []);
       setSubscribers(subData || []);
@@ -629,6 +634,31 @@ export default function AdminDashboardPage() {
     const { error } = await supabase.from("products").update({ stock_quantity: val }).eq("id", productId);
     if (error) { alert(t("Stock update failed: {message}", { message: error.message })); return; }
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, stock_quantity: val } : p));
+  };
+
+  const handleSaveCategory = async (productId: string) => {
+    const category = categoryEditValues[productId]?.trim();
+    if (!category) {
+      alert(t("Category is required."));
+      return;
+    }
+
+    setSavingCategoryId(productId);
+    const { data, error } = await supabase
+      .from("products")
+      .update({ category })
+      .eq("id", productId)
+      .select("id, category")
+      .single();
+    setSavingCategoryId(null);
+
+    if (error) {
+      alert(t("Category update failed: {message}", { message: error.message }));
+      return;
+    }
+
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, category: data.category } : p));
+    setCategoryEditValues(prev => ({ ...prev, [productId]: data.category }));
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -1015,6 +1045,10 @@ export default function AdminDashboardPage() {
     p.category.toLowerCase().includes(productSearch.toLowerCase())
   );
 
+  const productCategoryOptions = Array.from(
+    new Set(products.map(product => product.category?.trim()).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+
   const filteredBlogPosts = blogPosts.filter(p =>
     p.title?.toLowerCase().includes(blogSearch.toLowerCase()) ||
     p.category?.toLowerCase().includes(blogSearch.toLowerCase())
@@ -1276,6 +1310,9 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="bg-card border rounded-2xl overflow-hidden shadow-sm overflow-x-auto">
+                    <datalist id="admin-product-category-options">
+                      {productCategoryOptions.map(category => <option key={category} value={category} />)}
+                    </datalist>
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
@@ -1299,7 +1336,30 @@ export default function AdminDashboardPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-muted-foreground">{t(p.category)}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex min-w-52 items-center gap-2">
+                                <Input
+                                  value={categoryEditValues[p.id] ?? p.category ?? ""}
+                                  onChange={e => setCategoryEditValues(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") handleSaveCategory(p.id);
+                                  }}
+                                  list="admin-product-category-options"
+                                  className="h-8 min-w-40 text-xs"
+                                  aria-label={t("Category for {name}", { name: p.name })}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0"
+                                  onClick={() => handleSaveCategory(p.id)}
+                                  disabled={savingCategoryId === p.id || !(categoryEditValues[p.id] ?? "").trim() || (categoryEditValues[p.id] ?? "").trim() === p.category}
+                                  title={t("Save category")}
+                                >
+                                  {savingCategoryId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                                </Button>
+                              </div>
+                            </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <input
