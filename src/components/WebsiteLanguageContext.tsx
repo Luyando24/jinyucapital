@@ -15,6 +15,18 @@ type WebsiteLanguageContextValue = {
 const STORAGE_KEY = "jinyu_website_language";
 const LANGUAGE_CHANGE_EVENT = "jinyu-website-language-change";
 
+// Helper to normalize strings for robust translation lookup
+function normalizeKey(str: string): string {
+  if (!str) return "";
+  return str
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, "-")
+    .replace(/\r\n/g, "\n")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Chinese Dictionary
 const zh: Record<string, string> = {
   // Navigation & General
@@ -27,6 +39,7 @@ const zh: Record<string, string> = {
   "Request a quote": "索取报价",
   "Request a Quote": "索取报价",
   "Explore products": "浏览产品",
+  "Explore Products": "浏览产品中心",
   "Contact sales": "联系销售",
   "Contact our sales team": "联系销售团队",
   "Quick links": "快速链接",
@@ -39,6 +52,32 @@ const zh: Record<string, string> = {
   "Quote": "报价",
   "Our Story": "关于我们",
   "Cart": "购物车",
+  "YOUR CART": "您的购物车",
+  "Your cart is empty": "您的购物车是空的",
+  "Explore our collection of premium LED street lamps, ceiling panels, and landscape luminaires.": "探索我们的高品质 LED 路灯、吸顶平板灯及景观照明灯具系列。",
+  "We cannot checkout with an empty shopping bag. Head over to our products catalog to select your favorite products.": "您的购物车为空，无法结算。请前往产品中心挑选您心仪的产品。",
+  "Shop Products": "选购产品",
+  "Option:": "规格选项：",
+  "Wholesale": "批发采购",
+  "Subtotal": "商品小计",
+  "Shipping": "运费",
+  "Shipping and taxes calculated at checkout.": "运费和税费将在结算页面计算。",
+  "Proceed to Checkout": "前往结账",
+  "Continue Shopping": "继续选购",
+  "Back to Products": "返回产品列表",
+  "Order Summary": "订单明细",
+  "Total Due": "应付总额",
+  "Place Your Order": "提交订单",
+  "Processing Order...": "正在处理订单...",
+  "Delivery Information": "收货地址信息",
+  "Ordered Items": "已选商品清单",
+  "Payment Confirmed": "支付已确认",
+  "Thank you": "感谢您的订购",
+  "Order ID:": "订单编号：",
+  "Status": "订单状态",
+  "Total Paid": "已付总额",
+  "Secure Checkout Guaranteed": "安全结账保障",
+  "Your transaction is fully simulated. Placing the order will clear your cart and complete checkout. No actual credit card charge will be made.": "您的交易为全真模拟演示。提交订单将清空购物车并生成订单，不会产生实际信用卡扣费。",
 
   // Hero & Brand
   "Manufacturing Excellence From China To The World": "精益制造 始于中国 服务全球",
@@ -86,7 +125,7 @@ const zh: Record<string, string> = {
   "Metro Avenue Series": "都市干道系列",
   "Modern LED street lighting for highways, city roads, business parks, and residential developments. Built for efficient illumination, durability, and long-lasting outdoor performance.": "适用于高速公路、城市干道、商业园区及住宅小区的现代 LED 路灯，专为高效照明、耐用性与持久户外性能打造。",
 
-  // Product Catalog
+  // Product Categories
   "Product Portfolio": "产品系列全览",
   "Browse our focused range of high-performance municipal and commercial lighting solutions, engineered for precision, durability, and contemporary aesthetics.": "浏览我们专为市政和商业照明打造的高性能解决方案，兼具精密工程、耐用性与现代美感。",
   "All Categories": "所有类别",
@@ -103,6 +142,8 @@ const zh: Record<string, string> = {
   "Commercial & Industrial Lighting": "商业与工业照明",
   "Landscape & Urban Lamps": "景观与市政路灯",
   "OEM / ODM Custom Manufacturing": "OEM / ODM 定制制造",
+  "Electrical Box": "配电箱 / 配电柜",
+  "Solar Panels": "太阳能光伏板",
   "Search products...": "搜索产品...",
   "Sort by": "排序方式",
   "Featured": "精选推荐",
@@ -114,7 +155,6 @@ const zh: Record<string, string> = {
   "Out of Stock": "暂无现货",
   "Minimum Order:": "最小起订量：",
   "In stock and ready to ship worldwide": "有现货，支持全球快速发货",
-  "Back to Products": "返回产品列表",
   "Go back": "返回上一页",
   "Product not found": "未找到该产品",
   "Specifications": "规格参数",
@@ -122,7 +162,7 @@ const zh: Record<string, string> = {
   "No products found": "未找到相关产品",
   "We couldn't find any products in this category. Please try another category.": "在该类别下未找到任何产品，请尝试选择其他类别。",
 
-  // Product Names & Descriptions
+  // Product Names & Descriptions (Catalog & Database)
   "Jinyu Skyline Boulevard LED Street Lamp": "Jinyu 天际大道系列 LED 路灯",
   "100W-250W high-output street lamp engineered with a die-cast aluminum housing and IP66 waterproof rating for high-performance municipal, highway, and parking lot illumination.": "100W-250W 高光效路灯，采用压铸铝外壳与 IP66 防水等级，专为市政道路、高速公路及停车场照明设计。",
   "Jinyu Metro Avenue LED Street Lamp": "Jinyu 都市干道系列 LED 路灯",
@@ -143,6 +183,33 @@ const zh: Record<string, string> = {
   "Minimalistic linear pendant lamp in solid walnut wood finish. Features tri-color LED switching (warm, neutral, cool white) for customizable dining experiences.": "极简线条吊灯，胡桃木纹质感，具备三色温切换（暖光/中性光/冷白光），打造舒适就餐氛围。",
   "Jinyu Heavy Duty Industrial Floodlight": "Jinyu 重型工业投光灯",
   "High-output industrial LED floodlight built for sports arenas, ports, and construction sites. Features robust IP66 weatherproofing and die-cast aluminum heat sink.": "高输出工业 LED 投光灯，适用于体育场馆、港口码头及建筑工地，具备坚固的 IP66 防水及压铸铝散热器。",
+
+  // Electrical Box & Solar Products from Supabase
+  "Water Pump Power Control Box XL21 - Power Cabinet": "水泵动力控制箱 XL-21 动力柜",
+  "The XL-21 power cabinet is an indoor floor-standing low-voltage power distribution cabinet. It's cost-effective, compact, takes up little space, has flexible internal assembly, is easy to maintain, very versatile, and convenient to customize. It's suitable for power and lighting distribution in places like factory workshops, but it can't be used outdoors and isn't suitable for main distribution setups where multiple cabinets are linked together.": "XL-21 动力柜为室内落地式低压配电柜，具备性价比高、结构紧凑、占地小、内部组装灵活、维护方便、通用性强且易于定制等特点。适用于工厂车间等场所的动力和照明配电，不适用于户外及多柜联排的主配电场景。",
+  "GGD empty cabinet": "GGD 交流低压配电柜空柜体",
+  "The GGD empty cabinet is an indoor low-voltage fixed switchgear bare cabinet, made by welding cold-rolled steel plates. It has space for the main busbar, cable compartment, and component installation. The cabinet is strong and can be installed side by side with multiple cabinets. It offers good protection and can be custom-fitted with circuit breakers, busbars, meters, and other components. It's suitable for on-site secondary assembly and modification in the distribution room, meeting the needs of various low-voltage power distribution cabinets.": "GGD 空柜为室内低压固定式开关设备光柜，由冷轧钢板焊接而成。预留主母线、电缆室及元器件安装空间。柜体坚固，支持多柜并联安装，防护性能良好，可灵活配置断路器、母排、仪表等元件，满足低压配电现场二次组装需求。",
+  "GCK DRAWER TYPE SWITCHGEAR": "GCK 低压抽出式开关柜",
+  "GCK Drawer-Type Switchgear": "GCK 低压抽出式开关柜",
+  "GCK Drawer Type Switchgear": "GCK 低压抽出式开关柜",
+  "Low-Voltage drawer type complete switchgear equipment.": "低压抽出式成套开关设备。",
+  "The GCK low-voltage withdrawable switchgear is an indoor modular drawer-type distribution device. It uses a assembled frame design, with the busbar, functional unit, and cable compartments all separated. The drawer units can be mechanically interlocked and are interchangeable, so maintenance and replacements can be done without shutting down the entire cabinet. It has strong breaking capacity and flexible circuit configurations, making it suitable for power reception, feeding, and centralized motor control in industrial, mining, construction, and industrial park distribution rooms. Compared to high-end drawer cabinets, it offers great value for money and is ideal for distribution scenarios that require continuous operation and minimal downtime for maintenance.": "GCK 低压抽出式开关柜为室内模块化抽屉式配电设备，采用拼装式框架设计，母线室、功能单元室与电缆室相互隔离。抽屉单元具备机械联锁且互换性高，可在不断电情况下进行检修与更换。具备分断能力强、方案灵活等优势，适用于工业矿山、商业楼宇及园区配电房的受电、馈电与集中电机控制。",
+  "XL-21 Power Distribution Cabinet": "XL-21 动力配电柜",
+  "Durable, power distribution cabinet designed for dependable electrical control, circuit protection, and organized wiring management. Built with a clean metal enclosure and precision internal components, it delivers a professional-grade solution for factories, workshops, and commercial facilities that need safe, stable, and efficient power distribution.": "坚固耐用的动力配电柜，专为稳定可靠的电气控制、电路保护及规整布线管理而设计。采用高品质金属外壳及精密内部元件，为工厂、车间及商业设施提供安全、稳定、高效的专业配电解决方案。",
+  "Jinyu Capital High-Efficiency Solar Panel Module": "Jinyu Capital 高效光伏太阳能电池板组件",
+  "A sleek and durable solar panel module designed for dependable renewable energy generation. Built with a modern black photovoltaic surface and a clean, professional finish, it delivers efficient power capture, long-term performance, and a refined industrial look ideal for residential, commercial, and large-scale solar installations.": "外观优雅且坚固耐用的太阳能光伏组件，专为可靠的可再生能源发电设计。采用全黑光伏表面与精细工业质感，具备高效集电、长效持久性能，适用于住宅、工商业及大型地面光伏电站。",
+  "PV Grid-Connected Metering Cabinet": "光伏并网计量柜",
+  "光伏并网计量柜为分布式光伏专用并网成套设备，集成双向计量、防孤岛、防雷及各类电气保护，设置独立计量铅封室，可精准统计上网与下网电量，实现光伏电站与电网的安全隔离与合规并网，支持数据远传，多用于工商业及户用光伏项目的并网点。": "光伏并网计量柜为分布式光伏专用并网成套设备，集成双向计量、防孤岛、防雷及各类电气保护，设置独立计量铅封室，可精准统计上网与下网电量，实现光伏电站与电网的安全隔离与合规并网，支持数据远传，多用于工商业及户用光伏项目的并网点。",
+  "220V*4 x 380V*4 Waterproof Construction Site Socket Box": "220V*4 + 380V*4 施工工地防水插座箱",
+  "The box comes with multiple types of built-in outlets, including five-hole, industrial, and three-phase sockets, so you can power multiple devices at once like electric drills, cutting machines, lights, and water pumps. The pre-wired terminals make the input and output connections clear, so you don’t need any complicated on-site wiring—just plug in and use. The box door is easy to open, making it convenient for maintenance or replacing outlets, which is perfect for temporary power setups that need to be moved or reinstalled frequently on construction sites.": "该插座箱内置五孔插座、工业插座和三相插座等多种规格，可同时为电钻、切割机、照明灯具和水泵等多种设备供电。预设接线端子使进出线一目了然，无需复杂现场改线，即接即用。箱门开启便捷，方便检修与插座更换，非常适合建筑工地上频繁移动和复用的临时用电场景。",
+  "Temporary power socket box on the construction site": "建筑施工现场临时用电插座箱",
+  "Wiring is convenient, and temporary work is highly efficient. \nIt comes with built-in sockets of various types—five-hole, industrial, and three-phase sockets—so you can power multiple devices at the same time, like electric drills, cutting machines, lights, and water pumps. Pre-made wiring terminals make the inlet and outlet connections clear, so there’s no need for complicated on-site modifications; just connect and you’re ready to go. The box door is easy to open, making inspection and socket replacement simple, which is perfect for temporary power use on construction sites where equipment needs to be moved or reassembled frequently.": "接线便捷，临时用电施工高效省心。\n内置五孔插座、工业插座及三相插座等多种类型，支持电钻、切割机、照明灯及水泵等多台设备同时取电。预制端子进出线清晰，即连即用。箱门开合方便，便于巡检与维护，特别适用于工地上频繁移动安装的临时用电需求。",
+  "GGD Fixed Switchgear": "GGD 固定式交流低压开关柜",
+  "The GGD fixed AC low-voltage switchgear is an indoor fixed complete power distribution device. It features a fully welded cabinet, high main bus current capacity, and compartmentalized layout. Its structure is sturdy and protective, wiring and maintenance are easy to operate, and it can handle power receiving, feeding, and motor protection control. It's suitable for industrial and mining enterprises, commercial buildings, and campus distribution rooms as a low-voltage main distribution system. It's often used in multi-cabinet parallel networking, though the downside is that you need to power down the corresponding circuit for repairs.": "GGD 固定式交流低压开关柜为室内固定式成套配电设备，具备全焊接结构柜体、主母线通流能力大、分段合理等特点。结构坚固，防护等级高，接线与维护操作简便，可实现受电、馈电和电动机保护控制，广泛适用于工矿企业、商业建筑及园区配电房的主配电系统。",
+  "Multi-meter distribution box": "多表位电表计量分配箱",
+  "The multi-meter distribution box is an indoor distribution box designed for multiple users. It has reserved slots for several electricity meters, with separate areas for the meters and outgoing circuits. It can be sealed for protection, allowing independent electricity measurement and distribution for each user. Its compact structure makes it easy to manage and read meters, and it's widely used in apartments, dorms, and renovation projects for older residential areas where multiple users share a distribution setup.": "多表位电表计量箱为多用户室内配电箱，预留多个电能表安装位，表区与出线区分开设置，支持独立铅封防护，可实现分户精准计量与配电。结构紧凑，便于抄表与集中管理，广泛用于公寓、宿舍及老旧小区改造等多户共享配电场景。",
+  "Yellow outdoor first-level knife switch distribution cabinet": "黄色户外一级刀闸配电柜",
+  "The yellow outdoor first-level knife switch cabinet is a temporary outdoor rainproof main distribution cabinet used for construction site electricity. Its yellow warning appearance makes it highly noticeable, and the cabinet is rain and dustproof. Inside, it has a main isolation knife switch, as well as leakage and short-circuit protection components. It features clearly visible disconnection points, allowing for total power isolation and energy distribution on the construction site. It meets the three-level distribution standards for construction sites and is mostly used at the outdoor main power input of construction sites.": "黄色户外一级刀闸配电柜为建筑工地专用的户外防雨临时主配电柜。黄色醒目警示外观，防雨防尘。内部配置主隔离刀闸、漏电与短路保护装置，具有清晰可见的断开点，实现工地总电源隔离与电能分配，符合工地三级配电规范。",
 
   // Specification Keys & Values
   "Wattage": "功率",
@@ -318,6 +385,7 @@ const ru: Record<string, string> = {
   "Request a quote": "Запросить КП",
   "Request a Quote": "Запросить КП",
   "Explore products": "Каталог продукции",
+  "Explore Products": "Каталог продукции",
   "Contact sales": "Связаться с нами",
   "Contact our sales team": "Связаться с отделом продаж",
   "Quick links": "Быстрые ссылки",
@@ -330,6 +398,32 @@ const ru: Record<string, string> = {
   "Quote": "Запрос КП",
   "Our Story": "О нас",
   "Cart": "Корзина",
+  "YOUR CART": "ВАША КОРЗИНА",
+  "Your cart is empty": "Ваша корзина пуста",
+  "Explore our collection of premium LED street lamps, ceiling panels, and landscape luminaires.": "Ознакомьтесь с нашей коллекцией премиальных уличных светильников, потолочных панелей и паркового освещения.",
+  "We cannot checkout with an empty shopping bag. Head over to our products catalog to select your favorite products.": "Вы не можете оформить заказ с пустой корзиной. Перейдите в каталог продукции для выбора товаров.",
+  "Shop Products": "Перейти к покупкам",
+  "Option:": "Параметры:",
+  "Wholesale": "Опт",
+  "Subtotal": "Подытог",
+  "Shipping": "Доставка",
+  "Shipping and taxes calculated at checkout.": "Стоимость доставки рассчитывается при оформлении.",
+  "Proceed to Checkout": "Оформить заказ",
+  "Continue Shopping": "Продолжить покупки",
+  "Back to Products": "Назад к каталогу",
+  "Order Summary": "Состав заказа",
+  "Total Due": "Итого к оплате",
+  "Place Your Order": "Подтвердить заказ",
+  "Processing Order...": "Обработка заказа...",
+  "Delivery Information": "Информация о доставке",
+  "Ordered Items": "Заказанные товары",
+  "Payment Confirmed": "Оплата подтверждена",
+  "Thank you": "Спасибо за заказ",
+  "Order ID:": "Номер заказа:",
+  "Status": "Статус",
+  "Total Paid": "Всего оплачено",
+  "Secure Checkout Guaranteed": "Безопасное оформление заказа",
+  "Your transaction is fully simulated. Placing the order will clear your cart and complete checkout. No actual credit card charge will be made.": "Транзакция полностью смоделирована в демонстрационном режиме. Списание средств с банковской карты не производится.",
 
   // Hero & Brand
   "Manufacturing Excellence From China To The World": "Производственное совершенство из Китая по всему миру",
@@ -377,7 +471,7 @@ const ru: Record<string, string> = {
   "Metro Avenue Series": "Серия Metro Avenue",
   "Modern LED street lighting for highways, city roads, business parks, and residential developments. Built for efficient illumination, durability, and long-lasting outdoor performance.": "Современное светодиодное освещение для шоссе, городских магистралей и технопарков. Создано для максимальной долговечности и эффективности.",
 
-  // Product Catalog
+  // Product Categories
   "Product Portfolio": "Каталог продукции",
   "Browse our focused range of high-performance municipal and commercial lighting solutions, engineered for precision, durability, and contemporary aesthetics.": "Ознакомьтесь с нашим ассортиментом надежных решений для муниципального и коммерческого освещения.",
   "All Categories": "Все категории",
@@ -394,6 +488,8 @@ const ru: Record<string, string> = {
   "Commercial & Industrial Lighting": "Коммерческое и промышленное освещение",
   "Landscape & Urban Lamps": "Ландшафтное и уличное освещение",
   "OEM / ODM Custom Manufacturing": "Контрактное производство OEM / ODM",
+  "Electrical Box": "Электрические шкафы и щиты",
+  "Solar Panels": "Солнечные панели",
   "Search products...": "Поиск товаров...",
   "Sort by": "Сортировка",
   "Featured": "Популярные",
@@ -405,7 +501,6 @@ const ru: Record<string, string> = {
   "Out of Stock": "Нет в наличии",
   "Minimum Order:": "Мин. заказ:",
   "In stock and ready to ship worldwide": "В наличии, готовы к отправке по всему миру",
-  "Back to Products": "Назад к каталогу",
   "Go back": "Назад",
   "Product not found": "Товар не найден",
   "Specifications": "Технические характеристики",
@@ -413,7 +508,7 @@ const ru: Record<string, string> = {
   "No products found": "Товары не найдены",
   "We couldn't find any products in this category. Please try another category.": "В этой категории товары не найдены. Пожалуйста, выберите другую категорию.",
 
-  // Product Names & Descriptions
+  // Product Names & Descriptions (Catalog & Database)
   "Jinyu Skyline Boulevard LED Street Lamp": "Уличный светодиодный светильник Jinyu Skyline Boulevard",
   "100W-250W high-output street lamp engineered with a die-cast aluminum housing and IP66 waterproof rating for high-performance municipal, highway, and parking lot illumination.": "Мощный уличный светильник 100-250 Вт в литом алюминиевом корпусе с защитой IP66 для освещения автомагистралей, городских дорог и парковок.",
   "Jinyu Metro Avenue LED Street Lamp": "Уличный светодиодный светильник Jinyu Metro Avenue",
@@ -434,6 +529,33 @@ const ru: Record<string, string> = {
   "Minimalistic linear pendant lamp in solid walnut wood finish. Features tri-color LED switching (warm, neutral, cool white) for customizable dining experiences.": "Минималистичный подвесной светильник с отделкой под орех и переключением 3 температур света (теплый, нейтральный, холодный).",
   "Jinyu Heavy Duty Industrial Floodlight": "Промышленный прожектор Jinyu Heavy Duty",
   "High-output industrial LED floodlight built for sports arenas, ports, and construction sites. Features robust IP66 weatherproofing and die-cast aluminum heat sink.": "Высокомощный светодиодный прожектор для стадионов, портов и стройплощадок. Защита IP66 и надежный теплоотвод из литого алюминия.",
+
+  // Electrical Box & Solar Products from Supabase
+  "Water Pump Power Control Box XL21 - Power Cabinet": "Шкаф управления насосами XL-21 (силовой шкаф)",
+  "The XL-21 power cabinet is an indoor floor-standing low-voltage power distribution cabinet. It's cost-effective, compact, takes up little space, has flexible internal assembly, is easy to maintain, very versatile, and convenient to customize. It's suitable for power and lighting distribution in places like factory workshops, but it can't be used outdoors and isn't suitable for main distribution setups where multiple cabinets are linked together.": "Силовой шкаф XL-21 — это напольный низковольтный распределительный шкаф для помещений. Он экономичен, компактен, занимает минимум места, прост в сборке и обслуживании, универсален и удобен для кастомизации. Подходит для распределения электроэнергии и освещения в производственных цехах.",
+  "GGD empty cabinet": "Корпус шкафа GGD (пустой шкаф)",
+  "The GGD empty cabinet is an indoor low-voltage fixed switchgear bare cabinet, made by welding cold-rolled steel plates. It has space for the main busbar, cable compartment, and component installation. The cabinet is strong and can be installed side by side with multiple cabinets. It offers good protection and can be custom-fitted with circuit breakers, busbars, meters, and other components. It's suitable for on-site secondary assembly and modification in the distribution room, meeting the needs of various low-voltage power distribution cabinets.": "Пустой корпус GGD — это стационарный низковольтный шкаф для помещений из холоднокатаной листовой стали. Предусмотрены отсеки для сборных шин, кабелей и аппаратуры. Прочный корпус позволяет стыковать несколько шкафов в ряд и устанавливать выключатели, шины и приборы учета.",
+  "GCK DRAWER TYPE SWITCHGEAR": "Низковольтное выдвижное распределительное устройство GCK",
+  "GCK Drawer-Type Switchgear": "Низковольтное выдвижное распределительное устройство GCK",
+  "GCK Drawer Type Switchgear": "Низковольтное выдвижное распределительное устройство GCK",
+  "Low-Voltage drawer type complete switchgear equipment.": "Низковольтное комплектное распределительное устройство выдвижного типа.",
+  "The GCK low-voltage withdrawable switchgear is an indoor modular drawer-type distribution device. It uses a assembled frame design, with the busbar, functional unit, and cable compartments all separated. The drawer units can be mechanically interlocked and are interchangeable, so maintenance and replacements can be done without shutting down the entire cabinet. It has strong breaking capacity and flexible circuit configurations, making it suitable for power reception, feeding, and centralized motor control in industrial, mining, construction, and industrial park distribution rooms. Compared to high-end drawer cabinets, it offers great value for money and is ideal for distribution scenarios that require continuous operation and minimal downtime for maintenance.": "Низковольтное комплектное устройство GCK — это модульное выдвижное распределительное устройство для помещений с изолированными отсеками шин, функциональных блоков и кабелей. Выдвижные блоки взаимозаменяемы и снабжены механическими блокировками, что позволяет обслуживать их без отключения всего шкафа.",
+  "XL-21 Power Distribution Cabinet": "Распределительный силовой шкаф XL-21",
+  "Durable, power distribution cabinet designed for dependable electrical control, circuit protection, and organized wiring management. Built with a clean metal enclosure and precision internal components, it delivers a professional-grade solution for factories, workshops, and commercial facilities that need safe, stable, and efficient power distribution.": "Надежный силовой распределительный шкаф, разработанный для стабильного управления электропитанием, защиты цепей и аккуратной укладки кабелей. Прочный металлический корпус и прецизионные компоненты обеспечивают безопасное электроснабжение предприятий.",
+  "Jinyu Capital High-Efficiency Solar Panel Module": "Высокоэффективный модуль солнечных панелей Jinyu Capital",
+  "A sleek and durable solar panel module designed for dependable renewable energy generation. Built with a modern black photovoltaic surface and a clean, professional finish, it delivers efficient power capture, long-term performance, and a refined industrial look ideal for residential, commercial, and large-scale solar installations.": "Стильный и надежный модуль солнечных батарей для эффективной выработки чистой энергии. Черная фотоэлектрическая поверхность и качественная отделка обеспечивают высокую производительность и долговечность для жилых и коммерческих солнечных электростанций.",
+  "PV Grid-Connected Metering Cabinet": "Шкаф учета и подключения солнечной электростанции к сети (PV)",
+  "光伏并网计量柜为分布式光伏专用并网成套设备，集成双向计量、防孤岛、防雷及各类电气保护，设置独立计量铅封室，可精准统计上网与下网电量，实现光伏电站与电网的安全隔离与合规并网，支持数据远传，多用于工商业及户用光伏项目的并网点。": "Комплектный шкаф подключения к сети для распределенной солнечной энергетики (PV). Включает двунаправленный учет электроэнергии, защиту от работы на изолированную сеть (anti-islanding), грозозащиту и независимый опечатываемый отсек учета.",
+  "220V*4 x 380V*4 Waterproof Construction Site Socket Box": "Влагозащитный распределительный щит с розетками для стройплощадок (220V*4 x 380V*4)",
+  "The box comes with multiple types of built-in outlets, including five-hole, industrial, and three-phase sockets, so you can power multiple devices at once like electric drills, cutting machines, lights, and water pumps. The pre-wired terminals make the input and output connections clear, so you don’t need any complicated on-site wiring—just plug in and use. The box door is easy to open, making it convenient for maintenance or replacing outlets, which is perfect for temporary power setups that need to be moved or reinstalled frequently on construction sites.": "Щит оснащен различными типами встроенных розеток (бытовые, промышленные и трехфазные) для одновременного питания электроинструментов, станков, насосов и освещения. Предварительно разведенные клеммы обеспечивают простоту подключения.",
+  "Temporary power socket box on the construction site": "Щит временного электроснабжения и розеток для стройплощадки",
+  "Wiring is convenient, and temporary work is highly efficient. \nIt comes with built-in sockets of various types—five-hole, industrial, and three-phase sockets—so you can power multiple devices at the same time, like electric drills, cutting machines, lights, and water pumps. Pre-made wiring terminals make the inlet and outlet connections clear, so there’s no need for complicated on-site modifications; just connect and you’re ready to go. The box door is easy to open, making inspection and socket replacement simple, which is perfect for temporary power use on construction sites where equipment needs to be moved or reassembled frequently.": "Удобное подключение и высокая эффективность временных работ.\nВключает встроенные бытовые, промышленные и 3-фазные розетки для питания электроинструментов, насосов и освещения. Простая установка без сложного монтажа на объекте.",
+  "GGD Fixed Switchgear": "Стационарное распределительное устройство GGD",
+  "The GGD fixed AC low-voltage switchgear is an indoor fixed complete power distribution device. It features a fully welded cabinet, high main bus current capacity, and compartmentalized layout. Its structure is sturdy and protective, wiring and maintenance are easy to operate, and it can handle power receiving, feeding, and motor protection control. It's suitable for industrial and mining enterprises, commercial buildings, and campus distribution rooms as a low-voltage main distribution system. It's often used in multi-cabinet parallel networking, though the downside is that you need to power down the corresponding circuit for repairs.": "Стационарное комплектное распределительное устройство GGD — это надежное решение для низковольтных сетей с высокой пропускной способностью главных шин и сварным каркасом. Подходит для промышленных предприятий и коммерческих объектов в качестве главного распределительного щита.",
+  "Multi-meter distribution box": "Многоабонентский щит учета электроэнергии",
+  "The multi-meter distribution box is an indoor distribution box designed for multiple users. It has reserved slots for several electricity meters, with separate areas for the meters and outgoing circuits. It can be sealed for protection, allowing independent electricity measurement and distribution for each user. Its compact structure makes it easy to manage and read meters, and it's widely used in apartments, dorms, and renovation projects for older residential areas where multiple users share a distribution setup.": "Многоабонентский распределительный щит учета электроэнергии для жилых домов и общежитий. Предусмотрены раздельные отсеки для счетчиков и автоматов, возможность пломбирования и независимый учет по каждому абоненту.",
+  "Yellow outdoor first-level knife switch distribution cabinet": "Желтый уличный вводной распределительный шкаф 1-й ступени с рубильником",
+  "The yellow outdoor first-level knife switch cabinet is a temporary outdoor rainproof main distribution cabinet used for construction site electricity. Its yellow warning appearance makes it highly noticeable, and the cabinet is rain and dustproof. Inside, it has a main isolation knife switch, as well as leakage and short-circuit protection components. It features clearly visible disconnection points, allowing for total power isolation and energy distribution on the construction site. It meets the three-level distribution standards for construction sites and is mostly used at the outdoor main power input of construction sites.": "Вводной уличный шкаф в ярко-желтом влагозащитном исполнении для временного электроснабжения строительных площадок. Оборудован главным рубильником с видимым разрывом, устройствами защитного отключения и автоматами защиты.",
 
   // Specification Keys & Values
   "Wattage": "Мощность",
@@ -609,6 +731,7 @@ const fr: Record<string, string> = {
   "Request a quote": "Demander un devis",
   "Request a Quote": "Demander un devis",
   "Explore products": "Explorer les produits",
+  "Explore Products": "Explorer les produits",
   "Contact sales": "Contacter les ventes",
   "Contact our sales team": "Contacter notre équipe commerciale",
   "Quick links": "Liens rapides",
@@ -621,6 +744,32 @@ const fr: Record<string, string> = {
   "Quote": "Devis",
   "Our Story": "Notre histoire",
   "Cart": "Panier",
+  "YOUR CART": "VOTRE PANIER",
+  "Your cart is empty": "Votre panier est vide",
+  "Explore our collection of premium LED street lamps, ceiling panels, and landscape luminaires.": "Découvrez notre collection de lampadaires LED haut de gamme, plafonniers et luminaires paysagers.",
+  "We cannot checkout with an empty shopping bag. Head over to our products catalog to select your favorite products.": "Vous ne pouvez pas commander avec un panier vide. Rendez-vous sur notre catalogue pour choisir vos produits.",
+  "Shop Products": "Voir les produits",
+  "Option:": "Option :",
+  "Wholesale": "Vente en gros",
+  "Subtotal": "Sous-total",
+  "Shipping": "Frais de livraison",
+  "Shipping and taxes calculated at checkout.": "Frais de livraison et taxes calculés au paiement.",
+  "Proceed to Checkout": "Passer à la caisse",
+  "Continue Shopping": "Continuer les achats",
+  "Back to Products": "Retour aux produits",
+  "Order Summary": "Récapitulatif de la commande",
+  "Total Due": "Total à régler",
+  "Place Your Order": "Confirmer la commande",
+  "Processing Order...": "Traitement de la commande...",
+  "Delivery Information": "Informations de livraison",
+  "Ordered Items": "Articles commandés",
+  "Payment Confirmed": "Paiement confirmé",
+  "Thank you": "Merci pour votre commande",
+  "Order ID:": "N° de commande :",
+  "Status": "Statut",
+  "Total Paid": "Total payé",
+  "Secure Checkout Guaranteed": "Paiement sécurisé garanti",
+  "Your transaction is fully simulated. Placing the order will clear your cart and complete checkout. No actual credit card charge will be made.": "Votre transaction est une simulation complète. Aucun débit réel ne sera effectué sur votre carte bancaire.",
 
   // Hero & Brand
   "Manufacturing Excellence From China To The World": "Excellence de fabrication de la Chine au monde entier",
@@ -668,7 +817,7 @@ const fr: Record<string, string> = {
   "Metro Avenue Series": "Série Metro Avenue",
   "Modern LED street lighting for highways, city roads, business parks, and residential developments. Built for efficient illumination, durability, and long-lasting outdoor performance.": "Éclairage public LED moderne pour autoroutes, avenues et parcs d'activités. Conçu pour un éclairage efficace, robuste et durable en extérieur.",
 
-  // Product Catalog
+  // Product Categories
   "Product Portfolio": "Gamme de produits",
   "Browse our focused range of high-performance municipal and commercial lighting solutions, engineered for precision, durability, and contemporary aesthetics.": "Parcourez notre gamme ciblée de solutions d'éclairage municipal et commercial haute performance.",
   "All Categories": "Toutes les catégories",
@@ -685,6 +834,8 @@ const fr: Record<string, string> = {
   "Commercial & Industrial Lighting": "Éclairage commercial et industriel",
   "Landscape & Urban Lamps": "Éclairage paysager et urbain",
   "OEM / ODM Custom Manufacturing": "Fabrication sur mesure OEM / ODM",
+  "Electrical Box": "Armoires et coffrets électriques",
+  "Solar Panels": "Panneaux solaires",
   "Search products...": "Rechercher des produits...",
   "Sort by": "Trier par",
   "Featured": "En vedette",
@@ -696,7 +847,6 @@ const fr: Record<string, string> = {
   "Out of Stock": "Rupture de stock",
   "Minimum Order:": "Commande min :",
   "In stock and ready to ship worldwide": "En stock et prêt à être expédié dans le monde entier",
-  "Back to Products": "Retour aux produits",
   "Go back": "Retour",
   "Product not found": "Produit non trouvé",
   "Specifications": "Spécifications techniques",
@@ -704,7 +854,7 @@ const fr: Record<string, string> = {
   "No products found": "Aucun produit trouvé",
   "We couldn't find any products in this category. Please try another category.": "Aucun produit trouvé dans cette catégorie. Veuillez essayer une autre catégorie.",
 
-  // Product Names & Descriptions
+  // Product Names & Descriptions (Catalog & Database)
   "Jinyu Skyline Boulevard LED Street Lamp": "Lampadaire LED Jinyu Skyline Boulevard",
   "100W-250W high-output street lamp engineered with a die-cast aluminum housing and IP66 waterproof rating for high-performance municipal, highway, and parking lot illumination.": "Lampadaire haute puissance 100W-250W avec boîtier en fonte d'aluminium et indice de protection IP66 pour routes urbaines, autoroutes et parkings.",
   "Jinyu Metro Avenue LED Street Lamp": "Lampadaire LED Jinyu Metro Avenue",
@@ -725,6 +875,33 @@ const fr: Record<string, string> = {
   "Minimalistic linear pendant lamp in solid walnut wood finish. Features tri-color LED switching (warm, neutral, cool white) for customizable dining experiences.": "Suspension linéaire minimaliste en finition noyer. 3 températures de couleur commutables (chaud, neutre, blanc froid) pour une ambiance personnalisée.",
   "Jinyu Heavy Duty Industrial Floodlight": "Projecteur industriel renforcé Jinyu",
   "High-output industrial LED floodlight built for sports arenas, ports, and construction sites. Features robust IP66 weatherproofing and die-cast aluminum heat sink.": "Projecteur LED industriel haute puissance conçu pour complexes sportifs, ports et chantiers. Étanchéité IP66 et dissipateur thermique en fonte d'aluminium.",
+
+  // Electrical Box & Solar Products from Supabase
+  "Water Pump Power Control Box XL21 - Power Cabinet": "Armoire de commande pour pompe à eau XL-21 - Armoire de puissance",
+  "The XL-21 power cabinet is an indoor floor-standing low-voltage power distribution cabinet. It's cost-effective, compact, takes up little space, has flexible internal assembly, is easy to maintain, very versatile, and convenient to customize. It's suitable for power and lighting distribution in places like factory workshops, but it can't be used outdoors and isn't suitable for main distribution setups where multiple cabinets are linked together.": "L'armoire de puissance XL-21 est une armoire de distribution basse tension d'intérieur au sol. Économique et compacte, elle offre une grande flexibilité d'assemblage interne, une maintenance aisée et une personnalisation simple. Parfaite pour la distribution d'éclairage et d'énergie en atelier.",
+  "GGD empty cabinet": "Armoire nue GGD (châssis vide)",
+  "The GGD empty cabinet is an indoor low-voltage fixed switchgear bare cabinet, made by welding cold-rolled steel plates. It has space for the main busbar, cable compartment, and component installation. The cabinet is strong and can be installed side by side with multiple cabinets. It offers good protection and can be custom-fitted with circuit breakers, busbars, meters, and other components. It's suitable for on-site secondary assembly and modification in the distribution room, meeting the needs of various low-voltage power distribution cabinets.": "Le coffret nu GGD est une armoire fixe basse tension d'intérieur en tôle d'acier laminée à froid. Elle dispose d'emplacements pour jeu de barres principal, compartiment de câbles et appareillage. Robuste et modulable, elle est prête pour l'intégration de disjoncteurs et d'instruments de mesure.",
+  "GCK DRAWER TYPE SWITCHGEAR": "Tableau de distribution débrochable basse tension GCK",
+  "GCK Drawer-Type Switchgear": "Tableau de distribution débrochable basse tension GCK",
+  "GCK Drawer Type Switchgear": "Tableau de distribution débrochable basse tension GCK",
+  "Low-Voltage drawer type complete switchgear equipment.": "Équipement de distribution complet débrochable basse tension.",
+  "The GCK low-voltage withdrawable switchgear is an indoor modular drawer-type distribution device. It uses a assembled frame design, with the busbar, functional unit, and cable compartments all separated. The drawer units can be mechanically interlocked and are interchangeable, so maintenance and replacements can be done without shutting down the entire cabinet. It has strong breaking capacity and flexible circuit configurations, making it suitable for power reception, feeding, and centralized motor control in industrial, mining, construction, and industrial park distribution rooms. Compared to high-end drawer cabinets, it offers great value for money and is ideal for distribution scenarios that require continuous operation and minimal downtime for maintenance.": "Le tableau débrochable BT GCK est un équipement modulaire intérieur avec compartiments séparés (barres, unités fonctionnelles, câbles). Les tiroirs sont interchangeables avec verrouillage mécanique, permettant une maintenance sans coupure totale du tableau. Idéal pour l'industrie et les grands bâtiments.",
+  "XL-21 Power Distribution Cabinet": "Armoire de distribution électrique XL-21",
+  "Durable, power distribution cabinet designed for dependable electrical control, circuit protection, and organized wiring management. Built with a clean metal enclosure and precision internal components, it delivers a professional-grade solution for factories, workshops, and commercial facilities that need safe, stable, and efficient power distribution.": "Armoire de distribution électrique robuste conçue pour un contrôle fiable, une protection des circuits et un câblage ordonné. Fabriquée avec un boîtier métallique soigné et des composants de précision pour les usines et bâtiments tertiaires.",
+  "Jinyu Capital High-Efficiency Solar Panel Module": "Module de panneau solaire haute efficacité Jinyu Capital",
+  "A sleek and durable solar panel module designed for dependable renewable energy generation. Built with a modern black photovoltaic surface and a clean, professional finish, it delivers efficient power capture, long-term performance, and a refined industrial look ideal for residential, commercial, and large-scale solar installations.": "Module solaire photovoltaïque élégant et durable pour la production d'énergie renouvelable. Surface noire moderne à haut rendement assurant une capture d'énergie optimale et une longévité maximale pour installations résidentielles et commerciales.",
+  "PV Grid-Connected Metering Cabinet": "Armoire de comptage et raccordement réseau photovoltaïque (PV)",
+  "光伏并网计量柜为分布式光伏专用并网成套设备，集成双向计量、防孤岛、防雷及各类电气保护，设置独立计量铅封室，可精准统计上网与下网电量，实现光伏电站与电网的安全隔离与合规并网，支持数据远传，多用于工商业及户用光伏项目的并网点。": "Armoire complète de raccordement pour installations photovoltaïques réparties. Intègre comptage bidirectionnel, protection anti-îlotage, parafoudre et compartiment scellé pour une injection réseau sécurisée et conforme.",
+  "220V*4 x 380V*4 Waterproof Construction Site Socket Box": "Coffret de prises étanche de chantier 220V*4 x 380V*4",
+  "The box comes with multiple types of built-in outlets, including five-hole, industrial, and three-phase sockets, so you can power multiple devices at once like electric drills, cutting machines, lights, and water pumps. The pre-wired terminals make the input and output connections clear, so you don’t need any complicated on-site wiring—just plug in and use. The box door is easy to open, making it convenient for maintenance or replacing outlets, which is perfect for temporary power setups that need to be moved or reinstalled frequently on construction sites.": "Le coffret intègre plusieurs prises (standard, industrielles et triphasées) permettant d'alimenter simultanément perceuses, découpeuses, pompes et éclairages. Borniers pré-câblés pour un raccordement direct et rapide sur chantier.",
+  "Temporary power socket box on the construction site": "Coffret de prises temporaire pour chantier de construction",
+  "Wiring is convenient, and temporary work is highly efficient. \nIt comes with built-in sockets of various types—five-hole, industrial, and three-phase sockets—so you can power multiple devices at the same time, like electric drills, cutting machines, lights, and water pumps. Pre-made wiring terminals make the inlet and outlet connections clear, so there’s no need for complicated on-site modifications; just connect and you’re ready to go. The box door is easy to open, making inspection and socket replacement simple, which is perfect for temporary power use on construction sites where equipment needs to be moved or reassembled frequently.": "Câblage pratique pour une efficacité maximale sur vos chantiers temporaires.\nÉquipé de prises multiples (mono, industrielles et triphasées) pour outillage, découpe et pompage. Boîtier étanche avec accès rapide pour maintenance et déplacement aisé.",
+  "GGD Fixed Switchgear": "Tableau de distribution fixe basse tension GGD",
+  "The GGD fixed AC low-voltage switchgear is an indoor fixed complete power distribution device. It features a fully welded cabinet, high main bus current capacity, and compartmentalized layout. Its structure is sturdy and protective, wiring and maintenance are easy to operate, and it can handle power receiving, feeding, and motor protection control. It's suitable for industrial and mining enterprises, commercial buildings, and campus distribution rooms as a low-voltage main distribution system. It's often used in multi-cabinet parallel networking, though the downside is that you need to power down the corresponding circuit for repairs.": "Le tableau BT fixe GGD est un équipement complet d'intérieur doté d'une structure soudée robuste et d'un jeu de barres haute capacité. Il assure la réception, la distribution et la protection moteur pour usines, centres commerciaux et sous-stations.",
+  "Multi-meter distribution box": "Coffret de comptage et distribution multi-compteurs",
+  "The multi-meter distribution box is an indoor distribution box designed for multiple users. It has reserved slots for several electricity meters, with separate areas for the meters and outgoing circuits. It can be sealed for protection, allowing independent electricity measurement and distribution for each user. Its compact structure makes it easy to manage and read meters, and it's widely used in apartments, dorms, and renovation projects for older residential areas where multiple users share a distribution setup.": "Coffret de distribution multi-utilisateurs avec emplacements réservés pour plusieurs compteurs électriques. Compartiments séparés et scellables pour un comptage individuel et une gestion simplifiée en immeubles d'habitation ou résidences.",
+  "Yellow outdoor first-level knife switch distribution cabinet": "Armoire de distribution extérieure jaune de niveau 1 avec sectionneur à couteaux",
+  "The yellow outdoor first-level knife switch cabinet is a temporary outdoor rainproof main distribution cabinet used for construction site electricity. Its yellow warning appearance makes it highly noticeable, and the cabinet is rain and dustproof. Inside, it has a main isolation knife switch, as well as leakage and short-circuit protection components. It features clearly visible disconnection points, allowing for total power isolation and energy distribution on the construction site. It meets the three-level distribution standards for construction sites and is mostly used at the outdoor main power input of construction sites.": "Armoire de chantier extérieure jaune étanche pour l'alimentation principale temporaire. Équipée d'un sectionneur principal à coupure visible, de disjoncteurs différentiels et d'une protection contre les courts-circuits selon les normes de sécurité de chantier.",
 
   // Specification Keys & Values
   "Wattage": "Puissance",
@@ -888,6 +1065,22 @@ const fr: Record<string, string> = {
   "By": "Par",
 };
 
+// Build normalized fast-lookup dictionaries
+function buildNormalizedDict(source: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = { ...source };
+  for (const [key, value] of Object.entries(source)) {
+    const norm = normalizeKey(key);
+    if (!result[norm]) {
+      result[norm] = value;
+    }
+  }
+  return result;
+}
+
+const normalizedZh = buildNormalizedDict(zh);
+const normalizedRu = buildNormalizedDict(ru);
+const normalizedFr = buildNormalizedDict(fr);
+
 const WebsiteLanguageContext = createContext<WebsiteLanguageContextValue | null>(null);
 
 function subscribeToLanguage(callback: () => void) {
@@ -941,9 +1134,17 @@ export function WebsiteLanguageProvider({ children }: { children: React.ReactNod
     (message: string, values?: TranslationValues) => {
       if (!message) return "";
       if (language === "en") return interpolate(message, values);
-      const dict = language === "zh" ? zh : language === "ru" ? ru : language === "fr" ? fr : zh;
-      const translated = dict[message] ?? message;
-      return interpolate(translated, values);
+      const dict = language === "zh" ? normalizedZh : language === "ru" ? normalizedRu : language === "fr" ? normalizedFr : normalizedZh;
+      const rawMatch = dict[message];
+      if (rawMatch) return interpolate(rawMatch, values);
+
+      const trimmedMatch = dict[message.trim()];
+      if (trimmedMatch) return interpolate(trimmedMatch, values);
+
+      const normalizedMatch = dict[normalizeKey(message)];
+      if (normalizedMatch) return interpolate(normalizedMatch, values);
+
+      return interpolate(message, values);
     },
     [language],
   );

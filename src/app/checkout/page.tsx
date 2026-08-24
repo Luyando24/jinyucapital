@@ -10,6 +10,7 @@ import { useAuth } from "@/components/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useCurrency } from "@/components/CurrencyContext";
 import { useStoreSettings } from "@/components/StoreSettingsContext";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const { settings } = useStoreSettings();
+  const { t } = useWebsiteLanguage();
 
   const globalWholesaleMoq = Number(settings?.global_wholesale_moq ?? 500.00);
   
@@ -328,7 +330,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 mt-8 lg:mt-0 flex flex-col space-y-6">
             <div className="bg-white border border-neutral-200 p-6 rounded-lg shadow-sm">
               <h2 className="text-sm font-bold text-black mb-6 border-b border-neutral-200 pb-3 uppercase tracking-widest" style={{ fontFamily: "var(--font-display)" }}>
-                Order Summary
+                {t("Order Summary")}
               </h2>
 
               {/* Items List */}
@@ -346,7 +348,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-bold text-black truncate">
-                        {item.name}
+                        {t(item.name)}
                       </h4>
                       <p className="text-[10px] font-bold text-neutral-450 uppercase tracking-wide mt-0.5" style={{ fontFamily: "var(--font-display)" }}>
                         Qty: {item.quantity} | {item.length}
@@ -362,11 +364,11 @@ export default function CheckoutPage() {
               {/* Calculation Summary */}
               <div className="space-y-3.5 border-t border-neutral-150 pt-6">
                 <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>
-                  <span>Subtotal</span>
+                  <span>{t("Subtotal")}</span>
                   <span className="text-black font-extrabold">{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>
-                  <span>Shipping</span>
+                  <span>{t("Shipping")}</span>
                   <span className="text-black font-extrabold">
                     {shippingCost === 0 ? "Free" : formatPrice(shippingCost)}
                   </span>
@@ -376,7 +378,7 @@ export default function CheckoutPage() {
                   <span className="text-black font-extrabold">{formatPrice(taxCost)}</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-black border-t border-neutral-150 pt-4" style={{ fontFamily: "var(--font-display)" }}>
-                  <span>Total Due</span>
+                  <span>{t("Total Due")}</span>
                   <span className="text-sm font-extrabold">{formatPrice(totalAmount)}</span>
                 </div>
               </div>
@@ -387,10 +389,10 @@ export default function CheckoutPage() {
               <Shield className="h-6 w-6 text-black flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-black uppercase mb-1 tracking-widest" style={{ fontFamily: "var(--font-display)" }}>
-                  Secure Checkout Guaranteed
+                  {t("Secure Checkout Guaranteed")}
                 </h4>
                 <p className="text-[10px] uppercase tracking-wider text-neutral-450 font-bold leading-relaxed" style={{ fontFamily: "var(--font-display)" }}>
-                  Your credentials and data are protected. Jinyu Capital utilizes the highest security standards to secure checkout data and connection sockets.
+                  {t("Your transaction is fully simulated. Placing the order will clear your cart and complete checkout. No actual credit card charge will be made.")}
                 </p>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { X, ShoppingBag, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "./CartContext";
 import { useCurrency } from "./CurrencyContext";
 import { useStoreSettings } from "./StoreSettingsContext";
+import { useWebsiteLanguage } from "./WebsiteLanguageContext";
 
 export default function CartDrawer() {
   const {
@@ -20,6 +21,7 @@ export default function CartDrawer() {
   } = useCart();
   const { formatPrice } = useCurrency();
   const { settings } = useStoreSettings();
+  const { t } = useWebsiteLanguage();
 
   const globalWholesaleMoq = Number(settings?.global_wholesale_moq ?? 500.00);
   const hasWholesaleItems = cartItems.some(item => item.isWholesale);
@@ -81,7 +83,7 @@ export default function CartDrawer() {
             <div className="flex items-center space-x-2">
               <ShoppingBag className="h-5 w-5 text-black" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-black" style={{ fontFamily: "var(--font-display)" }}>
-                YOUR CART ({cartCount})
+                {t("YOUR CART")} ({cartCount})
               </h2>
             </div>
             <button
@@ -101,10 +103,10 @@ export default function CartDrawer() {
                 </div>
                 <div>
                   <h3 className="font-display text-base font-bold uppercase mb-1">
-                    Your cart is empty
+                    {t("Your cart is empty")}
                   </h3>
                   <p className="text-xs text-neutral-400 font-light max-w-xs leading-relaxed">
-                    Explore our collection of premium LED street lamps, ceiling panels, and landscape luminaires.
+                    {t("Explore our collection of premium LED street lamps, ceiling panels, and landscape luminaires.")}
                   </p>
                 </div>
                 <button
@@ -112,7 +114,7 @@ export default function CartDrawer() {
                   className="px-6 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-neutral-800 transition-colors"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Shop Products
+                  {t("Shop Products")}
                 </button>
               </div>
             ) : (
@@ -136,10 +138,10 @@ export default function CartDrawer() {
                   <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex justify-between items-start">
                       <h4 className="text-sm font-bold truncate pr-2 flex items-center gap-1.5 text-black font-display">
-                        {item.name}
+                        {t(item.name)}
                         {item.isWholesale && (
                           <span className="bg-neutral-100 text-black text-[7px] font-bold px-1.5 py-0.5 rounded border border-black uppercase tracking-wider">
-                            Wholesale
+                            {t("Wholesale")}
                           </span>
                         )}
                       </h4>
@@ -149,7 +151,7 @@ export default function CartDrawer() {
                     </div>
                     
                     <p className="text-xs mt-1 flex flex-wrap gap-2 text-neutral-400 font-semibold" style={{ fontFamily: "var(--font-display)" }}>
-                      <span>Option: <span className="text-black uppercase">{item.length}</span></span>
+                      <span>{t("Option:")} <span className="text-black uppercase">{item.length}</span></span>
                       {item.isWholesale && (
                         <span className="text-neutral-500 font-bold">
                           (MOQ: {item.moqQuantity || 10})
@@ -194,11 +196,11 @@ export default function CartDrawer() {
           {cartItems.length > 0 && (
             <div className="px-6 py-6 border-t border-neutral-200 bg-white space-y-4">
               <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-black" style={{ fontFamily: "var(--font-display)" }}>
-                <span>Subtotal</span>
+                <span>{t("Subtotal")}</span>
                 <span className="text-base font-extrabold">{formatPrice(cartTotal)}</span>
               </div>
               <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-bold" style={{ fontFamily: "var(--font-display)" }}>
-                Shipping and taxes calculated at checkout.
+                {t("Shipping and taxes calculated at checkout.")}
               </p>
 
               {!isWholesaleMoqValid && (
@@ -215,7 +217,7 @@ export default function CartDrawer() {
                     className="w-full py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest text-center bg-black text-white hover:bg-neutral-800 transition-colors block"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    Proceed to Checkout
+                    {t("Proceed to Checkout")}
                   </Link>
                 ) : (
                   <button
@@ -223,7 +225,7 @@ export default function CartDrawer() {
                     className="w-full bg-neutral-100 text-neutral-400 py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest text-center cursor-not-allowed"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    Proceed to Checkout
+                    {t("Proceed to Checkout")}
                   </button>
                 )}
                 <button
@@ -231,7 +233,7 @@ export default function CartDrawer() {
                   className="w-full py-3.5 rounded-lg font-bold text-xs uppercase tracking-widest text-center border border-neutral-200 text-neutral-500 hover:bg-neutral-50 transition-colors"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Continue Shopping
+                  {t("Continue Shopping")}
                 </button>
               </div>
             </div>

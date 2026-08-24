@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, Package, MapPin, Phone, Mail, ShoppingBag, Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useCurrency } from "@/components/CurrencyContext";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 interface Order {
   id: string;
@@ -38,6 +39,7 @@ function SuccessReceiptContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const { formatPrice } = useCurrency();
+  const { t } = useWebsiteLanguage();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -146,18 +148,18 @@ function SuccessReceiptContent() {
           </div>
           <div>
             <span className="text-[10px] font-bold text-black border border-black uppercase tracking-widest bg-neutral-50 px-3 py-1 rounded-full" style={{ fontFamily: "var(--font-display)" }}>
-              Payment Confirmed
+              {t("Payment Confirmed")}
             </span>
             <h1 className="text-3xl font-display font-extrabold text-black mt-4 uppercase tracking-tight">
-              Thank you, {order.first_name}!
+              {t("Thank you")}, {order.first_name}!
             </h1>
             <p className="text-neutral-500 text-sm mt-2 max-w-md mx-auto font-light leading-relaxed">
-              Your gear is in good hands. We have received your order and are already preparing your premium fitness equipment packages!
+              Your gear is in good hands. We have received your order and are already preparing your packages!
             </p>
           </div>
           
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-xs text-neutral-400 font-bold uppercase tracking-wider" style={{ fontFamily: "var(--font-display)" }}>
-            <span>Order ID: <span className="text-black select-all">{order.id}</span></span>
+            <span>{t("Order ID:")} <span className="text-black select-all">{order.id}</span></span>
             <span className="hidden sm:inline text-neutral-200">•</span>
             <span>Placed: <span className="text-black">{new Date(order.created_at).toLocaleString()}</span></span>
           </div>
@@ -169,7 +171,7 @@ function SuccessReceiptContent() {
           {/* Shipping Address Details */}
           <div>
             <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-4 flex items-center" style={{ fontFamily: "var(--font-display)" }}>
-              <MapPin className="h-4.5 w-4.5 mr-2 text-black" /> Delivery Information
+              <MapPin className="h-4.5 w-4.5 mr-2 text-black" /> {t("Delivery Information")}
             </h3>
             
             <div className="bg-neutral-50 rounded-lg p-5 border border-neutral-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold text-neutral-600 uppercase tracking-wide" style={{ fontFamily: "var(--font-display)" }}>
@@ -196,7 +198,7 @@ function SuccessReceiptContent() {
           {/* Purchased Items List */}
           <div>
             <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-4 flex items-center" style={{ fontFamily: "var(--font-display)" }}>
-              <Package className="h-4.5 w-4.5 mr-2 text-black" /> Ordered Items
+              <Package className="h-4.5 w-4.5 mr-2 text-black" /> {t("Ordered Items")}
             </h3>
 
             <div className="border border-neutral-200 rounded-lg overflow-hidden">
@@ -217,10 +219,10 @@ function SuccessReceiptContent() {
                       )}
                       <div>
                         <h4 className="text-sm font-bold text-black font-display">
-                          {item.products?.name || "Premium Gear"}
+                          {t(item.products?.name || "Premium Gear")}
                         </h4>
                         <p className="text-[10px] font-bold text-neutral-400 mt-0.5 uppercase tracking-wider" style={{ fontFamily: "var(--font-display)" }}>
-                          Category: {item.products?.category || "Equipment"} | Qty: {item.quantity}
+                          Category: {t(item.products?.category || "Equipment")} | Qty: {item.quantity}
                         </p>
                       </div>
                     </div>
@@ -242,7 +244,7 @@ function SuccessReceiptContent() {
           {/* Pricing Total */}
           <div className="border-t border-neutral-200 pt-6 flex justify-between items-center">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>Status</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>{t("Status")}</span>
               <p className="text-xs font-bold text-green-600 flex items-center mt-0.5 uppercase tracking-wider" style={{ fontFamily: "var(--font-display)" }}>
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 inline-block"></span>
                 Processing Shipment
@@ -250,7 +252,7 @@ function SuccessReceiptContent() {
             </div>
             
             <div className="text-right space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>Total Paid</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400" style={{ fontFamily: "var(--font-display)" }}>{t("Total Paid")}</span>
               <p className="text-2xl font-extrabold text-black">
                 {formatPrice(Number(order.total_amount))}
               </p>
@@ -268,7 +270,7 @@ function SuccessReceiptContent() {
             className="bg-black text-white px-6 py-3 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-neutral-800 transition-colors inline-flex items-center"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Continue Shopping <ArrowRight className="ml-2 h-4 w-4 stroke-[2]" />
+            {t("Continue Shopping")} <ArrowRight className="ml-2 h-4 w-4 stroke-[2]" />
           </Link>
         </div>
 
