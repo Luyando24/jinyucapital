@@ -286,10 +286,10 @@ export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
                     {t(post.category)}
                   </span>
                   <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                    {post.title}
+                    {t(post.title)}
                   </h3>
                   <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
-                    {post.excerpt}
+                    {t(post.excerpt)}
                   </p>
                   <div className="mt-auto pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
                     <span>

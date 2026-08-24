@@ -9,32 +9,49 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
-// Simple basic markdown parser helper
-function renderContent(content: string) {
+// Helper to render bold markdown and paragraphs
+function renderFormattedText(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
+// Markdown parser helper with translation
+function renderContent(content: string, t: (str: string) => string) {
   if (!content) return null;
   
-  const lines = content.split('\n');
+  // Translate full content if available
+  const translated = t(content);
+  const lines = translated.split('\n');
+
   return lines.map((line, index) => {
     const trimmed = line.trim();
     if (trimmed.startsWith('# ')) {
-      return <h1 key={index} className="text-3xl font-extrabold mt-8 mb-4 text-foreground">{trimmed.slice(2)}</h1>;
+      return <h1 key={index} className="text-3xl font-extrabold mt-8 mb-4 text-foreground">{renderFormattedText(t(trimmed.slice(2)))}</h1>;
     }
     if (trimmed.startsWith('## ')) {
-      return <h2 key={index} className="text-2xl font-bold mt-6 mb-3 text-foreground">{trimmed.slice(3)}</h2>;
+      return <h2 key={index} className="text-2xl font-bold mt-8 mb-3 text-foreground">{renderFormattedText(t(trimmed.slice(3)))}</h2>;
     }
     if (trimmed.startsWith('### ')) {
-      return <h3 key={index} className="text-xl font-bold mt-4 mb-2 text-foreground">{trimmed.slice(4)}</h3>;
+      return <h3 key={index} className="text-xl font-bold mt-6 mb-2 text-foreground">{renderFormattedText(t(trimmed.slice(4)))}</h3>;
     }
     if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-      return <li key={index} className="ml-6 list-disc mb-1.5 text-muted-foreground">{trimmed.slice(2)}</li>;
+      return <li key={index} className="ml-6 list-disc mb-2 text-muted-foreground leading-relaxed">{renderFormattedText(t(trimmed.slice(2)))}</li>;
     }
     if (trimmed.match(/^\d+\.\s/)) {
-      return <li key={index} className="ml-6 list-decimal mb-1.5 text-muted-foreground">{trimmed.replace(/^\d+\.\s/, '')}</li>;
+      return <li key={index} className="ml-6 list-decimal mb-2 text-muted-foreground leading-relaxed">{renderFormattedText(t(trimmed.replace(/^\d+\.\s/, '')))}</li>;
+    }
+    if (trimmed === '---') {
+      return <hr key={index} className="my-8 border-border" />;
     }
     if (trimmed === '') {
-      return <div key={index} className="h-4" />;
+      return <div key={index} className="h-3" />;
     }
-    return <p key={index} className="leading-relaxed mb-4 text-muted-foreground text-base md:text-lg">{trimmed}</p>;
+    return <p key={index} className="leading-relaxed mb-4 text-muted-foreground text-base md:text-lg">{renderFormattedText(t(trimmed))}</p>;
   });
 }
 
@@ -140,17 +157,17 @@ export default function BlogPostPage() {
 
           {/* Title */}
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            {post.title}
+            {t(post.title)}
           </h1>
 
           {/* Excerpt */}
           <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed italic border-l-4 border-primary pl-4 py-1">
-            {post.excerpt}
+            {t(post.excerpt)}
           </p>
 
           {/* Content */}
           <div className="prose prose-zinc dark:prose-invert max-w-none pt-4 border-t">
-            {renderContent(post.content)}
+            {renderContent(post.content, t)}
           </div>
         </div>
       </div>
