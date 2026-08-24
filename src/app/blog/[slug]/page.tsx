@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Tag, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { useWebsiteLanguage } from '@/components/WebsiteLanguageContext';
 
 // Simple basic markdown parser helper
 function renderContent(content: string) {
@@ -41,6 +42,7 @@ export default function BlogPostPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
+  const { t } = useWebsiteLanguage();
 
   const [post, setPost] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function BlogPostPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background">
         <Loader2 className="animate-spin h-8 w-8 text-primary" />
-        <p className="text-muted-foreground text-sm">Loading article...</p>
+        <p className="text-muted-foreground text-sm">{t("Loading article...")}</p>
       </div>
     );
   }
@@ -82,12 +84,12 @@ export default function BlogPostPage() {
         <div className="bg-muted p-4 rounded-full mb-4">
           <AlertCircle className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h2 className="text-2xl font-bold mb-2">Article Not Found</h2>
+        <h2 className="text-2xl font-bold mb-2">{t("Article Not Found")}</h2>
         <p className="text-muted-foreground max-w-md mb-6">
-          The article you are looking for does not exist or may have been moved.
+          {t("The article you are looking for does not exist or may have been moved.")}
         </p>
         <Button asChild>
-          <Link href="/blog">Back to Blog</Link>
+          <Link href="/blog">{t("Back to Blog")}</Link>
         </Button>
       </div>
     );
@@ -113,7 +115,7 @@ export default function BlogPostPage() {
         <div className="absolute top-8 left-4 md:left-8 z-20">
           <Button variant="outline" size="sm" className="bg-background/80 backdrop-blur border-none hover:bg-background gap-2" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4" />
-            Back
+            {t("Back")}
           </Button>
         </div>
       </div>
@@ -124,7 +126,7 @@ export default function BlogPostPage() {
           <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-muted-foreground border-b pb-6">
             <span className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-semibold uppercase tracking-wider text-[10px]">
               <Tag className="w-3.5 h-3.5" />
-              {post.category}
+              {t(post.category)}
             </span>
             <span className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
@@ -132,7 +134,7 @@ export default function BlogPostPage() {
             </span>
             <span className="flex items-center gap-1.5">
               <User className="w-4 h-4" />
-              By {post.author}
+              {t("By")} {post.author}
             </span>
           </div>
 

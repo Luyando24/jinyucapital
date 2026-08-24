@@ -36,9 +36,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index }) => {
           </div>
         </div>
         <div className="p-6 flex flex-col flex-grow">
-          <h3 className="text-xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors">{product.name}</h3>
+          <h3 className="text-xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors">{t(product.name)}</h3>
           <p className="text-sm text-muted-foreground flex-grow line-clamp-3 leading-relaxed">
-            {product.description}
+            {t(product.description)}
           </p>
           <div className="mt-4 pt-4 border-t flex justify-end items-center">
             <span className="text-sm text-primary font-medium">{t("View Details")} →</span>

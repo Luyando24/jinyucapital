@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ShoppingBag, FileText, BookOpen, ShoppingCart } from "lucide-react";
 import { useCart } from "./CartContext";
+import { useWebsiteLanguage } from "@/components/WebsiteLanguageContext";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { cartCount, setIsCartOpen } = useCart();
+  const { t } = useWebsiteLanguage();
 
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/checkout")) {
     return null;
@@ -51,7 +53,7 @@ export default function BottomNav() {
                   fontFamily: "var(--font-display)",
                 }}
               >
-                {tab.label}
+                {t(tab.label)}
               </span>
             </Link>
           );
@@ -87,7 +89,7 @@ export default function BottomNav() {
               fontFamily: "var(--font-display)",
             }}
           >
-            Cart
+            {t("Cart")}
           </span>
         </button>
       </div>

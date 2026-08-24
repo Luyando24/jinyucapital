@@ -12,13 +12,13 @@ export default function ContactPage() {
   const contactInfo = [
     {
       icon: Mail,
-      title: 'Email',
+      title: t('Email'),
       content: 'sales@jinyucapital.com',
       link: 'mailto:sales@jinyucapital.com'
     },
     {
       icon: Phone,
-      title: 'Phone',
+      title: t('Phone'),
       content: '+86-139-2243-0321',
       link: 'tel:+86-139-2243-0321'
     },
@@ -94,7 +94,7 @@ export default function ContactPage() {
                           {info.content}
                         </a>
                       ) : (
-                        <p className="text-muted-foreground">{info.content}</p>
+                        <p className="text-muted-foreground">{t(info.content)}</p>
                       )}
                     </div>
                   </div>

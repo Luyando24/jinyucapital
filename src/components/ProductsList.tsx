@@ -95,7 +95,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ selectedCategory }) => {
               </div>
               <h3 className="text-2xl font-semibold mb-3 text-foreground">{t("No products found")}</h3>
               <p className="text-muted-foreground max-w-md leading-relaxed text-lg">
-                We couldn&apos;t find any products in this category. Please try another category.
+                {t("We couldn't find any products in this category. Please try another category.")}
               </p>
             </motion.div>
           ) : (

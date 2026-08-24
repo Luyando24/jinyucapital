@@ -162,10 +162,10 @@ export default function ProductDetailPage() {
 
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="flex flex-col">
           <span className="text-primary font-bold text-sm mb-2">{t(product.category)}</span>
-          <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' as any }}>{product.name}</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4" style={{ textWrap: 'balance' as any }}>{t(product.name)}</h1>
 
           <div className="prose prose-sm md:prose-base dark:prose-invert text-muted-foreground mb-8">
-            <p>{product.description}</p>
+            <p>{t(product.description)}</p>
           </div>
 
           {/* Specifications */}
@@ -175,8 +175,8 @@ export default function ProductDetailPage() {
               <div className="divide-y">
                 {Object.entries(product.specifications).map(([key, val]) => (
                   <div key={key} className="flex justify-between px-4 py-2.5 text-sm">
-                    <span className="text-muted-foreground">{key}</span>
-                    <span className="font-medium">{val}</span>
+                    <span className="text-muted-foreground">{t(key)}</span>
+                    <span className="font-medium">{t(val)}</span>
                   </div>
                 ))}
               </div>

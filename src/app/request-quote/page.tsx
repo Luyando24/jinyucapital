@@ -112,7 +112,7 @@ function QuoteContent() {
                   className="text-xs font-bold uppercase tracking-widest border-b-2 border-primary text-primary transition-all pb-0.5 mt-4 hover:text-black hover:border-black"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  Submit another quote request
+                  {t("Submit another quote request")}
                 </button>
               </div>
             ) : (
@@ -122,7 +122,7 @@ function QuoteContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="firstName" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      First Name *
+                      {t("First Name *")}
                     </label>
                     <input
                       type="text"
@@ -136,7 +136,7 @@ function QuoteContent() {
                   </div>
                   <div>
                     <label htmlFor="lastName" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Last Name *
+                      {t("Last Name *")}
                     </label>
                     <input
                       type="text"
@@ -154,7 +154,7 @@ function QuoteContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="companyName" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Company Name *
+                      {t("Company Name *")}
                     </label>
                     <input
                       type="text"
@@ -168,7 +168,7 @@ function QuoteContent() {
                   </div>
                   <div>
                     <label htmlFor="email" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Email Address *
+                      {t("Email Address *")}
                     </label>
                     <input
                       type="email"
@@ -186,7 +186,7 @@ function QuoteContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="phone" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Phone Number *
+                      {t("Phone Number *")}
                     </label>
                     <input
                       type="tel"
@@ -200,7 +200,7 @@ function QuoteContent() {
                   </div>
                   <div>
                     <label htmlFor="projectType" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Project Type *
+                      {t("Project Type *")}
                     </label>
                     <select
                       id="projectType"
@@ -210,10 +210,10 @@ function QuoteContent() {
                       className="w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-lg border border-neutral-200 bg-white outline-none cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      <option value="Street Lighting">Street & Highway Lighting</option>
-                      <option value="Landscape Lighting">Landscape & Architectural</option>
-                      <option value="Industrial Lighting">Industrial Floodlights</option>
-                      <option value="Custom OEM">Custom OEM/ODM Manufacturing</option>
+                      <option value="Street Lighting">{t("Street & Highway Lighting")}</option>
+                      <option value="Landscape Lighting">{t("Landscape & Architectural")}</option>
+                      <option value="Industrial Lighting">{t("Industrial Floodlights")}</option>
+                      <option value="Custom OEM">{t("Custom OEM/ODM Manufacturing")}</option>
                     </select>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ function QuoteContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div className="sm:col-span-2">
                     <label htmlFor="productInterest" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Product of Interest
+                      {t("Product of Interest")}
                     </label>
                     <input
                       type="text"
@@ -235,7 +235,7 @@ function QuoteContent() {
                   </div>
                   <div>
                     <label htmlFor="quantity" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                      Est. Quantity *
+                      {t("Est. Quantity *")}
                     </label>
                     <input
                       type="number"
@@ -253,13 +253,13 @@ function QuoteContent() {
                 {/* Message */}
                 <div>
                   <label htmlFor="message" className="block text-[10px] font-bold uppercase tracking-widest mb-2 text-neutral-500" style={{ fontFamily: "var(--font-display)" }}>
-                    Project Specifications & Details *
+                    {t("Project Specifications & Details *")}
                   </label>
                   <textarea
                     id="message"
                     rows={6}
                     required
-                    placeholder="Describe your project, required certifications (CE, RoHS, UL), voltage specs, and any customization requests..."
+                    placeholder={t("Describe your project, required certifications (CE, RoHS, UL), voltage specs, and any customization requests...")}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="w-full px-4 py-3 text-xs font-semibold rounded-lg border border-neutral-200 bg-white outline-none resize-none focus:border-primary focus:ring-1 focus:ring-primary"
@@ -274,9 +274,9 @@ function QuoteContent() {
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {formStatus === 'submitting' ? (
-                    'SENDING REQUEST...'
+                    t('SENDING REQUEST...')
                   ) : (
-                    <span className="flex items-center justify-center gap-2">SUBMIT QUOTE REQUEST <Send className="h-3.5 w-3.5" /></span>
+                    <span className="flex items-center justify-center gap-2">{t("SUBMIT QUOTE REQUEST")} <Send className="h-3.5 w-3.5" /></span>
                   )}
                 </button>
 
@@ -290,40 +290,40 @@ function QuoteContent() {
             {/* Value card */}
             <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-6 space-y-4">
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                <Sparkles className="h-4.5 w-4.5 text-primary" /> Engineering Standards
+                <Sparkles className="h-4.5 w-4.5 text-primary" /> {t("Engineering Standards")}
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed font-light">
-                Jinyu Capital operates state-of-the-art aluminum die-casting, automated SMT lines, and photometric testing labs to ensure pro-grade durability.
+                {t("Jinyu Capital operates state-of-the-art aluminum die-casting, automated SMT lines, and photometric testing labs to ensure pro-grade durability.")}
               </p>
             </div>
 
             {/* Quality assurance */}
             <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-6 space-y-4">
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                <Shield className="h-4.5 w-4.5 text-primary" /> Commercial Warranty
+                <Shield className="h-4.5 w-4.5 text-primary" /> {t("Commercial Warranty")}
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed font-light">
-                Every commercial lighting product includes a 5-year replacement warranty, full certificate compliance support, and free local shipping coordination.
+                {t("Every commercial lighting product includes a 5-year replacement warranty, full certificate compliance support, and free local shipping coordination.")}
               </p>
             </div>
 
             {/* Response time */}
             <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-6 space-y-4">
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                <Clock className="h-4.5 w-4.5 text-primary" /> 24-Hour Turnaround
+                <Clock className="h-4.5 w-4.5 text-primary" /> {t("24-Hour Turnaround")}
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed font-light">
-                Our sales engineers review photometrics files, BOM requirements, and logistics paths to deliver accurate quote sheets within 1 business day.
+                {t("Our sales engineers review photometrics files, BOM requirements, and logistics paths to deliver accurate quote sheets within 1 business day.")}
               </p>
             </div>
 
             {/* General FAQs link */}
             <div className="bg-neutral-50 rounded-xl border border-neutral-200 p-6 space-y-4">
               <h3 className="font-display text-sm font-bold uppercase tracking-wider text-black flex items-center gap-2">
-                <HelpCircle className="h-4.5 w-4.5 text-primary" /> Need Assistance?
+                <HelpCircle className="h-4.5 w-4.5 text-primary" /> {t("Need Assistance?")}
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed font-light">
-                For custom OEM molds or general questions about supply chain scheduling, email our support directly at <a href="mailto:sales@jinyucapital.com" className="text-primary hover:underline font-bold">sales@jinyucapital.com</a>.
+                {t("For custom OEM molds or general questions about supply chain scheduling, email our support directly at")} <a href="mailto:sales@jinyucapital.com" className="text-primary hover:underline font-bold">sales@jinyucapital.com</a>.
               </p>
             </div>
 

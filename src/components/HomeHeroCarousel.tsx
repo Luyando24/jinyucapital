@@ -94,10 +94,10 @@ export default function HomeHeroCarousel({
             className="text-4xl md:text-5xl lg:text-7xl font-extrabold leading-tight mb-8"
             style={{ letterSpacing: "-0.03em", textWrap: "balance" }}
           >
-            {heroHeadline}
+            {t(heroHeadline)}
           </h1>
           <p className="text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-10 text-white/90">
-            {heroSubheadline}
+            {t(heroSubheadline)}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center mb-12">

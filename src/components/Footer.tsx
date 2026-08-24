@@ -86,7 +86,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start space-x-3 text-sm text-muted-foreground">
                 <MapPin size={18} className="mt-0.5 flex-shrink-0 text-foreground" />
-                <span className="leading-relaxed">{address}</span>
+                <span className="leading-relaxed">{t(address)}</span>
               </li>
             </ul>
           </div>
@@ -137,14 +137,14 @@ export default function Footer() {
             rel="noopener noreferrer"
             className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
           >
-            Website design by SpaceMinds
+            {t("Website design by SpaceMinds")}
           </a>
           <div className="flex space-x-8">
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-              Privacy Policy
+              {t("Privacy Policy")}
             </Link>
             <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200">
-              Terms of Service
+              {t("Terms of Service")}
             </Link>
           </div>
         </div>

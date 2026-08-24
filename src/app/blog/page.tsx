@@ -131,9 +131,9 @@ export default function BlogPage() {
               <div className="bg-background p-4 rounded-full shadow-sm mb-4">
                 <AlertCircle className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No articles found</h3>
+              <h3 className="text-xl font-semibold mb-2">{t("No articles found")}</h3>
               <p className="text-muted-foreground max-w-md">
-                No articles match your current filters or search terms.
+                {t("No articles match your current filters or search terms.")}
               </p>
               <Button 
                 className="mt-6" 
@@ -143,7 +143,7 @@ export default function BlogPage() {
                   setSelectedCategory('All');
                 }}
               >
-                Clear Filters
+                {t("Clear Filters")}
               </Button>
             </div>
           ) : (
@@ -171,7 +171,7 @@ export default function BlogPage() {
                       </div>
                       <div className="p-6 flex flex-col flex-grow">
                         <span className="text-xs font-bold text-primary uppercase tracking-wider mb-3">
-                          {post.category}
+                          {t(post.category)}
                         </span>
                         <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
                           {post.title}
@@ -181,7 +181,7 @@ export default function BlogPage() {
                         </p>
                         <div className="mt-auto pt-4 border-t border-border/50 flex justify-between items-center text-xs text-muted-foreground">
                           <span>{post.publish_date || (post.created_at ? new Date(post.created_at).toLocaleDateString() : '')}</span>
-                          <span className="font-bold text-primary group-hover:underline">Read More →</span>
+                          <span className="font-bold text-primary group-hover:underline">{t("Read More →")}</span>
                         </div>
                       </div>
                     </Link>

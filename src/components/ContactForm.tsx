@@ -32,19 +32,19 @@ export default function ContactForm() {
     const newErrors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('Name is required');
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('Email is required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('Please enter a valid email address');
     }
     
     if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = t('Message is required');
     } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
+      newErrors.message = t('Message must be at least 10 characters');
     }
     
     setErrors(newErrors);
@@ -71,10 +71,10 @@ export default function ContactForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send message');
+        throw new Error(errorData.error || t('Failed to send message. Please try again.'));
       }
       
-      toast.success('Message sent successfully. Our sales team will contact you shortly.');
+      toast.success(t('Message sent successfully. Our sales team will contact you shortly.'));
       
       setFormData({
         name: '',
@@ -85,7 +85,7 @@ export default function ContactForm() {
       });
     } catch (error: any) {
       console.error('Form submission error:', error);
-      toast.error(error.message || 'Failed to send message. Please try again.');
+      toast.error(error.message || t('Failed to send message. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +103,7 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             className="mt-2 text-foreground"
-            placeholder="Your full name"
+            placeholder={t("Your full name")}
           />
           {errors.name && (
             <p className="text-sm text-destructive mt-1">{errors.name}</p>
@@ -150,7 +150,7 @@ export default function ContactForm() {
             value={formData.company}
             onChange={handleChange}
             className="mt-2 text-foreground"
-            placeholder="Your company name"
+            placeholder={t("Your company name")}
           />
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function ContactForm() {
           value={formData.message}
           onChange={handleChange}
           className="mt-2 min-h-[150px] text-foreground"
-          placeholder="Tell us more about your inquiry..."
+          placeholder={t("Tell us more about your inquiry...")}
         />
         {errors.message && (
           <p className="text-sm text-destructive mt-1">{errors.message}</p>

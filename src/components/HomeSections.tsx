@@ -148,17 +148,17 @@ export function HomeManufacturingSection({
               <div className="rounded-2xl shadow-xl w-full aspect-[4/3] bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col items-center justify-center text-zinc-500 font-bold border border-zinc-800 p-6 text-center gap-2">
                 <Factory className="w-12 h-12 text-zinc-600 mb-2" />
                 <span className="text-sm font-semibold tracking-wider uppercase text-zinc-400">
-                  Guangzhou Production Facility
+                  {t("Guangzhou Production Facility")}
                 </span>
                 <span className="text-xs font-normal text-zinc-500 max-w-xs">
-                  High-performance manufacturing, assembly, and testing workshop
+                  {t("High-performance manufacturing, assembly, and testing workshop")}
                 </span>
               </div>
             )}
             <div className="absolute -bottom-6 -left-6 bg-background p-6 rounded-xl shadow-lg border hidden md:block">
               <div className="text-4xl font-bold text-primary mb-1">10k+</div>
               <div className="text-sm font-medium text-muted-foreground">
-                Sq.m Production Area
+                {t("Sq.m Production Area")}
               </div>
             </div>
           </motion.div>
@@ -220,9 +220,9 @@ export function HomeProductsSection({
                 )}
               </div>
               <div className="p-6 flex flex-col h-full">
-                <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
+                <h3 className="text-xl font-semibold mb-2">{t(product.title)}</h3>
                 <p className="text-muted-foreground leading-relaxed text-sm">
-                  {product.description}
+                  {t(product.description)}
                 </p>
               </div>
             </motion.div>
@@ -283,7 +283,7 @@ export function HomeBlogSection({ posts }: { posts: BlogPost[] }) {
                 </div>
                 <div className="p-6 flex flex-col flex-grow">
                   <span className="text-xs font-bold text-primary uppercase tracking-wider mb-3 block">
-                    {post.category}
+                    {t(post.category)}
                   </span>
                   <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors line-clamp-2">
                     {post.title}
